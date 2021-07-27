@@ -1,0 +1,6 @@
+name: Bonfire
+version: ${plugin_version}
+main: com.mineinabyss.bonfire.BonfirePlugin
+api-version: 1.17
+authors: [ Scyu_ ]
+depend: [ Geary, ProtocolLib ]
