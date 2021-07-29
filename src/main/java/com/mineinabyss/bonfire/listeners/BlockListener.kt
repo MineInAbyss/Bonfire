@@ -101,6 +101,8 @@ object BlockListener : Listener {
                 var bonfire = blockState as Campfire
                 bonfire.broadcastVal()
                 bonfire.bonfireData()?.updateModel()
+
+                //if(bonfire.bonfireData().players )
             }
         }
     }

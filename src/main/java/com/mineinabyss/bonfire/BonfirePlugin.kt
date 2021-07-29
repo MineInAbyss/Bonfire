@@ -9,6 +9,7 @@ import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.bonfire.listeners.ChatPacketAdapter
 import com.mineinabyss.geary.minecraft.dsl.attachToGeary
 import com.mineinabyss.idofront.plugin.registerEvents
+import com.mineinabyss.idofront.slimjar.LibraryLoaderInjector
 import kotlinx.serialization.InternalSerializationApi
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
@@ -26,7 +27,7 @@ class BonfirePlugin : JavaPlugin() {
 
     @InternalSerializationApi
     override fun onEnable() {
-//        LibraryLoaderInjector.inject(this)
+        LibraryLoaderInjector.inject(this)
         saveDefaultConfig()
         BonfireConfig.load()
 
