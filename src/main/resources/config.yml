@@ -13,4 +13,4 @@ bonfireRecipe:
     amount: 1
     custom-model-data: 1
     display-name: §aBonfire
-campfireDespawnTime: 1m
+timeUntilcampfireDespawn: 1m
