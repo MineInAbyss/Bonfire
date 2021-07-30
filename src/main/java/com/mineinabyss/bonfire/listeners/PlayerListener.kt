@@ -3,6 +3,7 @@ package com.mineinabyss.bonfire.listeners
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.idofront.entities.leftClicked
 import com.mineinabyss.idofront.messaging.*
@@ -18,7 +19,7 @@ import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.player.*
 import org.bukkit.inventory.EquipmentSlot
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object PlayerListener : Listener {
@@ -49,7 +50,7 @@ object PlayerListener : Listener {
             }
 
             transaction {
-                val playerCount = Players.select { Players.bonfireUUID eq bonfire.uuid }.count()
+                val playerCount = Players.select { bonfireUUID eq bonfire.uuid }.count()
                 if (playerCount >= BonfireConfig.data.maxPlayerCount) {
                     return@transaction player.error("This campfire is full!")
                 }
@@ -72,7 +73,8 @@ object PlayerListener : Listener {
     fun PlayerRespawnEvent.event() {
         val playerUUID = player.uniqueId
         transaction {
-            val respawnBonfire = (Players innerJoin Bonfire)
+            val respawnBonfire = Players
+                .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
                 .select { Players.playerUUID eq playerUUID }
                 .firstOrNull() ?: return@transaction
             val respawnBonfireLocation = respawnBonfire[Bonfire.location]
