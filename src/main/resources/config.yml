@@ -14,3 +14,4 @@ bonfireRecipe:
     custom-model-data: 1
     display-name: §aBonfire
 timeUntilcampfireDespawn: 1m
+campfireDestroyCheckInterval: 10s
