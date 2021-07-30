@@ -21,7 +21,7 @@ dependencies {
 
     // Shaded
     implementation("com.mineinabyss:idofront:1.17.1-0.6.22")
-    implementation("com.github.okkero:skedule")
+    implementation("com.github.okkero:Skedule:v1.2.6")
 
     // Database
     slim("org.jetbrains.exposed:exposed-core:$exposedVersion") { isTransitive = false }
