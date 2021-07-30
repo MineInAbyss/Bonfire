@@ -1,12 +1,10 @@
 package com.mineinabyss.bonfire
 
-import com.comphenix.protocol.ProtocolLibrary
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
-import com.mineinabyss.bonfire.data.Player
+import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
-import com.mineinabyss.bonfire.listeners.ChatPacketAdapter
 import com.mineinabyss.geary.minecraft.dsl.attachToGeary
 import com.mineinabyss.idofront.plugin.registerEvents
 import com.mineinabyss.idofront.slimjar.LibraryLoaderInjector
@@ -14,7 +12,10 @@ import kotlinx.serialization.InternalSerializationApi
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.java.JavaPlugin
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.transactions.transaction
 
 
@@ -33,7 +34,7 @@ class BonfirePlugin : JavaPlugin() {
         transaction {
             addLogger(StdOutSqlLogger)
 
-            SchemaUtils.create (Bonfire, Player)
+            SchemaUtils.create(Bonfire, Players)
         }
 
         registerEvents(

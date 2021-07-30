@@ -5,7 +5,6 @@ import com.comphenix.protocol.events.ListenerPriority
 import com.comphenix.protocol.events.PacketAdapter
 import com.comphenix.protocol.events.PacketEvent
 import com.mineinabyss.bonfire.bonfirePlugin
-import com.mineinabyss.bonfire.components.RespawnLocation
 import com.mineinabyss.geary.minecraft.access.geary
 import com.mineinabyss.idofront.messaging.broadcastVal
 

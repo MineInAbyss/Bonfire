@@ -1,6 +1,7 @@
 package com.mineinabyss.bonfire.listeners
 
 import com.mineinabyss.bonfire.components.updateModel
+import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.bonfireData
 import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.bonfire.extensions.makeBonfire
@@ -18,9 +19,10 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
-import org.bukkit.event.entity.EntityPotionEffectEvent
 import org.bukkit.event.world.ChunkLoadEvent
 import org.bukkit.inventory.ItemStack
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.math.floor
 import org.bukkit.block.data.type.Campfire as CampfireBlockData
 
@@ -82,10 +84,14 @@ object BlockListener : Listener {
 
         val bonfire = (block.state as Campfire).bonfireData() ?: return
 
-        if(bonfire.players.isNotEmpty()) {
-            player.error("You can not break this bonfire rekindled one")
-            isCancelled = true
-            return
+        transaction {
+            val playerCount = Players.select { Players.bonfireUUID eq bonfire.uuid }.count()
+
+            if(playerCount > 0) {
+                player.error("You can not break this bonfire rekindled one")
+                isCancelled = true
+                return@transaction
+            }
         }
 
         val armorStand = Bukkit.getEntity(bonfire.uuid)
@@ -98,11 +104,9 @@ object BlockListener : Listener {
     fun ChunkLoadEvent.load() {
         chunk.tileEntities.filter { blockState -> blockState.type == Material.CAMPFIRE }.forEach { blockState ->
             run {
-                var bonfire = blockState as Campfire
+                val bonfire = blockState as Campfire
                 bonfire.broadcastVal()
                 bonfire.bonfireData()?.updateModel()
-
-                //if(bonfire.bonfireData().players )
             }
         }
     }
