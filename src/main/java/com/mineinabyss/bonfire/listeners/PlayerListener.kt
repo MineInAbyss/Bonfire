@@ -6,7 +6,9 @@ import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.idofront.entities.leftClicked
-import com.mineinabyss.idofront.messaging.*
+import com.mineinabyss.idofront.messaging.error
+import com.mineinabyss.idofront.messaging.info
+import com.mineinabyss.idofront.messaging.logVal
 import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.block.data.type.Bed
@@ -14,12 +16,18 @@ import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDeathEvent
-import org.bukkit.event.player.*
+import org.bukkit.event.player.PlayerArmorStandManipulateEvent
+import org.bukkit.event.player.PlayerBedEnterEvent
+import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerRespawnEvent
 import org.bukkit.inventory.EquipmentSlot
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.innerJoin
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object PlayerListener : Listener {
@@ -37,7 +45,9 @@ object PlayerListener : Listener {
     @EventHandler
     fun PlayerInteractEvent.rightClickCampfire() {
         val clicked = clickedBlock ?: return // If no block was clicked, return
+
         if (hand == EquipmentSlot.OFF_HAND) return
+
         if (clicked.type == Material.CAMPFIRE) {
             val respawnCampfire = clicked.state as Campfire
             val bonfire = respawnCampfire.bonfireData() ?: return
@@ -57,6 +67,15 @@ object PlayerListener : Listener {
             }
 
             player.setRespawnLocation(bonfire.uuid)
+
+            if (item?.type.toString().contains("shovel", true) ||
+                item?.type == Material.WATER_BUCKET ||
+                item?.type == Material.PUFFERFISH_BUCKET ||
+                item?.type == Material.SALMON_BUCKET ||
+                item?.type == Material.COD_BUCKET ||
+                item?.type == Material.TROPICAL_FISH_BUCKET ||
+                item?.type == Material.AXOLOTL_BUCKET
+            ) isCancelled = true
         } else if (clicked.blockData is Bed) {
             isCancelled = true
         }
@@ -69,50 +88,32 @@ object PlayerListener : Listener {
         if (player.world.getBlockAt(player.location).state is Campfire) isCancelled = true
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun PlayerRespawnEvent.event() {
-        val playerUUID = player.uniqueId
         transaction {
             val respawnBonfire = Players
                 .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
-                .select { Players.playerUUID eq playerUUID }
-                .firstOrNull() ?: return@transaction
-            val respawnBonfireLocation = respawnBonfire[Bonfire.location]
-            respawnBonfireLocation.broadcastVal()
-            val respawnBlock = player.world.getBlockAt(respawnBonfireLocation)
-            respawnBlock.broadcastVal()
-            if (respawnBlock.state is Campfire) {
-                val campfire = respawnBlock.state as Campfire
-                campfire.bonfireData()?.uuid.broadcastVal("Bonfire UUID")
-                if (campfire.isBonfire(respawnBonfire[Bonfire.entityUUID])) {
-                    player.info("Respawning at bonfire")
-                    respawnLocation = respawnBonfireLocation.toCenterLocation()
-                    return@transaction
+                .select { Players.playerUUID eq player.uniqueId }
+                .firstOrNull()
+
+            if (respawnBonfire != null) {
+                val respawnBonfireLocation = respawnBonfire[Bonfire.location]
+                val respawnBlock = player.world.getBlockAt(respawnBonfireLocation)
+                if (respawnBlock.state is Campfire) {
+                    val campfire = respawnBlock.state as Campfire
+                    if (campfire.isBonfire(respawnBonfire[Bonfire.entityUUID])) {
+                        player.info("Respawning at bonfire")
+                        respawnLocation = respawnBonfireLocation.toCenterLocation()
+                        return@transaction
+                    }
                 }
+
+                logVal("Bonfire missing for player " + player.name)
+                player.error("Bonfire not found")
+                Players.deleteWhere { Players.playerUUID eq player.uniqueId }
+                Bonfire.deleteWhere { Bonfire.entityUUID eq respawnBonfire[Bonfire.entityUUID] }
             }
-
-            //TODO: Handle if there is no bonfire at the location (remove from Bonfire table and remove player entry)
         }
-
-//        val gearyPlayer = geary(player)
-//        val respawnLocation = gearyPlayer.get<RespawnLocation>() ?: return
-//        respawnLocation.broadcastVal()
-//        val respawnBlock = player.world.getBlockAt(respawnLocation.location)
-//        respawnBlock.type.broadcastVal()
-//        if (respawnBlock.state is Campfire) {
-//            val campfire = respawnBlock.state as Campfire
-//            campfire.bonfireData()?.uuid.broadcastVal("Bonfire UUID")
-//            respawnLocation.uuid.broadcastVal("Respawn UUID")
-//            if (campfire.isBonfire(respawnLocation.uuid)) {
-//                player.info("Respawning at bonfire")
-//                setRespawnLocation(respawnLocation.location.toCenterLocation())
-//                return
-//            }
-//        }
-//
-//        logVal("Bonfire missing for player " + player.name)
-//        player.error("Bonfire not found")
-//        gearyPlayer.remove(RespawnLocation::class)
     }
 
     @EventHandler

@@ -7,7 +7,7 @@ import org.jetbrains.exposed.sql.Column
 import java.util.*
 
 object Bonfire : IdTable<UUID>() {
-    val entityUUID = uuid("uuid").uniqueIndex()
+    val entityUUID = uuid("entityUUID").uniqueIndex()
     val location = location("location")
     override val id: Column<EntityID<UUID>>
         get() = entityUUID.entityId()

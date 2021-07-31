@@ -7,6 +7,4 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("bonfire:model")
 @AutoscanComponent
-class BonfireModel (
-
-)
+class BonfireModel
