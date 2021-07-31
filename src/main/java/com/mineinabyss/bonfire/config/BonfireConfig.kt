@@ -15,7 +15,7 @@ object BonfireConfig : IdofrontConfig<BonfireConfig.Data>(bonfirePlugin, Data.se
     data class Data(
         var bonfireRecipe: SerializableRecipe,
         var maxPlayerCount: Int = 4,
-        var timeUntilcampfireDespawn: TimeSpan = 1.weeks,
+        var timeUntilCampfireDespawn: TimeSpan = 1.weeks,
         var campfireDestroyCheckInterval: TimeSpan = 1.days,
     )
 

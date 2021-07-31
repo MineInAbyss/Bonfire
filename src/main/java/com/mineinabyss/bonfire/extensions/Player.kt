@@ -1,13 +1,19 @@
 package com.mineinabyss.bonfire.extensions
 
+import com.mineinabyss.bonfire.components.destroyBonfire
 import com.mineinabyss.bonfire.components.save
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
+import org.bukkit.Bukkit
+import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.entity.Player
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.time.Duration
+import java.time.LocalDateTime
 import java.util.*
 
 fun Player.setRespawnLocation(bonfireUUID: UUID) {
@@ -17,6 +23,29 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
         val playerRow = Players
             .select { Players.playerUUID eq playerUUID }
             .firstOrNull()
+
+        val newBonfire = Bonfire
+            .select { Bonfire.entityUUID eq bonfireUUID }
+            .firstOrNull() ?: return@transaction
+        val newBonfireBlock = newBonfire[Bonfire.location].block.state as? Campfire ?: return@transaction
+        val newBonfireData = newBonfireBlock.bonfireData() ?: return@transaction
+
+        if(Players.select { Players.bonfireUUID eq bonfireUUID }.empty()){
+            val newTimeUntilDestroy = Duration.between(
+                LocalDateTime.now(),
+                newBonfire[Bonfire.stateChangedTimestamp] + newBonfire[Bonfire.timeUntilDestroy]
+            )
+
+            if(newTimeUntilDestroy.isNegative){
+                newBonfireData.destroyBonfire(true)
+                error("The campfire has expired and degrades to dust")
+                return@transaction
+            }else{
+                Bonfire.update({ Bonfire.entityUUID eq bonfireUUID }) {
+                    it[timeUntilDestroy] = newTimeUntilDestroy
+                }
+            }
+        }
 
         if (playerRow != null && playerRow[Players.bonfireUUID] != bonfireUUID) {
             val oldBonfireBlock = Bonfire
@@ -36,13 +65,7 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
             }
         }
 
-        val newBonfire = Bonfire
-            .select { Bonfire.entityUUID eq bonfireUUID }
-            .first()[Bonfire.location]
-            .block.state as? Campfire ?: return@transaction
-
-        newBonfire.bonfireData()?.save()
-
+        newBonfireData.save()
         success("Respawn point set")
     }
 }

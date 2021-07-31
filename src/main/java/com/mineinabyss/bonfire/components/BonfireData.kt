@@ -15,7 +15,6 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.entity.ArmorStand
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -55,7 +54,7 @@ fun BonfireData.updateModel() {
 
 fun BonfireData.save() {
     transaction{
-        if(Players.select { Players.bonfireUUID eq this@save.uuid }.count() == 0){
+        if(Players.select { Players.bonfireUUID eq this@save.uuid }.empty()){
             Bonfire.update({Bonfire.entityUUID eq this@save.uuid}){
                 it[stateChangedTimestamp] = LocalDateTime.now()
             }
