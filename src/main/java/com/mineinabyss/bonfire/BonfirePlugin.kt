@@ -7,9 +7,11 @@ import com.mineinabyss.bonfire.data.Bonfire.stateChangedTimestamp
 import com.mineinabyss.bonfire.data.Bonfire.timeUntilDestroy
 import com.mineinabyss.bonfire.data.Bonfire.uuid
 import com.mineinabyss.bonfire.data.Player
+import com.mineinabyss.bonfire.extensions.bonfireData
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.geary.minecraft.dsl.attachToGeary
+import com.mineinabyss.idofront.messaging.broadcast
 import com.mineinabyss.idofront.plugin.registerEvents
 import com.mineinabyss.idofront.slimjar.LibraryLoaderInjector
 import com.okkero.skedule.schedule
@@ -54,20 +56,23 @@ class BonfirePlugin : JavaPlugin() {
 
         schedule {
             repeating(BonfireConfig.data.campfireDestroyCheckInterval.inTicks)
-            transaction {
-                Bonfire
-                    .leftJoin(Player, { uuid }, { bonfireUUID })
-                    .select { Player.bonfireUUID.isNull() }
-                    .forEach {
-                        if ((it[stateChangedTimestamp] + it[timeUntilDestroy]) <= LocalDateTime.now()) {
-                            if (it[location].block.state is Campfire) {
-                                it[location].block.type = Material.AIR //FIXME: is this the correct way to destroy a block?
-                                Bukkit.getEntity(it[uuid])?.remove() //FIXME: does the ECS need cleanup?
+            while(true) {
+                transaction {
+                    Bonfire
+                        .leftJoin(Player, { uuid }, { bonfireUUID })
+                        .select { Player.bonfireUUID.isNull() }
+                        .forEach {
+                            if ((it[stateChangedTimestamp] + it[timeUntilDestroy]) <= LocalDateTime.now()) {
+                                if (it[location].block.state is Campfire) {
+                                    it[location].block.type = Material.AIR //FIXME: is this the correct way to destroy a block?
+                                    Bukkit.getEntity(it[uuid])?.remove() //FIXME: does the ECS need cleanup?
 
-                                Bonfire.deleteWhere { uuid eq it[uuid] }
+                                    Bonfire.deleteWhere { uuid eq it[uuid] }
+                                }
                             }
                         }
-                    }
+                }
+                yield()
             }
         }
     }

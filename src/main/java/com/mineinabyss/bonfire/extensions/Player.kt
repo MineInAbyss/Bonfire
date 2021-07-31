@@ -18,7 +18,6 @@ import org.jetbrains.exposed.sql.update
 import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
-import com.mineinabyss.bonfire.data.Player as DataPlayer
 
 fun Player.setRespawnLocation(spawn: RespawnLocation) {
     val oldSpawn = geary(this).get(RespawnLocation::class)
@@ -37,7 +36,6 @@ fun Player.setRespawnLocation(spawn: RespawnLocation) {
 
     val newSpawn = spawn.location.block.state as? Campfire ?: return
     val bonfire = newSpawn.bonfireData() ?: return
-    success("Respawn point set")
 
     if (bonfire.players.size == 0) {
         transaction {
@@ -54,6 +52,8 @@ fun Player.setRespawnLocation(spawn: RespawnLocation) {
                 Bonfire.deleteWhere { Bonfire.uuid eq dbBonfire[Bonfire.uuid] }
 
                 error("The campfire has expired, and degrades to dust")
+
+                return@transaction
             } else {
                 Bonfire.update({ Bonfire.uuid eq bonfire.uuid }) {
                     it[timeUntilDestroy] = newTimeUntilDestroy
@@ -62,17 +62,18 @@ fun Player.setRespawnLocation(spawn: RespawnLocation) {
         }
     }
 
+    success("Respawn point set")
     bonfire.players.add(this.uniqueId)
     bonfire.save()
     geary(this).setPersisting(spawn)
 
-    transaction {
-        val player = DataPlayer.select { DataPlayer.playerUUID eq uniqueId }.single()
-        println(player)
-//        if(player == null) {
-//            val insertData = DataPlayer.insert {  }
-//        }
-    }
+//    transaction {
+//        val player = DataPlayer.select { DataPlayer.playerUUID eq uniqueId }.single()
+//        println(player)
+////        if(player == null) {
+////            val insertData = DataPlayer.insert {  }
+////        }
+//    }
 }
 
 

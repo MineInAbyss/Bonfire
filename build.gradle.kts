@@ -20,7 +20,7 @@ dependencies {
     compileOnly("com.charleskorn.kaml:kaml")
 
     // Shaded
-    implementation("com.mineinabyss:idofront:1.17.1-0.6.22")
+    implementation("com.mineinabyss:idofront:1.17.1-0.6.23")
     implementation("com.github.okkero:Skedule:v1.2.6")
 
     // Database
