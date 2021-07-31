@@ -2,6 +2,7 @@ package com.mineinabyss.bonfire.extensions
 
 import com.mineinabyss.bonfire.components.destroyBonfire
 import com.mineinabyss.bonfire.components.save
+import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.idofront.messaging.error
@@ -66,6 +67,7 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
         }
 
         newBonfireData.save()
+        BonfireConfig.data.respawnSetSound.playSound(this@setRespawnLocation)
         success("Respawn point set")
     }
 }
@@ -79,7 +81,10 @@ fun Player.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
                 (Players.playerUUID eq playerUUID) and (Players.bonfireUUID eq bonfireUUID)
             }
         if (deleteReturnCode == 0) return@transaction false
+
+        BonfireConfig.data.respawnUnsetSound.playSound(this@removeBonfireSpawnLocation)
         success("Respawn point has been removed")
+
         val bonfire = Bonfire
             .select { Bonfire.entityUUID eq bonfireUUID }
             .first()[Bonfire.location].block.state as? Campfire ?: return@transaction false

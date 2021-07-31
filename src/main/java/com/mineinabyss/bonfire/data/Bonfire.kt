@@ -16,7 +16,7 @@ object Bonfire : IdTable<UUID>() {
     val location = location("location")
     val stateChangedTimestamp = datetime("stateChangedTimestamp").clientDefault { LocalDateTime.now() }
     val timeUntilDestroy =
-        duration("timeUntilDestroy").default(BonfireConfig.data.timeUntilCampfireDespawn.javaDuration())
+        duration("timeUntilDestroy").default(BonfireConfig.data.bonfireExpirationTime.javaDuration())
     override val id: Column<EntityID<UUID>>
         get() = entityUUID.entityId()
 }

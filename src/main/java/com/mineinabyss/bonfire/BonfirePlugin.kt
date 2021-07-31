@@ -54,7 +54,7 @@ class BonfirePlugin : JavaPlugin() {
         attachToGeary { autoscanComponents() }
 
         schedule {
-            repeating(BonfireConfig.data.campfireDestroyCheckInterval.inTicks)
+            repeating(BonfireConfig.data.expirationCheckInterval.inTicks)
             while (true) {
                 transaction {
                     Bonfire

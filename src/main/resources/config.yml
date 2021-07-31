@@ -14,5 +14,13 @@ bonfireRecipe:
     custom-model-data: 1
     display-name: §aBonfire
 maxPlayerCount: 4
-timeUntilCampfireDespawn: 1m
-campfireDestroyCheckInterval: 10s
+bonfireExpirationTime: 1m
+expirationCheckInterval: 10s
+respawnSetSound:
+  sound: block.ladder.step
+  volume: 1f
+  pitch: 1.5f
+respawnUnsetSound:
+  sound: block.ladder.step
+  volume: 1f
+  pitch: 0.5f

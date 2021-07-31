@@ -1,6 +1,7 @@
 package com.mineinabyss.bonfire.config
 
 import com.mineinabyss.bonfire.bonfirePlugin
+import com.mineinabyss.bonfire.components.SoundEffect
 import com.mineinabyss.idofront.config.IdofrontConfig
 import com.mineinabyss.idofront.config.ReloadScope
 import com.mineinabyss.idofront.recpies.register
@@ -15,8 +16,10 @@ object BonfireConfig : IdofrontConfig<BonfireConfig.Data>(bonfirePlugin, Data.se
     data class Data(
         var bonfireRecipe: SerializableRecipe,
         var maxPlayerCount: Int = 4,
-        var timeUntilCampfireDespawn: TimeSpan = 1.weeks,
-        var campfireDestroyCheckInterval: TimeSpan = 1.days,
+        var bonfireExpirationTime: TimeSpan = 1.weeks,
+        var expirationCheckInterval: TimeSpan = 1.days,
+        var respawnSetSound : SoundEffect,
+        var respawnUnsetSound : SoundEffect,
     )
 
     override fun ReloadScope.load() {
