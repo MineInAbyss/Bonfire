@@ -11,6 +11,7 @@ import com.mineinabyss.bonfire.extensions.setBonfireModel
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
 import org.bukkit.Material
+import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.Campfire
 import org.bukkit.entity.ArmorStand
@@ -18,6 +19,8 @@ import org.bukkit.entity.EntityType
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
+import org.bukkit.event.block.BlockPistonExtendEvent
+import org.bukkit.event.block.BlockPistonRetractEvent
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.inventory.ItemStack
 import org.jetbrains.exposed.sql.select
@@ -29,13 +32,7 @@ object BlockListener : Listener {
 
     @EventHandler
     fun BlockPlaceEvent.place() {
-        val blockBelow = blockPlaced.getRelative(BlockFace.DOWN)
-        val blockBelowBelowBlock = blockBelow.getRelative(BlockFace.DOWN)
-
-        if (
-            (blockBelow.state is Campfire && (blockBelow.state as Campfire).isBonfire)
-            || (blockBelowBelowBlock.state is Campfire && (blockBelowBelowBlock.state as Campfire).isBonfire)
-        ) {
+        if(blockPlaced.hasBonfireBelow()){
             isCancelled = true
             return
         }
@@ -45,6 +42,14 @@ object BlockListener : Listener {
             && itemInHand.itemMeta.hasCustomModelData()
             && itemInHand.itemMeta.customModelData == 1
         ) {
+            if (blockPlaced.getRelative(BlockFace.UP).type != Material.AIR ||
+                blockPlaced.getRelative(BlockFace.UP, 2).type != Material.AIR
+            ) {
+                player.error("There is not enough room.")
+                isCancelled = true
+                return
+            }
+
             // If we are trying to place our custom campfire
             // we need to save this as a respawn campfire instead of just a regular campfire
             val respawnCampfire = blockPlaced.state as Campfire
@@ -105,6 +110,43 @@ object BlockListener : Listener {
         }
         val campfire = entity.location.block.state as Campfire
         campfire.bonfireData()?.updateModel()
+    }
+
+    @EventHandler
+    fun BlockPistonExtendEvent.pistonExtend() {
+        if(block.getRelative(direction).hasBonfireBelow()){
+            isCancelled = true
+            return
+        }
+
+        blocks.forEach {
+            if(it.getRelative(direction).hasBonfireBelow()){
+                isCancelled = true
+                return
+            }
+        }
+    }
+
+    @EventHandler
+    fun BlockPistonRetractEvent.pistonRetract() {
+        if(block.getRelative(direction).hasBonfireBelow()){
+            isCancelled = true
+            return
+        }
+
+        blocks.forEach {
+            if(it.getRelative(direction).hasBonfireBelow()){
+                isCancelled = true
+                return
+            }
+        }
+    }
+
+    private fun Block.hasBonfireBelow() : Boolean {
+        val blockBelow = getRelative(BlockFace.DOWN)
+        val blockBelowBelowBlock = blockBelow.getRelative(BlockFace.DOWN)
+
+        return ((blockBelow.state is Campfire && (blockBelow.state as Campfire).isBonfire) || (blockBelowBelowBlock.state is Campfire && (blockBelowBelowBlock.state as Campfire).isBonfire))
     }
 
     //TODO: Prevent splash potions from extinguishing bonfires, might require some NMS magic...
