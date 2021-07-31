@@ -14,3 +14,5 @@ bonfireRecipe:
     custom-model-data: 1
     display-name: §aBonfire
 maxPlayerCount: 4
+timeUntilcampfireDespawn: 1m
+campfireDestroyCheckInterval: 10s

@@ -16,13 +16,13 @@ fun Campfire.isBonfire(uuid: UUID): Boolean = bonfireData()?.uuid == uuid
 fun Campfire.bonfireData(): BonfireData? = persistentDataContainer.decode()
 fun Campfire.save(data: BonfireData) = persistentDataContainer.encode(data)
 
-fun Campfire.makeBonfire(uuid: UUID){
-    val bonfireData = BonfireData(uuid)
+fun Campfire.makeBonfire(newBonfireUUID: UUID){
+    val bonfireData = BonfireData(newBonfireUUID)
     this.save(bonfireData)
 
     transaction{
         Bonfire.insert{
-            it[entityUUID] = uuid
+            it[uuid] = newBonfireUUID
             it[location] = this@makeBonfire.location
         }
     }

@@ -15,9 +15,12 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.entity.ArmorStand
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
+import java.time.LocalDateTime
 import java.util.*
 import org.bukkit.block.data.type.Campfire as BlockDataTypeCampfire
 
@@ -51,6 +54,14 @@ fun BonfireData.updateModel() {
 }
 
 fun BonfireData.save() {
+    transaction{
+        if(Players.select { Players.bonfireUUID eq this@save.uuid }.count() == 0){
+            Bonfire.update({Bonfire.entityUUID eq this@save.uuid}){
+                it[stateChangedTimestamp] = LocalDateTime.now()
+            }
+        }
+    }
+
     this.updateModel()
 
     val model = Bukkit.getEntity(this.uuid)
