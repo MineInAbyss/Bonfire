@@ -6,6 +6,7 @@ import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.idofront.entities.leftClicked
+import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.logVal
@@ -76,7 +77,7 @@ object PlayerListener : Listener {
                 item?.type == Material.TROPICAL_FISH_BUCKET ||
                 item?.type == Material.AXOLOTL_BUCKET
             ) isCancelled = true
-        } else if (clicked.blockData is Bed) {
+        } else if (clicked.blockData is Bed && rightClicked) {
             isCancelled = true
         }
     }
