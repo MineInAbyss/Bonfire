@@ -22,7 +22,7 @@ fun Campfire.makeBonfire(newBonfireUUID: UUID){
 
     transaction{
         Bonfire.insert{
-            it[uuid] = newBonfireUUID
+            it[entityUUID] = newBonfireUUID
             it[location] = this@makeBonfire.location
         }
     }
