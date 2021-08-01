@@ -63,7 +63,7 @@ object PlayerListener : Listener {
             transaction {
                 val playerCount = Players.select { bonfireUUID eq bonfire.uuid }.count()
                 if (playerCount >= BonfireConfig.data.maxPlayerCount) {
-                    return@transaction player.error("This campfire is full!")
+                    return@transaction player.error("This bonfire is full!")
                 }
             }
 

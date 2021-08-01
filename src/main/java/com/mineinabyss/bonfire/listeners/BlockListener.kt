@@ -42,7 +42,7 @@ object BlockListener : Listener {
             if (blockPlaced.getRelative(BlockFace.UP).type != Material.AIR ||
                 blockPlaced.getRelative(BlockFace.UP, 2).type != Material.AIR
             ) {
-                player.error("There is not enough room.")
+                player.error("There is not enough space here for a bonfire.")
                 isCancelled = true
                 return
             }
@@ -89,7 +89,7 @@ object BlockListener : Listener {
             val playerCount = Players.select { Players.bonfireUUID eq bonfire.uuid }.count()
 
             if (playerCount > 0) {
-                player.error("You can not break this bonfire rekindled one")
+                player.error("You cannot break this bonfire, unkindled one")
                 isCancelled = true
                 return@transaction
             }
