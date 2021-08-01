@@ -4,10 +4,7 @@ import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent
 import com.mineinabyss.bonfire.components.destroyBonfire
 import com.mineinabyss.bonfire.components.updateModel
 import com.mineinabyss.bonfire.data.Players
-import com.mineinabyss.bonfire.extensions.bonfireData
-import com.mineinabyss.bonfire.extensions.isBonfire
-import com.mineinabyss.bonfire.extensions.makeBonfire
-import com.mineinabyss.bonfire.extensions.setBonfireModel
+import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
 import org.bukkit.Material
@@ -103,13 +100,16 @@ object BlockListener : Listener {
 
     @EventHandler
     fun EntityAddToWorldEvent.load() {
-        if (entity !is ArmorStand) return
-        if (entity.location.block.state !is Campfire) {
-            entity.remove()
-            return
+        val armorStand = entity as? ArmorStand ?: return
+        if (armorStand.isBonfireModel()) {
+            if(armorStand.location.block.state !is Campfire){
+                entity.remove()
+            }
+            else{
+                val campfire = entity.location.block.state as Campfire
+                campfire.bonfireData()?.updateModel()
+            }
         }
-        val campfire = entity.location.block.state as Campfire
-        campfire.bonfireData()?.updateModel()
     }
 
     @EventHandler
