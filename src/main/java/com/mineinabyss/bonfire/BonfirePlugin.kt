@@ -1,20 +1,28 @@
 package com.mineinabyss.bonfire
 
-import com.comphenix.protocol.ProtocolLibrary
+import com.mineinabyss.bonfire.components.destroyBonfire
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
-import com.mineinabyss.bonfire.data.Player
+import com.mineinabyss.bonfire.data.Bonfire.location
+import com.mineinabyss.bonfire.data.Bonfire.stateChangedTimestamp
+import com.mineinabyss.bonfire.data.Bonfire.timeUntilDestroy
+import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.data.Players.bonfireUUID
+import com.mineinabyss.bonfire.extensions.bonfireData
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
-import com.mineinabyss.bonfire.listeners.ChatPacketAdapter
 import com.mineinabyss.geary.minecraft.dsl.attachToGeary
 import com.mineinabyss.idofront.plugin.registerEvents
+import com.mineinabyss.idofront.slimjar.LibraryLoaderInjector
+import com.okkero.skedule.schedule
 import kotlinx.serialization.InternalSerializationApi
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
+import org.bukkit.block.Campfire
 import org.bukkit.plugin.java.JavaPlugin
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.time.LocalDateTime
 
 
 val bonfirePlugin: BonfirePlugin by lazy { JavaPlugin.getPlugin(BonfirePlugin::class.java) }
@@ -23,7 +31,7 @@ class BonfirePlugin : JavaPlugin() {
 
     @InternalSerializationApi
     override fun onEnable() {
-//        LibraryLoaderInjector.inject(this)
+        LibraryLoaderInjector.inject(this)
         saveDefaultConfig()
         BonfireConfig.load()
 
@@ -32,7 +40,7 @@ class BonfirePlugin : JavaPlugin() {
         transaction {
             addLogger(StdOutSqlLogger)
 
-            SchemaUtils.create (Bonfire, Player)
+            SchemaUtils.create(Bonfire, Players)
         }
 
         registerEvents(
@@ -44,6 +52,23 @@ class BonfirePlugin : JavaPlugin() {
 //        protocolManager.addPacketListener(ChatPacketAdapter)
 
         attachToGeary { autoscanComponents() }
+
+        schedule {
+            repeating(BonfireConfig.data.expirationCheckInterval.inTicks)
+            while (true) {
+                transaction {
+                    Bonfire
+                        .leftJoin(Players, { entityUUID }, { bonfireUUID })
+                        .select { bonfireUUID.isNull() }
+                        .forEach {
+                            if ((it[stateChangedTimestamp] + it[timeUntilDestroy]) <= LocalDateTime.now()) {
+                                (it[location].block.state as? Campfire)?.bonfireData()?.destroyBonfire(true)
+                            }
+                        }
+                }
+                yield()
+            }
+        }
     }
 
     override fun onDisable() {
