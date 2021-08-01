@@ -39,7 +39,7 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
 
             if(newTimeUntilDestroy.isNegative){
                 newBonfireData.destroyBonfire(true)
-                error("The campfire has expired and degrades to dust")
+                error("The bonfire has expired and turned to ash")
                 return@transaction
             }else{
                 Bonfire.update({ Bonfire.entityUUID eq bonfireUUID }) {
