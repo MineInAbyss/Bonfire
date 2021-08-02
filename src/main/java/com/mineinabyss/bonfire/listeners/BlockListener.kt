@@ -1,6 +1,7 @@
 package com.mineinabyss.bonfire.listeners
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent
+import com.mineinabyss.bonfire.Permissions
 import com.mineinabyss.bonfire.components.destroyBonfire
 import com.mineinabyss.bonfire.components.updateModel
 import com.mineinabyss.bonfire.data.Players
@@ -86,15 +87,15 @@ object BlockListener : Listener {
         val bonfire = (block.state as Campfire).bonfireData() ?: return
 
         transaction {
-            val playerCount = Players.select { Players.bonfireUUID eq bonfire.uuid }.count()
+            val hasRegisteredPlayers = Players.select { Players.bonfireUUID eq bonfire.uuid }.any()
 
-            if (playerCount > 0) {
+            if(player.hasPermission(Permissions.BREAK_BONFIRE_PERMISSION) || !hasRegisteredPlayers){
+                bonfire.destroyBonfire(false)
+            }
+            else{
                 player.error("You cannot break this bonfire, unkindled one")
                 isCancelled = true
-                return@transaction
             }
-
-            bonfire.destroyBonfire(false)
         }
     }
 
