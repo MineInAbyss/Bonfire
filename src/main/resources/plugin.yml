@@ -4,3 +4,8 @@ main: com.mineinabyss.bonfire.BonfirePlugin
 api-version: 1.17
 authors: [ Scyu_, Norazan ]
 depend: [ Geary, ProtocolLib ]
+
+permissions:
+  bonfire.remove:
+    description: Allow staff to remove bonfires.
+    default: op
