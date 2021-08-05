@@ -64,10 +64,10 @@ object PlayerListener : Listener {
                 val playerCount = Players.select { bonfireUUID eq bonfire.uuid }.count()
                 if (playerCount >= BonfireConfig.data.maxPlayerCount) {
                     return@transaction player.error("This bonfire is full!")
+                }else{
+                    player.setRespawnLocation(bonfire.uuid)
                 }
             }
-
-            player.setRespawnLocation(bonfire.uuid)
 
             if (item?.type.toString().contains("shovel", true) ||
                 item?.type == Material.WATER_BUCKET ||
