@@ -59,6 +59,11 @@ object PlayerListener : Listener {
                 return
             }
 
+            if (player.fallDistance > BonfireConfig.data.minFallDist){
+                isCancelled = true
+                return
+            }
+
             transaction {
                 val playerCount = Players.select { bonfireUUID eq bonfire.uuid }.count()
                 if (playerCount >= BonfireConfig.data.maxPlayerCount) {
