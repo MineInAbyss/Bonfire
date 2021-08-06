@@ -75,7 +75,7 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
 
 fun Player.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
     val playerUUID = uniqueId
-    transaction {
+    return transaction {
         val deleteReturnCode = Players
             .deleteWhere {
                 (Players.playerUUID eq playerUUID) and (Players.bonfireUUID eq bonfireUUID)
@@ -89,6 +89,6 @@ fun Player.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
             .select { Bonfire.entityUUID eq bonfireUUID }
             .first()[Bonfire.location].block.state as? Campfire ?: return@transaction false
         bonfire.bonfireData()?.save() ?: return@transaction false
+        return@transaction true
     }
-    return true
 }

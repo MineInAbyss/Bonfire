@@ -10,6 +10,7 @@ import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.logVal
+import com.mineinabyss.idofront.util.toMCKey
 import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.block.data.type.Bed
@@ -21,10 +22,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDeathEvent
-import org.bukkit.event.player.PlayerArmorStandManipulateEvent
-import org.bukkit.event.player.PlayerBedEnterEvent
-import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.event.player.PlayerRespawnEvent
+import org.bukkit.event.player.*
 import org.bukkit.inventory.EquipmentSlot
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.innerJoin
@@ -125,6 +123,11 @@ object PlayerListener : Listener {
     @EventHandler
     fun PlayerBedEnterEvent.enter() {
         isCancelled = true
+    }
+
+    @EventHandler
+    fun PlayerJoinEvent.joinServer(){
+        player.discoverRecipe(BonfireConfig.data.bonfireRecipe.key.toMCKey())
     }
 }
 
