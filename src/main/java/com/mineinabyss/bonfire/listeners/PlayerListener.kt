@@ -41,7 +41,7 @@ object PlayerListener : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun PlayerInteractEvent.rightClickCampfire() {
         val clicked = clickedBlock ?: return // If no block was clicked, return
 
@@ -112,6 +112,7 @@ object PlayerListener : Listener {
                 Players.deleteWhere { Players.playerUUID eq player.uniqueId }
                 Bonfire.deleteWhere { Bonfire.entityUUID eq respawnBonfire[Bonfire.entityUUID] }
             }
+            respawnLocation = player.server.worlds.first().spawnLocation
         }
     }
 
