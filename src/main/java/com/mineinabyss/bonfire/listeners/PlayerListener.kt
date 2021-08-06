@@ -15,6 +15,7 @@ import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.block.data.type.Bed
 import org.bukkit.entity.ArmorStand
+import org.bukkit.entity.Boat
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -73,7 +74,13 @@ object PlayerListener : Listener {
                 item?.type == Material.SALMON_BUCKET ||
                 item?.type == Material.COD_BUCKET ||
                 item?.type == Material.TROPICAL_FISH_BUCKET ||
-                item?.type == Material.AXOLOTL_BUCKET
+                item?.type == Material.AXOLOTL_BUCKET ||
+                item?.type == Material.BIRCH_BOAT ||
+                item?.type == Material.ACACIA_BOAT ||
+                item?.type == Material.DARK_OAK_BOAT ||
+                item?.type == Material.JUNGLE_BOAT ||
+                item?.type == Material.SPRUCE_BOAT ||
+                item?.type == Material.OAK_BOAT
             ) isCancelled = true
         } else if (clicked.blockData is Bed && rightClicked) {
             isCancelled = true
@@ -97,12 +104,22 @@ object PlayerListener : Listener {
 
             if (respawnBonfire != null) {
                 val respawnBonfireLocation = respawnBonfire[Bonfire.location]
-                val respawnBlock = player.world.getBlockAt(respawnBonfireLocation)
+                val respawnBlock = respawnBonfireLocation.world.getBlockAt(respawnBonfireLocation)
                 if (respawnBlock.state is Campfire) {
                     val campfire = respawnBlock.state as Campfire
                     if (campfire.isBonfire(respawnBonfire[Bonfire.entityUUID])) {
+                        val respawnCenterLocation = respawnBonfireLocation.toCenterLocation()
+
+                        respawnBonfireLocation.chunk.load()
+                        val entitiesOnRespawn = respawnBonfireLocation.world.getNearbyEntities(
+                            respawnCenterLocation, 0.5, 1.5, 0.5
+                        )
+                        entitiesOnRespawn.filterIsInstance<Boat>().forEach{
+                            it.remove()
+                        }
+
                         player.info("Respawning at bonfire")
-                        respawnLocation = respawnBonfireLocation.toCenterLocation()
+                        respawnLocation = respawnCenterLocation
                         return@transaction
                     }
                 }
