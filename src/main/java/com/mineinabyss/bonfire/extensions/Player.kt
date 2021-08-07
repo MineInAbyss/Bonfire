@@ -7,8 +7,6 @@ import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
-import org.bukkit.Bukkit
-import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.entity.Player
 import org.jetbrains.exposed.sql.*
@@ -31,17 +29,17 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
         val newBonfireBlock = newBonfire[Bonfire.location].block.state as? Campfire ?: return@transaction
         val newBonfireData = newBonfireBlock.bonfireData() ?: return@transaction
 
-        if(Players.select { Players.bonfireUUID eq bonfireUUID }.empty()){
+        if (Players.select { Players.bonfireUUID eq bonfireUUID }.empty()) {
             val newTimeUntilDestroy = Duration.between(
                 LocalDateTime.now(),
                 newBonfire[Bonfire.stateChangedTimestamp] + newBonfire[Bonfire.timeUntilDestroy]
             )
 
-            if(newTimeUntilDestroy.isNegative){
+            if (newTimeUntilDestroy.isNegative) {
                 newBonfireData.destroyBonfire(true)
                 error("The bonfire has expired and turned to ash")
                 return@transaction
-            }else{
+            } else {
                 Bonfire.update({ Bonfire.entityUUID eq bonfireUUID }) {
                     it[timeUntilDestroy] = newTimeUntilDestroy
                 }
@@ -51,14 +49,13 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
         if (playerRow != null && playerRow[Players.bonfireUUID] != bonfireUUID) {
             val oldBonfireBlock = Bonfire
                 .select { Bonfire.entityUUID eq playerRow[Players.bonfireUUID] }
-                .first()[Bonfire.location]
-                .block.state as? Campfire ?: return@transaction
+                .firstOrNull()?.get(Bonfire.location)?.block?.state as? Campfire
 
             Players.update({ Players.playerUUID eq playerRow[Players.playerUUID] }) {
                 it[Players.bonfireUUID] = bonfireUUID
             }
 
-            oldBonfireBlock.bonfireData()?.save()
+            oldBonfireBlock?.bonfireData()?.save()
         } else if (playerRow == null) {
             Players.insert {
                 it[Players.playerUUID] = playerUUID
@@ -87,8 +84,8 @@ fun Player.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
 
         val bonfire = Bonfire
             .select { Bonfire.entityUUID eq bonfireUUID }
-            .first()[Bonfire.location].block.state as? Campfire ?: return@transaction false
-        bonfire.bonfireData()?.save() ?: return@transaction false
+            .firstOrNull()?.get(Bonfire.location)?.block?.state as? Campfire
+        bonfire?.bonfireData()?.save()
         return@transaction true
     }
 }
