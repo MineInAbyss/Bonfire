@@ -54,6 +54,11 @@ object PlayerListener : Listener {
             val respawnCampfire = clicked.state as Campfire
             val bonfire = respawnCampfire.bonfireData() ?: return
 
+            if (player.fallDistance > BonfireConfig.data.minFallDist){
+                isCancelled = true
+                return
+            }
+
             transaction {
                 val playerBonfireUUID = Players
                     .select { Players.playerUUID eq player.uniqueId }
