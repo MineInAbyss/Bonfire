@@ -20,6 +20,7 @@ object BonfireConfig : IdofrontConfig<BonfireConfig.Data>(bonfirePlugin, Data.se
         var expirationCheckInterval: TimeSpan = 1.days,
         var respawnSetSound : SoundEffect,
         var respawnUnsetSound : SoundEffect,
+        var minFallDist: Int,
     )
 
     override fun ReloadScope.load() {

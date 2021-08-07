@@ -59,6 +59,11 @@ object PlayerListener : Listener {
                 return
             }
 
+            if (player.fallDistance > BonfireConfig.data.minFallDist){
+                isCancelled = true
+                return
+            }
+
             transaction {
                 val playerBonfireUUID = Players
                     .select { Players.playerUUID eq player.uniqueId }
