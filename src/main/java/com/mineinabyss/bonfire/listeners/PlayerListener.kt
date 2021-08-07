@@ -60,14 +60,14 @@ object PlayerListener : Listener {
             }
 
             transaction {
-                val playerBonfireUUID = Players
+                val playerFromDB = Players
                     .select { Players.playerUUID eq player.uniqueId }
-                    .firstOrNull()?.get(bonfireUUID) ?: return@transaction
+                    .firstOrNull()
 
-                if (bonfire.uuid == playerBonfireUUID) {
-                    if (!player.removeBonfireSpawnLocation(bonfire.uuid)) {
-                        player.error("This is not your respawn point")
-                    }
+                if (playerFromDB != null && bonfire.uuid == playerFromDB.get(bonfireUUID)) {
+                        if (!player.removeBonfireSpawnLocation(bonfire.uuid)) {
+                            player.error("This is not your respawn point")
+                        }
                 }else{  //add player to bonfire if bonfire not maxed out
                     val playerCount = Players.select { bonfireUUID eq bonfire.uuid }.count()
                     if (playerCount >= BonfireConfig.data.maxPlayerCount) {
