@@ -53,7 +53,7 @@ object PlayerListener : Listener {
         if (clicked.type == Material.CAMPFIRE) {
             val respawnCampfire = clicked.state as Campfire
             val bonfire = respawnCampfire.bonfireData() ?: return
-1`
+
             transaction {
                 val playerBonfireUUID = Players
                     .select { Players.playerUUID eq player.uniqueId }
