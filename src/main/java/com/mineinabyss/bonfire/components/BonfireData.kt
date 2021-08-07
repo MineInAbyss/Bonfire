@@ -4,6 +4,7 @@ package com.mineinabyss.bonfire.components
 
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.ecs.api.autoscan.AutoscanComponent
 import com.mineinabyss.geary.minecraft.store.encode
 import com.mineinabyss.idofront.items.editItemMeta
@@ -19,6 +20,7 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.innerJoin
 import java.time.LocalDateTime
 import java.util.*
 import org.bukkit.block.data.type.Campfire as BlockDataTypeCampfire
@@ -53,9 +55,9 @@ fun BonfireData.updateModel() {
 }
 
 fun BonfireData.save() {
-    transaction{
-        if(Players.select { Players.bonfireUUID eq this@save.uuid }.empty()){
-            Bonfire.update({Bonfire.entityUUID eq this@save.uuid}){
+    transaction {
+        if (Players.select { Players.bonfireUUID eq this@save.uuid }.empty()) {
+            Bonfire.update({ Bonfire.entityUUID eq this@save.uuid }) {
                 it[stateChangedTimestamp] = LocalDateTime.now()
             }
         }
@@ -79,16 +81,24 @@ fun BonfireData.destroyBonfire(destroyBlock: Boolean) {
     var blockLocation = model?.location
 
     transaction {
-        if(model == null){
-            blockLocation = Bonfire.select { Bonfire.entityUUID eq this@destroyBonfire.uuid }.firstOrNull()?.get(Bonfire.location)
+        if (model == null) {
+            blockLocation = Bonfire
+                .select { Bonfire.entityUUID eq this@destroyBonfire.uuid }
+                .firstOrNull()?.get(Bonfire.location)
         }
 
+        Players
+            .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
+            .select { Players.bonfireUUID eq this@destroyBonfire.uuid }
+            .forEach {
+                BonfireLogger.logRespawnUnset(it[Bonfire.location], Bukkit.getPlayer(it[Players.playerUUID])!!)
+            }
         Bonfire.deleteWhere { Bonfire.entityUUID eq this@destroyBonfire.uuid }
         Players.deleteWhere { Players.bonfireUUID eq this@destroyBonfire.uuid }
     }
 
-    if(destroyBlock && blockLocation != null){
-        if(blockLocation!!.block.state is Campfire){
+    if (destroyBlock && blockLocation != null) {
+        if (blockLocation!!.block.state is Campfire) {
             blockLocation!!.block.type = Material.AIR
         }
     }

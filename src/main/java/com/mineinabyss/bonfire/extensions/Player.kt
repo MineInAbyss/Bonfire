@@ -5,10 +5,9 @@ import com.mineinabyss.bonfire.components.save
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
-import org.bukkit.Bukkit
-import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.entity.Player
 import org.jetbrains.exposed.sql.*
@@ -58,6 +57,8 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
                 it[Players.bonfireUUID] = bonfireUUID
             }
 
+            BonfireLogger.logRespawnUnset(oldBonfireBlock.location, this@setRespawnLocation)
+
             oldBonfireBlock.bonfireData()?.save()
         } else if (playerRow == null) {
             Players.insert {
@@ -69,6 +70,8 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
         newBonfireData.save()
         BonfireConfig.data.respawnSetSound.playSound(this@setRespawnLocation)
         success("Respawn point set")
+
+        BonfireLogger.logRespawnSet(newBonfireBlock.location, this@setRespawnLocation)
     }
 }
 
@@ -76,6 +79,11 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
 fun Player.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
     val playerUUID = uniqueId
     return transaction {
+        val oldRespawnLocation = Bonfire
+            .innerJoin(Players, {entityUUID}, {Players.bonfireUUID})
+            .select{Players.playerUUID eq playerUUID}
+            .firstOrNull()?.get(Bonfire.location) ?: return@transaction false
+
         val deleteReturnCode = Players
             .deleteWhere {
                 (Players.playerUUID eq playerUUID) and (Players.bonfireUUID eq bonfireUUID)
@@ -84,6 +92,8 @@ fun Player.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
 
         BonfireConfig.data.respawnUnsetSound.playSound(this@removeBonfireSpawnLocation)
         success("Respawn point has been removed")
+
+        BonfireLogger.logRespawnUnset(oldRespawnLocation, this@removeBonfireSpawnLocation)
 
         val bonfire = Bonfire
             .select { Bonfire.entityUUID eq bonfireUUID }

@@ -5,11 +5,11 @@ import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.extensions.*
+import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.entities.leftClicked
 import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
-import com.mineinabyss.idofront.messaging.logVal
 import com.mineinabyss.idofront.util.toMCKey
 import org.bukkit.Material
 import org.bukkit.block.Campfire
@@ -125,16 +125,18 @@ object PlayerListener : Listener {
 
                         player.info("Respawning at bonfire")
                         respawnLocation = respawnCenterLocation
+                        BonfireLogger.logRespawnAtBonfire(player, respawnBonfireLocation)
                         return@transaction
                     }
                 }
 
-                logVal("Bonfire missing for player " + player.name)
                 player.error("Bonfire not found")
+                BonfireLogger.logRespawnFailed(player, respawnBonfire[Bonfire.location])
                 Players.deleteWhere { Players.playerUUID eq player.uniqueId }
                 Bonfire.deleteWhere { Bonfire.entityUUID eq respawnBonfire[Bonfire.entityUUID] }
             }
             respawnLocation = player.server.worlds.first().spawnLocation
+            BonfireLogger.logRespawnAtWorldSpawn(player)
         }
     }
 
