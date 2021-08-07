@@ -46,27 +46,33 @@ object PlayerListener : Listener {
     fun PlayerInteractEvent.rightClickCampfire() {
         val clicked = clickedBlock ?: return // If no block was clicked, return
 
-        if (hand == EquipmentSlot.OFF_HAND) return
+        if (hand == EquipmentSlot.OFF_HAND) return  //the event is called twice, on for each hand. We want to ignore the offhand call
+
+        if (!rightClicked) return   //only do stuff when player rightclicks
 
         if (clicked.type == Material.CAMPFIRE) {
             val respawnCampfire = clicked.state as Campfire
             val bonfire = respawnCampfire.bonfireData() ?: return
-
-            if (leftClicked) {
-                if (!player.removeBonfireSpawnLocation(bonfire.uuid)) {
-                    player.error("This is not your respawn point")
-                }
-                return
-            }
-
+1`
             transaction {
-                val playerCount = Players.select { bonfireUUID eq bonfire.uuid }.count()
-                if (playerCount >= BonfireConfig.data.maxPlayerCount) {
-                    return@transaction player.error("This bonfire is full!")
-                }else{
-                    player.setRespawnLocation(bonfire.uuid)
+                val playerBonfireUUID = Players
+                    .select { Players.playerUUID eq player.uniqueId }
+                    .firstOrNull()?.get(bonfireUUID) ?: return@transaction
+
+                if (bonfire.uuid == playerBonfireUUID) {
+                    if (!player.removeBonfireSpawnLocation(bonfire.uuid)) {
+                        player.error("This is not your respawn point")
+                    }
+                }else{  //add player to bonfire if bonfire not maxed out
+                    val playerCount = Players.select { bonfireUUID eq bonfire.uuid }.count()
+                    if (playerCount >= BonfireConfig.data.maxPlayerCount) {
+                        return@transaction player.error("This bonfire is full!")
+                    }else{
+                        player.setRespawnLocation(bonfire.uuid)
+                    }
                 }
             }
+
 
             if (item?.type.toString().contains("shovel", true) ||
                 item?.type == Material.WATER_BUCKET ||
@@ -82,7 +88,7 @@ object PlayerListener : Listener {
                 item?.type == Material.SPRUCE_BOAT ||
                 item?.type == Material.OAK_BOAT
             ) isCancelled = true
-        } else if (clicked.blockData is Bed && rightClicked) {
+        } else if (clicked.blockData is Bed) {
             isCancelled = true
         }
     }
