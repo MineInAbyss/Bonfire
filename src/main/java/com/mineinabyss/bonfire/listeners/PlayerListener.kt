@@ -6,12 +6,13 @@ import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
-import com.mineinabyss.idofront.entities.leftClicked
 import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.util.toMCKey
 import org.bukkit.Material
+import org.bukkit.block.Block
+import org.bukkit.block.BlockFace
 import org.bukkit.block.Campfire
 import org.bukkit.block.data.type.Bed
 import org.bukkit.entity.ArmorStand
@@ -125,8 +126,19 @@ object PlayerListener : Listener {
                         val respawnCenterLocation = respawnBonfireLocation.toCenterLocation()
 
                         respawnBonfireLocation.chunk.load()
+
+                        fun getHighestAirBlock(block: Block): Block {
+                            return if (block.getRelative(BlockFace.UP).type != Material.AIR || block == block.location.toHighestLocation().block) {
+                                block
+                            } else {
+                                getHighestAirBlock(block.getRelative(BlockFace.UP))
+                            }
+                        }
+
+                        val height = respawnBonfireLocation.distance(getHighestAirBlock(respawnBonfireLocation.block).location)
+                        player.info("$height")
                         val entitiesOnRespawn = respawnBonfireLocation.world.getNearbyEntities(
-                            respawnCenterLocation, 0.5, 1.5, 0.5
+                            respawnCenterLocation, 0.5, height + 0.5, 0.5
                         )
                         entitiesOnRespawn.filterIsInstance<Boat>().forEach {
                             it.remove()
