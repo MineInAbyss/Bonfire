@@ -91,7 +91,7 @@ fun BonfireData.destroyBonfire(destroyBlock: Boolean) {
             .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
             .select { Players.bonfireUUID eq this@destroyBonfire.uuid }
             .forEach {
-                BonfireLogger.logRespawnUnset(it[Bonfire.location], Bukkit.getPlayer(it[Players.playerUUID])!!)
+                BonfireLogger.logRespawnUnset(it[Bonfire.location], Bukkit.getOfflinePlayer(it[Players.playerUUID]))
             }
         Bonfire.deleteWhere { Bonfire.entityUUID eq this@destroyBonfire.uuid }
         Players.deleteWhere { Players.bonfireUUID eq this@destroyBonfire.uuid }
