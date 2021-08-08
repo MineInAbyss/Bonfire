@@ -12,6 +12,7 @@ import com.mineinabyss.bonfire.extensions.bonfireData
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.geary.minecraft.dsl.attachToGeary
+import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
 import com.mineinabyss.idofront.plugin.registerEvents
 import com.mineinabyss.idofront.slimjar.LibraryLoaderInjector
 import com.okkero.skedule.schedule
@@ -30,6 +31,7 @@ val bonfirePlugin: BonfirePlugin by lazy { JavaPlugin.getPlugin(BonfirePlugin::c
 class BonfirePlugin : JavaPlugin() {
 
     @InternalSerializationApi
+    @ExperimentalCommandDSL
     override fun onEnable() {
         LibraryLoaderInjector.inject(this)
         saveDefaultConfig()
@@ -52,6 +54,8 @@ class BonfirePlugin : JavaPlugin() {
 //        protocolManager.addPacketListener(ChatPacketAdapter)
 
         attachToGeary { autoscanComponents() }
+
+        BonfireCommandExecutor
 
         schedule {
             repeating(BonfireConfig.data.expirationCheckInterval.inTicks)
