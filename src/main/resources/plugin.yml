@@ -5,7 +5,15 @@ api-version: 1.17
 authors: [ Scyu_, Norazan ]
 depend: [ Geary, ProtocolLib ]
 
+commands:
+  bonfire:
+    aliases: [ bf ]
+
 permissions:
+  bonfire.*:
+    description: Gives access to all commands and allows staff to remove bonfires
+    children:
+      bonfire.remove: true
   bonfire.remove:
     description: Allow staff to remove bonfires.
     default: op
