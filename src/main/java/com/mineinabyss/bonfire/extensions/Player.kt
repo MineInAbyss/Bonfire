@@ -8,6 +8,7 @@ import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
+import org.bukkit.OfflinePlayer
 import org.bukkit.block.Campfire
 import org.bukkit.entity.Player
 import org.jetbrains.exposed.sql.*
@@ -16,7 +17,7 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
 
-fun Player.setRespawnLocation(bonfireUUID: UUID) {
+fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
     val playerUUID = uniqueId
 
     transaction {
@@ -30,17 +31,17 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
         val newBonfireBlock = newBonfire[Bonfire.location].block.state as? Campfire ?: return@transaction
         val newBonfireData = newBonfireBlock.bonfireData() ?: return@transaction
 
-        if(Players.select { Players.bonfireUUID eq bonfireUUID }.empty()){
+        if (Players.select { Players.bonfireUUID eq bonfireUUID }.empty()) {
             val newTimeUntilDestroy = Duration.between(
                 LocalDateTime.now(),
                 newBonfire[Bonfire.stateChangedTimestamp] + newBonfire[Bonfire.timeUntilDestroy]
             )
 
-            if(newTimeUntilDestroy.isNegative){
+            if (newTimeUntilDestroy.isNegative) {
                 newBonfireData.destroyBonfire(true)
-                error("The bonfire has expired and turned to ash")
+                this@setRespawnLocation.player?.error("The bonfire has expired and turned to ash")
                 return@transaction
-            }else{
+            } else {
                 Bonfire.update({ Bonfire.entityUUID eq bonfireUUID }) {
                     it[timeUntilDestroy] = newTimeUntilDestroy
                 }
@@ -50,16 +51,17 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
         if (playerRow != null && playerRow[Players.bonfireUUID] != bonfireUUID) {
             val oldBonfireBlock = Bonfire
                 .select { Bonfire.entityUUID eq playerRow[Players.bonfireUUID] }
-                .first()[Bonfire.location]
-                .block.state as? Campfire ?: return@transaction
+                .firstOrNull()?.get(Bonfire.location)?.block?.state as? Campfire
 
             Players.update({ Players.playerUUID eq playerRow[Players.playerUUID] }) {
                 it[Players.bonfireUUID] = bonfireUUID
             }
 
-            BonfireLogger.logRespawnUnset(oldBonfireBlock.location, this@setRespawnLocation)
+            if(oldBonfireBlock != null){
+                BonfireLogger.logRespawnUnset(oldBonfireBlock.location, this@setRespawnLocation)
 
-            oldBonfireBlock.bonfireData()?.save()
+                oldBonfireBlock.bonfireData()?.save()
+            }
         } else if (playerRow == null) {
             Players.insert {
                 it[Players.playerUUID] = playerUUID
@@ -68,37 +70,40 @@ fun Player.setRespawnLocation(bonfireUUID: UUID) {
         }
 
         newBonfireData.save()
-        BonfireConfig.data.respawnSetSound.playSound(this@setRespawnLocation)
-        success("Respawn point set")
+        this@setRespawnLocation.player?.let { BonfireConfig.data.respawnSetSound.playSound(it) }
+        this@setRespawnLocation.player?.success("Respawn point set")
 
         BonfireLogger.logRespawnSet(newBonfireBlock.location, this@setRespawnLocation)
     }
 }
 
 
-fun Player.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
-    val playerUUID = uniqueId
-    return transaction {
-        val oldRespawnLocation = Bonfire
-            .innerJoin(Players, {entityUUID}, {Players.bonfireUUID})
-            .select{Players.playerUUID eq playerUUID}
-            .firstOrNull()?.get(Bonfire.location) ?: return@transaction false
+fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
+    return transaction{
+        val dbPlayer = Players
+            .select{Players.playerUUID eq this@removeBonfireSpawnLocation.uniqueId}
+            .firstOrNull() ?: return@transaction true
 
-        val deleteReturnCode = Players
-            .deleteWhere {
-                (Players.playerUUID eq playerUUID) and (Players.bonfireUUID eq bonfireUUID)
-            }
-        if (deleteReturnCode == 0) return@transaction false
+        val oldRespawnLocation = Bonfire.select{Bonfire.entityUUID eq bonfireUUID}.firstOrNull()?.get(Bonfire.location) ?: return@transaction true
 
-        BonfireConfig.data.respawnUnsetSound.playSound(this@removeBonfireSpawnLocation)
-        success("Respawn point has been removed")
+        if(dbPlayer[Players.bonfireUUID] != bonfireUUID){
+            return@transaction false
+        }
 
+        val deleteCode = Players.deleteWhere {
+            (Players.playerUUID eq this@removeBonfireSpawnLocation.uniqueId) and
+            (Players.bonfireUUID eq bonfireUUID)
+        }
+        if(deleteCode == 0) return@transaction false
+
+        this@removeBonfireSpawnLocation.player?.let { BonfireConfig.data.respawnUnsetSound.playSound(it) }
+        this@removeBonfireSpawnLocation.player?.success("Respawn point has been removed")
         BonfireLogger.logRespawnUnset(oldRespawnLocation, this@removeBonfireSpawnLocation)
 
         val bonfire = Bonfire
-            .select { Bonfire.entityUUID eq bonfireUUID }
-            .first()[Bonfire.location].block.state as? Campfire ?: return@transaction false
-        bonfire.bonfireData()?.save() ?: return@transaction false
+            .select { Bonfire.entityUUID eq dbPlayer[Players.bonfireUUID] }
+            .firstOrNull()?.get(Bonfire.location)?.block?.state as? Campfire
+        bonfire?.bonfireData()?.save()
         return@transaction true
     }
 }
