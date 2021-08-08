@@ -1,5 +1,6 @@
 package com.mineinabyss.bonfire
 
+import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.bonfireData
@@ -134,10 +135,13 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                 }
             }
             "bonfire"(desc = "Commands to get bonfire info") {
-                "check"(desc = "Check if a bonfire at location is stored in the database") {
-                    val bonfireLocX by intArg { name = "X" }
-                    val bonfireLocY by intArg { name = "Y" }
-                    val bonfireLocZ by intArg { name = "Z" }
+                val bonfireLocX by intArg { name = "X" }
+                val bonfireLocY by intArg { name = "Y" }
+                val bonfireLocZ by intArg { name = "Z" }
+                "dbcheck"(desc = "Check if a bonfire at location is stored in the database") {
+//                    val bonfireLocX by intArg { name = "X" }
+//                    val bonfireLocY by intArg { name = "Y" }
+//                    val bonfireLocZ by intArg { name = "Z" }
                     playerAction {
                         val bonfireUUID = (Location(
                             player.world,
@@ -158,6 +162,40 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                             }
                         }
                     }
+                }
+                "players"(desc = "Get the players registered with the bonfire at location"){
+                    playerAction{
+                        val bonfireUUID = (Location(
+                            player.world,
+                            bonfireLocX.toDouble(),
+                            bonfireLocY.toDouble(),
+                            bonfireLocZ.toDouble()
+                        ).block.state as? Campfire)?.bonfireData()?.uuid
+
+                        if(bonfireUUID == null){
+                            command.stopCommand("No bonfire found at this location.")
+                        }else{
+                            transaction{
+                                val registeredPlayers = Players.select{Players.bonfireUUID eq bonfireUUID}
+
+                                if(registeredPlayers.empty()){
+                                    sender.info("No players registered with this bonfire.")
+                                }else{
+                                    val playersString = registeredPlayers.map{ registeredPlayer ->
+                                        Bukkit.getOfflinePlayers().first{
+                                            it.uniqueId == registeredPlayer[Players.playerUUID]
+                                        }
+                                    }.joinToString(",")
+                                    sender.info("The following players are registered with this bonfire: $playersString")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            "give"(desc = "Give yourself a bonfire"){ //TODO: Add this command to idofront/MiA for any custom item
+                playerAction{
+                    player.inventory.addItem(BonfireConfig.data.bonfireRecipe.result.toItemStack())
                 }
             }
         }
