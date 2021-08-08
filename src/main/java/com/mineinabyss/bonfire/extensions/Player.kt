@@ -95,7 +95,7 @@ fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
         if(deleteCode == 0) return@transaction false
 
         this@removeBonfireSpawnLocation.player?.let { BonfireConfig.data.respawnUnsetSound.playSound(it) }
-        this@removeBonfireSpawnLocation.player?.success("Respawn point has been removed")
+        this@removeBonfireSpawnLocation.player?.error("Respawn point has been removed")
 
         Bonfire
             .select{Bonfire.entityUUID eq bonfireUUID}
