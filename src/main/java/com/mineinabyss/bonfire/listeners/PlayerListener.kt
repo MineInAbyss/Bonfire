@@ -64,7 +64,7 @@ object PlayerListener : Listener {
                     .select { Players.playerUUID eq player.uniqueId }
                     .firstOrNull()
 
-                if (playerFromDB != null && bonfire.uuid == playerFromDB.get(bonfireUUID)) {
+                if (playerFromDB != null && bonfire.uuid == playerFromDB[bonfireUUID]) {
                         if (!player.removeBonfireSpawnLocation(bonfire.uuid)) {
                             player.error("This is not your respawn point")
                         }
