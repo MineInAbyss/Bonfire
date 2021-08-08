@@ -6,6 +6,7 @@ import com.mineinabyss.bonfire.components.destroyBonfire
 import com.mineinabyss.bonfire.components.updateModel
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.*
+import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
 import org.bukkit.Material
@@ -77,6 +78,8 @@ object BlockListener : Listener {
                 makeBonfire(armorStand.uniqueId)
                 update()
             }
+
+            BonfireLogger.logBonfirePlace(blockPlaced.location, player)
         }
     }
 
@@ -91,6 +94,7 @@ object BlockListener : Listener {
 
             if(player.hasPermission(Permissions.BREAK_BONFIRE_PERMISSION) || !hasRegisteredPlayers){
                 bonfire.destroyBonfire(false)
+                BonfireLogger.logBonfireBreak(block.location, player)
             }
             else{
                 player.error("You cannot break this bonfire, unkindled one")

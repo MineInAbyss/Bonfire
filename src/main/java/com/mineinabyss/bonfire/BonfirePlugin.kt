@@ -11,6 +11,7 @@ import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.extensions.bonfireData
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
+import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.minecraft.dsl.attachToGeary
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
 import com.mineinabyss.idofront.plugin.registerEvents
@@ -67,6 +68,8 @@ class BonfirePlugin : JavaPlugin() {
                         .forEach {
                             if ((it[stateChangedTimestamp] + it[timeUntilDestroy]) <= LocalDateTime.now()) {
                                 (it[location].block.state as? Campfire)?.bonfireData()?.destroyBonfire(true)
+                                    ?: return@forEach
+                                BonfireLogger.logBonfireExpired(it[location])
                             }
                         }
                 }

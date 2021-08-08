@@ -5,6 +5,7 @@ import com.mineinabyss.bonfire.components.save
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import org.bukkit.OfflinePlayer
@@ -56,7 +57,11 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
                 it[Players.bonfireUUID] = bonfireUUID
             }
 
-            oldBonfireBlock?.bonfireData()?.save()
+            if(oldBonfireBlock != null){
+                BonfireLogger.logRespawnUnset(oldBonfireBlock.location, this@setRespawnLocation)
+
+                oldBonfireBlock.bonfireData()?.save()
+            }
         } else if (playerRow == null) {
             Players.insert {
                 it[Players.playerUUID] = playerUUID
@@ -67,6 +72,8 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
         newBonfireData.save()
         this@setRespawnLocation.player?.let { BonfireConfig.data.respawnSetSound.playSound(it) }
         this@setRespawnLocation.player?.success("Respawn point set")
+
+        BonfireLogger.logRespawnSet(newBonfireBlock.location, this@setRespawnLocation)
     }
 }
 
@@ -89,6 +96,12 @@ fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
 
         this@removeBonfireSpawnLocation.player?.let { BonfireConfig.data.respawnUnsetSound.playSound(it) }
         this@removeBonfireSpawnLocation.player?.success("Respawn point has been removed")
+
+        Bonfire
+            .select{Bonfire.entityUUID eq bonfireUUID}
+            .firstOrNull()?.get(Bonfire.location)?.let{
+                BonfireLogger.logRespawnUnset(it, this@removeBonfireSpawnLocation)
+            }
 
         val bonfire = Bonfire
             .select { Bonfire.entityUUID eq dbPlayer[Players.bonfireUUID] }
