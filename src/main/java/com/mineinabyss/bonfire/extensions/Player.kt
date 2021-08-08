@@ -84,8 +84,6 @@ fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
             .select{Players.playerUUID eq this@removeBonfireSpawnLocation.uniqueId}
             .firstOrNull() ?: return@transaction true
 
-        val oldRespawnLocation = Bonfire.select{Bonfire.entityUUID eq bonfireUUID}.firstOrNull()?.get(Bonfire.location) ?: return@transaction true
-
         if(dbPlayer[Players.bonfireUUID] != bonfireUUID){
             return@transaction false
         }
@@ -98,7 +96,12 @@ fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
 
         this@removeBonfireSpawnLocation.player?.let { BonfireConfig.data.respawnUnsetSound.playSound(it) }
         this@removeBonfireSpawnLocation.player?.success("Respawn point has been removed")
-        BonfireLogger.logRespawnUnset(oldRespawnLocation, this@removeBonfireSpawnLocation)
+
+        Bonfire
+            .select{Bonfire.entityUUID eq bonfireUUID}
+            .firstOrNull()?.get(Bonfire.location)?.let{
+                BonfireLogger.logRespawnUnset(it, this@removeBonfireSpawnLocation)
+            }
 
         val bonfire = Bonfire
             .select { Bonfire.entityUUID eq dbPlayer[Players.bonfireUUID] }

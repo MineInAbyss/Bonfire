@@ -2,13 +2,14 @@ package com.mineinabyss.bonfire.logging
 
 import com.mineinabyss.bonfire.bonfirePlugin
 import org.bukkit.Location
+import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 object BonfireLogger {
-    private val logFile: String = bonfirePlugin.dataFolder.path + "\\log.txt"
+    private val logFile: String = bonfirePlugin.dataFolder.path + "\\log.log"
 
     fun logBonfireBreak(location: Location, source: Player) {
         internalLog("The player ${source.name} broke a bonfire at $location", BonfireLogEvent.BREAK)
@@ -18,11 +19,11 @@ object BonfireLogger {
         internalLog("The player ${source.name} placed a bonfire at $location", BonfireLogEvent.PLACE)
     }
 
-    fun logRespawnSet(location: Location, player: Player) {
+    fun logRespawnSet(location: Location, player: OfflinePlayer) {
         internalLog("Respawn point set for player ${player.name} at $location", BonfireLogEvent.RESPAWN_SET)
     }
 
-    fun logRespawnUnset(location: Location, player: Player) {
+    fun logRespawnUnset(location: Location, player: OfflinePlayer) {
         internalLog("Respawn point unset for player ${player.name} at $location", BonfireLogEvent.RESPAWN_UNSET)
     }
 
