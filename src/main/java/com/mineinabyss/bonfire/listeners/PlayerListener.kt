@@ -54,12 +54,20 @@ object PlayerListener : Listener {
 
         if (abs(0 - player.velocity.y) < 0.001) return  // Only allow if player is on ground
 
+        if (clicked.blockData is Bed) {
+            isCancelled = true
+            return
+        }
+
         if (clicked.type == Material.CAMPFIRE) {
             val respawnCampfire = clicked.state as Campfire
             val bonfire = respawnCampfire.bonfireData() ?: return
 
+            if (!player.isSneaking) {
+                return
+            }
+
             if (player.fallDistance > BonfireConfig.data.minFallDist) {
-                isCancelled = true
                 return
             }
 
@@ -82,23 +90,27 @@ object PlayerListener : Listener {
                 }
             }
 
+            isCancelled = true //I think we can cancel this event in any situation where we set/unset respawn.
+                                // We don't want to have any regular behavior happen.
 
-            if (item?.type.toString().contains("shovel", true) ||
-                item?.type == Material.WATER_BUCKET ||
-                item?.type == Material.PUFFERFISH_BUCKET ||
-                item?.type == Material.SALMON_BUCKET ||
-                item?.type == Material.COD_BUCKET ||
-                item?.type == Material.TROPICAL_FISH_BUCKET ||
-                item?.type == Material.AXOLOTL_BUCKET ||
-                item?.type == Material.BIRCH_BOAT ||
-                item?.type == Material.ACACIA_BOAT ||
-                item?.type == Material.DARK_OAK_BOAT ||
-                item?.type == Material.JUNGLE_BOAT ||
-                item?.type == Material.SPRUCE_BOAT ||
-                item?.type == Material.OAK_BOAT
-            ) isCancelled = true
-        } else if (clicked.blockData is Bed) {
-            isCancelled = true
+//            if (item?.type.toString().contains("shovel", true) ||
+//                item?.type == Material.WATER_BUCKET ||
+//                item?.type == Material.PUFFERFISH_BUCKET ||
+//                item?.type == Material.SALMON_BUCKET ||
+//                item?.type == Material.COD_BUCKET ||
+//                item?.type == Material.TROPICAL_FISH_BUCKET ||
+//                item?.type == Material.AXOLOTL_BUCKET ||
+//                item?.type == Material.BIRCH_BOAT ||
+//                item?.type == Material.ACACIA_BOAT ||
+//                item?.type == Material.DARK_OAK_BOAT ||
+//                item?.type == Material.JUNGLE_BOAT ||
+//                item?.type == Material.SPRUCE_BOAT ||
+//                item?.type == Material.OAK_BOAT
+//            ) isCancelled = true
+//
+//            if(isBlockInHand){
+//                isCancelled = true
+//            }
         }
     }
 
