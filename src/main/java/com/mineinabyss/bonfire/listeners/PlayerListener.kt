@@ -29,6 +29,7 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import kotlin.math.abs
 
 object PlayerListener : Listener {
 
@@ -50,11 +51,13 @@ object PlayerListener : Listener {
 
         if (!rightClicked) return   //only do stuff when player rightclicks
 
+        if (abs(0 - player.velocity.y) < 0.001) return  // Only allow if player is on ground
+
         if (clicked.type == Material.CAMPFIRE) {
             val respawnCampfire = clicked.state as Campfire
             val bonfire = respawnCampfire.bonfireData() ?: return
 
-            if (player.fallDistance > BonfireConfig.data.minFallDist){
+            if (player.fallDistance > BonfireConfig.data.minFallDist) {
                 isCancelled = true
                 return
             }
@@ -65,14 +68,14 @@ object PlayerListener : Listener {
                     .firstOrNull()
 
                 if (playerFromDB != null && bonfire.uuid == playerFromDB[bonfireUUID]) {
-                        if (!player.removeBonfireSpawnLocation(bonfire.uuid)) {
-                            player.error("This is not your respawn point")
-                        }
-                }else{  //add player to bonfire if bonfire not maxed out
+                    if (!player.removeBonfireSpawnLocation(bonfire.uuid)) {
+                        player.error("This is not your respawn point")
+                    }
+                } else {  //add player to bonfire if bonfire not maxed out
                     val playerCount = Players.select { bonfireUUID eq bonfire.uuid }.count()
                     if (playerCount >= BonfireConfig.data.maxPlayerCount) {
                         return@transaction player.error("This bonfire is full!")
-                    }else{
+                    } else {
                         player.setRespawnLocation(bonfire.uuid)
                     }
                 }
@@ -125,7 +128,7 @@ object PlayerListener : Listener {
                         val entitiesOnRespawn = respawnBonfireLocation.world.getNearbyEntities(
                             respawnCenterLocation, 0.5, 1.5, 0.5
                         )
-                        entitiesOnRespawn.filterIsInstance<Boat>().forEach{
+                        entitiesOnRespawn.filterIsInstance<Boat>().forEach {
                             it.remove()
                         }
 
@@ -157,7 +160,7 @@ object PlayerListener : Listener {
     }
 
     @EventHandler
-    fun PlayerJoinEvent.joinServer(){
+    fun PlayerJoinEvent.joinServer() {
         player.discoverRecipe(BonfireConfig.data.bonfireRecipe.key.toMCKey())
     }
 }
