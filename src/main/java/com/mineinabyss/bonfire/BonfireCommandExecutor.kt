@@ -184,7 +184,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                                     val playersString = registeredPlayers.map{ registeredPlayer ->
                                         Bukkit.getOfflinePlayers().first{
                                             it.uniqueId == registeredPlayer[Players.playerUUID]
-                                        }
+                                        }.name
                                     }.joinToString(",")
                                     sender.info("The following players are registered with this bonfire: $playersString")
                                 }
