@@ -134,7 +134,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                     }
                 }
             }
-            "bonfire"(desc = "Commands to get bonfire info") {
+            "info"(desc = "Commands to get bonfire info") {
                 val bonfireLocX by intArg { name = "X" }
                 val bonfireLocY by intArg { name = "Y" }
                 val bonfireLocZ by intArg { name = "Z" }
