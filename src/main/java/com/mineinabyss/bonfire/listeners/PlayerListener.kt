@@ -148,7 +148,6 @@ object PlayerListener : Listener {
                         }
 
                         val height = respawnBonfireLocation.distance(getHighestAirBlock(respawnBonfireLocation.block).location)
-                        player.info("$height")
                         val entitiesOnRespawn = respawnBonfireLocation.world.getNearbyEntities(
                             respawnCenterLocation, 0.5, height + 0.5, 0.5
                         )
