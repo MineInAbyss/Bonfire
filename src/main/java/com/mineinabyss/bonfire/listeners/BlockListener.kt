@@ -2,13 +2,16 @@ package com.mineinabyss.bonfire.listeners
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent
 import com.mineinabyss.bonfire.Permissions
-import com.mineinabyss.bonfire.components.destroyBonfire
-import com.mineinabyss.bonfire.components.updateModel
+import com.mineinabyss.bonfire.bonfirePlugin
+import com.mineinabyss.bonfire.components.*
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.items.editItemMeta
+import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.error
+import com.okkero.skedule.schedule
+import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
@@ -17,10 +20,7 @@ import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.EntityType
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.block.BlockBreakEvent
-import org.bukkit.event.block.BlockPistonExtendEvent
-import org.bukkit.event.block.BlockPistonRetractEvent
-import org.bukkit.event.block.BlockPlaceEvent
+import org.bukkit.event.block.*
 import org.bukkit.inventory.ItemStack
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -112,8 +112,17 @@ object BlockListener : Listener {
             }
             else{
                 val campfire = entity.location.block.state as Campfire
-                campfire.bonfireData()?.updateModel()
+                campfire.bonfireData()?.save()
             }
+        }
+    }
+
+    @EventHandler
+    fun BlockCookEvent.cook() {
+        val bonfire = (block.state as Campfire).bonfireData() ?: return
+        Bukkit.getScheduler().schedule(bonfirePlugin) {
+            waitFor(1)
+            bonfire.updateFire()
         }
     }
 

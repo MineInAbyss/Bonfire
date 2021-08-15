@@ -2,8 +2,10 @@
 
 package com.mineinabyss.bonfire.components
 
+import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.extensions.isCooking
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.ecs.api.autoscan.AutoscanComponent
 import com.mineinabyss.geary.minecraft.store.encode
@@ -16,14 +18,12 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.entity.ArmorStand
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
-import org.jetbrains.exposed.sql.innerJoin
 import java.time.LocalDateTime
 import java.util.*
 import org.bukkit.block.data.type.Campfire as BlockDataTypeCampfire
+import com.okkero.skedule.schedule
 
 @Serializable
 @SerialName("bonfire:data")
@@ -73,6 +73,29 @@ fun BonfireData.save() {
 
     bonfire.persistentDataContainer.encode(this) //FIXME: is this necessary?
 
+    updateFire()
+}
+
+fun BonfireData.updateFire() {
+    val model = Bukkit.getEntity(this.uuid)
+    if (model !is ArmorStand) return
+    val block = model.world.getBlockAt(model.location)
+    if (block.state !is Campfire) return
+    val bonfireData = block.blockData as BlockDataTypeCampfire
+
+    if ((block.state as Campfire).isCooking()) return
+
+    transaction {
+        Players.select { Players.bonfireUUID eq this@updateFire.uuid }.forEach {
+            Bukkit.getScheduler().schedule(bonfirePlugin) {
+                waitFor(2)
+                val player = Bukkit.getPlayer(it[Players.playerUUID])
+                player?.sendBlockChange(block.location, (Material.SOUL_CAMPFIRE.createBlockData() as BlockDataTypeCampfire).apply {
+                    this.facing = bonfireData.facing
+                })
+            }
+        }
+    }
 }
 
 fun BonfireData.destroyBonfire(destroyBlock: Boolean) {
