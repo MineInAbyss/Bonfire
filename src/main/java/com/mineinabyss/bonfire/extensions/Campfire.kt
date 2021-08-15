@@ -17,14 +17,6 @@ fun Campfire.isBonfire(uuid: UUID): Boolean = bonfireData()?.uuid == uuid
 fun Campfire.bonfireData(): BonfireData? = persistentDataContainer.decode()
 fun Campfire.save(data: BonfireData) = persistentDataContainer.encode(data)
 
-fun Campfire.isCooking(): Boolean {
-    if(getItem(0) != null) return true
-    if(getItem(1) != null) return true
-    if(getItem(2) != null) return true
-    if(getItem(3) != null) return true
-    return false
-}
-
 fun Campfire.makeBonfire(newBonfireUUID: UUID){
     val bonfireData = BonfireData(newBonfireUUID)
     this.save(bonfireData)

@@ -5,12 +5,12 @@ package com.mineinabyss.bonfire.components
 import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
-import com.mineinabyss.bonfire.extensions.isCooking
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.ecs.api.autoscan.AutoscanComponent
 import com.mineinabyss.geary.minecraft.store.encode
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.serialization.UUIDSerializer
+import com.okkero.skedule.schedule
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
@@ -18,12 +18,14 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.entity.ArmorStand
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.innerJoin
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import java.time.LocalDateTime
 import java.util.*
 import org.bukkit.block.data.type.Campfire as BlockDataTypeCampfire
-import com.okkero.skedule.schedule
 
 @Serializable
 @SerialName("bonfire:data")
@@ -82,8 +84,6 @@ fun BonfireData.updateFire() {
     val block = model.world.getBlockAt(model.location)
     if (block.state !is Campfire) return
     val bonfireData = block.blockData as BlockDataTypeCampfire
-
-    if ((block.state as Campfire).isCooking()) return
 
     transaction {
         Players.select { Players.bonfireUUID eq this@updateFire.uuid }.forEach {

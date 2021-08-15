@@ -6,14 +6,11 @@ import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.extensions.*
-import com.mineinabyss.bonfire.listeners.PlayerListener.isCookableOnCampfire
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.entities.rightClicked
-import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.util.toMCKey
-import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
@@ -29,9 +26,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.player.*
-import org.bukkit.inventory.CampfireRecipe
 import org.bukkit.inventory.EquipmentSlot
-import org.bukkit.inventory.ItemStack
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.select
@@ -70,7 +65,6 @@ object PlayerListener : Listener {
             val bonfire = respawnCampfire.bonfireData() ?: return
 
             if (!player.isSneaking) {
-                if(player.inventory.itemInMainHand.isCookableOnCampfire() || player.inventory.itemInOffHand.isCookableOnCampfire() || respawnCampfire.isCooking()) return
                 return bonfire.updateFire()
             }
 
@@ -194,17 +188,6 @@ object PlayerListener : Listener {
         player.discoverRecipe(BonfireConfig.data.bonfireRecipe.key.toMCKey())
     }
 
-
-    fun ItemStack.isCookableOnCampfire(): Boolean {
-        var valid = false
-        Bukkit.recipeIterator().forEach {
-            if(it is CampfireRecipe && it.input.isSimilar(this)){
-                valid = true
-            }
-        }
-
-        return valid
-    }
 }
 
 
