@@ -159,6 +159,7 @@ object PlayerListener : Listener {
                         player.info("Respawning at bonfire")
                         respawnLocation = respawnCenterLocation
                         BonfireLogger.logRespawnAtBonfire(player, respawnBonfireLocation)
+                        campfire.bonfireData()?.updateFire();
                         return@transaction
                     }
                 }
