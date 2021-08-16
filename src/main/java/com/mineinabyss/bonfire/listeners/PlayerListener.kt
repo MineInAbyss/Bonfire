@@ -11,6 +11,7 @@ import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.util.toMCKey
+import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
@@ -26,7 +27,9 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.player.*
+import org.bukkit.inventory.CampfireRecipe
 import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.inventory.ItemStack
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.select
@@ -65,6 +68,7 @@ object PlayerListener : Listener {
             val bonfire = respawnCampfire.bonfireData() ?: return
 
             if (!player.isSneaking) {
+                if(!(player.inventory.itemInMainHand.isCookableOnCampfire())) isCancelled = true
                 return bonfire.updateFire()
             }
 
@@ -94,24 +98,9 @@ object PlayerListener : Listener {
             isCancelled = true //I think we can cancel this event in any situation where we set/unset respawn.
                                 // We don't want to have any regular behavior happen.
 
-//            if (item?.type.toString().contains("shovel", true) ||
-//                item?.type == Material.WATER_BUCKET ||
-//                item?.type == Material.PUFFERFISH_BUCKET ||
-//                item?.type == Material.SALMON_BUCKET ||
-//                item?.type == Material.COD_BUCKET ||
-//                item?.type == Material.TROPICAL_FISH_BUCKET ||
-//                item?.type == Material.AXOLOTL_BUCKET ||
-//                item?.type == Material.BIRCH_BOAT ||
-//                item?.type == Material.ACACIA_BOAT ||
-//                item?.type == Material.DARK_OAK_BOAT ||
-//                item?.type == Material.JUNGLE_BOAT ||
-//                item?.type == Material.SPRUCE_BOAT ||
-//                item?.type == Material.OAK_BOAT
-//            ) isCancelled = true
-//
-//            if(isBlockInHand){
-//                isCancelled = true
-//            }
+            if(isBlockInHand){
+                isCancelled = true
+            }
         }
     }
 
@@ -159,7 +148,7 @@ object PlayerListener : Listener {
                         player.info("Respawning at bonfire")
                         respawnLocation = respawnCenterLocation
                         BonfireLogger.logRespawnAtBonfire(player, respawnBonfireLocation)
-                        campfire.bonfireData()?.updateFire();
+                        campfire.bonfireData()?.updateFire()
                         return@transaction
                     }
                 }
@@ -187,6 +176,17 @@ object PlayerListener : Listener {
     @EventHandler
     fun PlayerJoinEvent.joinServer() {
         player.discoverRecipe(BonfireConfig.data.bonfireRecipe.key.toMCKey())
+    }
+
+    fun ItemStack.isCookableOnCampfire(): Boolean {
+        var valid = false
+        Bukkit.recipeIterator().forEach {
+            if(it is CampfireRecipe && it.input.isSimilar(this)){
+                valid = true
+            }
+        }
+
+        return valid
     }
 
 }
