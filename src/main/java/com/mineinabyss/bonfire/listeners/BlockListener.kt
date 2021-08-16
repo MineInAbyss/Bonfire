@@ -3,12 +3,14 @@ package com.mineinabyss.bonfire.listeners
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent
 import com.mineinabyss.bonfire.Permissions
 import com.mineinabyss.bonfire.bonfirePlugin
-import com.mineinabyss.bonfire.components.*
+import com.mineinabyss.bonfire.components.destroyBonfire
+import com.mineinabyss.bonfire.components.save
+import com.mineinabyss.bonfire.components.updateFire
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.items.editItemMeta
-import com.mineinabyss.idofront.messaging.broadcastVal
+import com.mineinabyss.idofront.messaging.broadcast
 import com.mineinabyss.idofront.messaging.error
 import com.okkero.skedule.schedule
 import org.bukkit.Bukkit
@@ -18,9 +20,11 @@ import org.bukkit.block.BlockFace
 import org.bukkit.block.Campfire
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.EntityType
+import org.bukkit.entity.ThrownPotion
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.*
+import org.bukkit.event.entity.EntityChangeBlockEvent
 import org.bukkit.inventory.ItemStack
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -163,6 +167,8 @@ object BlockListener : Listener {
         return ((blockBelow.state is Campfire && (blockBelow.state as Campfire).isBonfire) || (blockBelowBelowBlock.state is Campfire && (blockBelowBelowBlock.state as Campfire).isBonfire))
     }
 
-    //TODO: Prevent splash potions from extinguishing bonfires, might require some NMS magic...
-
+    @EventHandler
+    fun EntityChangeBlockEvent.douseBonfire() {
+        if (entity is ThrownPotion && (this.block.state as Campfire).isBonfire) isCancelled = true
+    }
 }
