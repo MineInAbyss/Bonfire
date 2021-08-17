@@ -20,6 +20,7 @@ import com.okkero.skedule.schedule
 import kotlinx.serialization.InternalSerializationApi
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
+import org.bukkit.Particle
 import org.bukkit.block.Campfire
 import org.bukkit.plugin.java.JavaPlugin
 import org.jetbrains.exposed.sql.*
@@ -71,6 +72,46 @@ class BonfirePlugin : JavaPlugin() {
                                     ?: return@forEach
                                 BonfireLogger.logBonfireExpired(it[location])
                             }
+                        }
+                }
+                yield()
+            }
+        }
+
+        schedule {
+            repeating(1)
+            while (true) {
+                transaction {
+                    Bonfire
+                        .leftJoin(Players, { entityUUID }, { bonfireUUID })
+                        .selectAll()
+                        .forEach { row ->
+                            if (!row[location].isChunkLoaded) return@forEach
+                            val player = row[location].getNearbyPlayers(BonfireConfig.data.effectRadius)
+                                .find { row[Players.playerUUID] == it.uniqueId } ?: return@forEach
+                            if ((1..2).random() == 1) {
+                                player.location.world.spawnParticle(
+                                    Particle.SOUL,
+                                    player.location,
+                                    1,
+                                    0.5,
+                                    1.0,
+                                    0.5,
+                                    0.0
+                                )
+                            } else {
+                                player.location.world.spawnParticle(
+                                    Particle.SOUL_FIRE_FLAME,
+                                    player.location,
+                                    1,
+                                    0.5,
+                                    1.0,
+                                    0.5,
+                                    0.0
+                                )
+                            }
+                            player.saturation = BonfireConfig.data.effectStrength
+                            player.saturatedRegenRate = BonfireConfig.data.effectRegenRate
                         }
                 }
                 yield()
