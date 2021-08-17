@@ -38,6 +38,7 @@ class BonfirePlugin : JavaPlugin() {
         LibraryLoaderInjector.inject(this)
         saveDefaultConfig()
         BonfireConfig.load()
+        BonfireConfig.save()
 
         Database.connect("jdbc:sqlite:" + this.dataFolder.path + "/data.db", "org.sqlite.JDBC")
 
@@ -79,7 +80,7 @@ class BonfirePlugin : JavaPlugin() {
         }
 
         schedule {
-            repeating(20)
+            repeating(1)
             while (true) {
                 transaction {
                     Bonfire
@@ -89,27 +90,17 @@ class BonfirePlugin : JavaPlugin() {
                             if (!row[location].isChunkLoaded) return@forEach
                             val player = row[location].getNearbyPlayers(BonfireConfig.data.effectRadius)
                                 .find { row[Players.playerUUID] == it.uniqueId } ?: return@forEach
-                            if ((1..2).random() == 1) {
-                                player.location.world.spawnParticle(
-                                    Particle.SOUL,
-                                    player.location,
-                                    1,
-                                    0.5,
-                                    1.0,
-                                    0.5,
-                                    0.0
-                                )
-                            } else {
-                                player.location.world.spawnParticle(
-                                    Particle.SOUL_FIRE_FLAME,
-                                    player.location,
-                                    1,
-                                    0.5,
-                                    1.0,
-                                    0.5,
-                                    0.0
-                                )
-                            }
+
+                            player.location.world.spawnParticle(
+                                if ((1..2).random() == 1) Particle.SOUL else Particle.SOUL_FIRE_FLAME,
+                                player.location,
+                                1,
+                                0.5,
+                                1.0,
+                                0.5,
+                                0.0
+                            )
+
                             player.saturation = BonfireConfig.data.effectStrength
                             player.saturatedRegenRate = BonfireConfig.data.effectRegenRate
                         }
