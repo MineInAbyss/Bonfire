@@ -68,7 +68,7 @@ object PlayerListener : Listener {
             val bonfire = respawnCampfire.bonfireData() ?: return
 
             if (!player.isSneaking) {
-                if(!(player.inventory.itemInMainHand.isCookableOnCampfire())) isCancelled = true
+                if (!(player.inventory.itemInMainHand.isCookableOnCampfire())) isCancelled = true
                 return bonfire.updateFire()
             }
 
@@ -96,9 +96,9 @@ object PlayerListener : Listener {
             }
 
             isCancelled = true //I think we can cancel this event in any situation where we set/unset respawn.
-                                // We don't want to have any regular behavior happen.
+            // We don't want to have any regular behavior happen.
 
-            if(isBlockInHand){
+            if (isBlockInHand) {
                 isCancelled = true
             }
         }
@@ -176,12 +176,28 @@ object PlayerListener : Listener {
     @EventHandler
     fun PlayerJoinEvent.joinServer() {
         player.discoverRecipe(BonfireConfig.data.bonfireRecipe.key.toMCKey())
+
+        transaction {
+            val respawnBonfire = Players
+                .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
+                .select { Players.playerUUID eq player.uniqueId }
+                .firstOrNull() ?: return@transaction
+
+            val respawnBonfireLocation = respawnBonfire[Bonfire.location]
+            val respawnBlock = respawnBonfireLocation.world.getBlockAt(respawnBonfireLocation)
+            if (respawnBlock.state is Campfire) {
+                val campfire = respawnBlock.state as Campfire
+                if (campfire.isBonfire(respawnBonfire[Bonfire.entityUUID])) {
+                    campfire.bonfireData()?.updateFire()
+                }
+            }
+        }
     }
 
     fun ItemStack.isCookableOnCampfire(): Boolean {
         var valid = false
         Bukkit.recipeIterator().forEach {
-            if(it is CampfireRecipe && it.input.isSimilar(this)){
+            if (it is CampfireRecipe && it.input.isSimilar(this)) {
                 valid = true
             }
         }
