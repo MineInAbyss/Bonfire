@@ -79,7 +79,7 @@ class BonfirePlugin : JavaPlugin() {
         }
 
         schedule {
-            repeating(1)
+            repeating(20)
             while (true) {
                 transaction {
                     Bonfire
