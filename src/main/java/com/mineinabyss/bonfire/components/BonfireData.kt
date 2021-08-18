@@ -4,11 +4,14 @@ package com.mineinabyss.bonfire.components
 
 import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.data.Bonfire
+import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.ecs.api.autoscan.AutoscanComponent
 import com.mineinabyss.geary.minecraft.store.encode
 import com.mineinabyss.idofront.items.editItemMeta
+import com.mineinabyss.idofront.messaging.color
+import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.serialization.UUIDSerializer
 import com.okkero.skedule.schedule
 import kotlinx.serialization.SerialName
@@ -18,11 +21,8 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.entity.ArmorStand
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.innerJoin
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.update
 import java.time.LocalDateTime
 import java.util.*
 import org.bukkit.block.data.type.Campfire as BlockDataTypeCampfire
@@ -113,8 +113,18 @@ fun BonfireData.destroyBonfire(destroyBlock: Boolean) {
         Players
             .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
             .select { Players.bonfireUUID eq this@destroyBonfire.uuid }
-            .forEach {
-                BonfireLogger.logRespawnUnset(it[Bonfire.location], Bukkit.getOfflinePlayer(it[Players.playerUUID]))
+            .forEach { row ->
+                BonfireLogger.logRespawnUnset(row[Bonfire.location], Bukkit.getOfflinePlayer(row[Players.playerUUID]))
+                val unsetMessage = "&4Your respawn point has been unset because the bonfire was destroyed"
+                val player = Bukkit.getPlayer(row[Players.playerUUID])
+                if (player != null) {
+                    player.info(unsetMessage.color())
+                } else {
+                    MessageQueue.insert {
+                        it[content] = unsetMessage
+                        it[playerUUID] = row[Players.playerUUID]
+                    }
+                }
             }
         Bonfire.deleteWhere { Bonfire.entityUUID eq this@destroyBonfire.uuid }
         Players.deleteWhere { Players.bonfireUUID eq this@destroyBonfire.uuid }

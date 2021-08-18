@@ -3,11 +3,14 @@ package com.mineinabyss.bonfire.listeners
 import com.mineinabyss.bonfire.components.updateFire
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
+import com.mineinabyss.bonfire.data.MessageQueue
+import com.mineinabyss.bonfire.data.MessageQueue.content
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.entities.rightClicked
+import com.mineinabyss.idofront.messaging.color
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.util.toMCKey
@@ -191,6 +194,13 @@ object PlayerListener : Listener {
                     campfire.bonfireData()?.updateFire()
                 }
             }
+        }
+
+        transaction {
+            MessageQueue.select { MessageQueue.playerUUID eq player.uniqueId }.forEach {
+                player.info(it[content].color())
+            }
+            MessageQueue.deleteWhere { MessageQueue.playerUUID eq player.uniqueId }
         }
     }
 

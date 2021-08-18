@@ -5,7 +5,6 @@ import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.geary.minecraft.store.decode
 import com.mineinabyss.geary.minecraft.store.encode
 import com.mineinabyss.geary.minecraft.store.has
-import com.mineinabyss.idofront.messaging.broadcastVal
 import org.bukkit.block.Campfire
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -17,14 +16,15 @@ fun Campfire.isBonfire(uuid: UUID): Boolean = bonfireData()?.uuid == uuid
 fun Campfire.bonfireData(): BonfireData? = persistentDataContainer.decode()
 fun Campfire.save(data: BonfireData) = persistentDataContainer.encode(data)
 
-fun Campfire.makeBonfire(newBonfireUUID: UUID){
+fun Campfire.makeBonfire(newBonfireUUID: UUID, playerUUID: UUID) {
     val bonfireData = BonfireData(newBonfireUUID)
     this.save(bonfireData)
 
-    transaction{
-        Bonfire.insert{
+    transaction {
+        Bonfire.insert {
             it[entityUUID] = newBonfireUUID
             it[location] = this@makeBonfire.location
+            it[ownerUUID] = playerUUID
         }
     }
 }
