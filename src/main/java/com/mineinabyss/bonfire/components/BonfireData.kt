@@ -10,8 +10,7 @@ import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.ecs.api.autoscan.AutoscanComponent
 import com.mineinabyss.geary.minecraft.store.encode
 import com.mineinabyss.idofront.items.editItemMeta
-import com.mineinabyss.idofront.messaging.color
-import com.mineinabyss.idofront.messaging.info
+import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.serialization.UUIDSerializer
 import com.okkero.skedule.schedule
 import kotlinx.serialization.SerialName
@@ -115,10 +114,10 @@ fun BonfireData.destroyBonfire(destroyBlock: Boolean) {
             .select { Players.bonfireUUID eq this@destroyBonfire.uuid }
             .forEach { row ->
                 BonfireLogger.logRespawnUnset(row[Bonfire.location], Bukkit.getOfflinePlayer(row[Players.playerUUID]))
-                val unsetMessage = "&4Your respawn point has been unset because the bonfire was destroyed"
+                val unsetMessage = "Your respawn point was unset because the bonfire was broken by the owner"
                 val player = Bukkit.getPlayer(row[Players.playerUUID])
                 if (player != null) {
-                    player.info(unsetMessage.color())
+                    player.error(unsetMessage)
                 } else {
                     MessageQueue.insert {
                         it[content] = unsetMessage
