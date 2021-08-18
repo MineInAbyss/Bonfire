@@ -10,7 +10,6 @@ import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.items.editItemMeta
-import com.mineinabyss.idofront.messaging.broadcast
 import com.mineinabyss.idofront.messaging.error
 import com.okkero.skedule.schedule
 import org.bukkit.Bukkit
@@ -123,10 +122,12 @@ object BlockListener : Listener {
 
     @EventHandler
     fun BlockCookEvent.cook() {
-        val bonfire = (block.state as Campfire).bonfireData() ?: return
-        Bukkit.getScheduler().schedule(bonfirePlugin) {
-            waitFor(1)
-            bonfire.updateFire()
+        if (block.state is Campfire) {
+            val bonfire = (block.state as Campfire).bonfireData() ?: return
+            Bukkit.getScheduler().schedule(bonfirePlugin) {
+                waitFor(1)
+                bonfire.updateFire()
+            }
         }
     }
 
