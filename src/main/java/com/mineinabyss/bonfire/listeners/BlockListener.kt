@@ -96,9 +96,9 @@ object BlockListener : Listener {
 
         transaction {
             val hasRegisteredPlayers = Players.select { Players.bonfireUUID eq bonfire.uuid }.any()
-            val bonfireRow = Bonfire.select { Bonfire.entityUUID eq bonfire.uuid }.first()
+            val bonfireRow = Bonfire.select { Bonfire.entityUUID eq bonfire.uuid }.firstOrNull()
 
-            if (player.hasPermission(Permissions.BREAK_BONFIRE_PERMISSION) || !hasRegisteredPlayers || bonfireRow[ownerUUID] == player.uniqueId) {
+            if (player.hasPermission(Permissions.BREAK_BONFIRE_PERMISSION) || !hasRegisteredPlayers || (bonfireRow !== null && bonfireRow[ownerUUID] == player.uniqueId)) {
                 bonfire.destroyBonfire(false)
                 BonfireLogger.logBonfireBreak(block.location, player)
             } else {
