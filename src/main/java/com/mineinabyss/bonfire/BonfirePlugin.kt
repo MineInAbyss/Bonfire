@@ -6,6 +6,7 @@ import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Bonfire.location
 import com.mineinabyss.bonfire.data.Bonfire.stateChangedTimestamp
 import com.mineinabyss.bonfire.data.Bonfire.timeUntilDestroy
+import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.extensions.bonfireData
@@ -45,16 +46,13 @@ class BonfirePlugin : JavaPlugin() {
         transaction {
             addLogger(StdOutSqlLogger)
 
-            SchemaUtils.create(Bonfire, Players)
+            SchemaUtils.createMissingTablesAndColumns(Bonfire, Players, MessageQueue)
         }
 
         registerEvents(
             PlayerListener,
             BlockListener
         )
-
-//        val protocolManager = ProtocolLibrary.getProtocolManager();
-//        protocolManager.addPacketListener(ChatPacketAdapter)
 
         attachToGeary { autoscanComponents() }
 

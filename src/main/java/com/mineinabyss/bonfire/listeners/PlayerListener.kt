@@ -1,8 +1,11 @@
 package com.mineinabyss.bonfire.listeners
 
+import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.components.updateFire
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
+import com.mineinabyss.bonfire.data.MessageQueue
+import com.mineinabyss.bonfire.data.MessageQueue.content
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.extensions.*
@@ -11,6 +14,7 @@ import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.util.toMCKey
+import com.okkero.skedule.schedule
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Block
@@ -190,6 +194,15 @@ object PlayerListener : Listener {
                 if (campfire.isBonfire(respawnBonfire[Bonfire.entityUUID])) {
                     campfire.bonfireData()?.updateFire()
                 }
+            }
+        }
+        bonfirePlugin.schedule {
+            waitFor(20)
+            transaction {
+                MessageQueue.select { MessageQueue.playerUUID eq player.uniqueId }.forEach {
+                    player.error(it[content])
+                }
+                MessageQueue.deleteWhere { MessageQueue.playerUUID eq player.uniqueId }
             }
         }
     }

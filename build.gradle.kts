@@ -34,7 +34,6 @@ dependencies {
 
     // Plugin dependencies
     compileOnly ("com.mineinabyss:geary-platform-papermc:0.6.48")
-    compileOnly ("com.comphenix.protocol:ProtocolLib:4.7.0")
 }
 
 //tasks.shadowJar {

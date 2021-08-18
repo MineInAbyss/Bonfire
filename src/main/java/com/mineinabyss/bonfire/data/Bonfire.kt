@@ -13,6 +13,7 @@ import java.util.*
 
 object Bonfire : IdTable<UUID>() {
     val entityUUID = uuid("entityUUID").uniqueIndex()
+    val ownerUUID = uuid("ownerUUID").nullable()
     val location = location("location")
     val stateChangedTimestamp = datetime("stateChangedTimestamp").clientDefault { LocalDateTime.now() }
     val timeUntilDestroy =

@@ -6,6 +6,8 @@ import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.components.destroyBonfire
 import com.mineinabyss.bonfire.components.save
 import com.mineinabyss.bonfire.components.updateFire
+import com.mineinabyss.bonfire.data.Bonfire
+import com.mineinabyss.bonfire.data.Bonfire.ownerUUID
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
@@ -78,7 +80,7 @@ object BlockListener : Listener {
             armorStand.equipment?.helmet = modelStick.editItemMeta { setCustomModelData(1) }
 
             respawnCampfire.run {
-                makeBonfire(armorStand.uniqueId)
+                makeBonfire(armorStand.uniqueId, player.uniqueId)
                 update()
             }
 
@@ -94,12 +96,12 @@ object BlockListener : Listener {
 
         transaction {
             val hasRegisteredPlayers = Players.select { Players.bonfireUUID eq bonfire.uuid }.any()
+            val bonfireRow = Bonfire.select { Bonfire.entityUUID eq bonfire.uuid }.firstOrNull()
 
-            if(player.hasPermission(Permissions.BREAK_BONFIRE_PERMISSION) || !hasRegisteredPlayers){
+            if (player.hasPermission(Permissions.BREAK_BONFIRE_PERMISSION) || !hasRegisteredPlayers || (bonfireRow !== null && bonfireRow[ownerUUID] == player.uniqueId)) {
                 bonfire.destroyBonfire(false)
                 BonfireLogger.logBonfireBreak(block.location, player)
-            }
-            else{
+            } else {
                 player.error("You cannot break this bonfire, unkindled one")
                 isCancelled = true
             }
