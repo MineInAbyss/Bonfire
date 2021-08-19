@@ -1,5 +1,6 @@
 package com.mineinabyss.bonfire
 
+import com.mineinabyss.bonfire.components.BonfireEffectArea
 import com.mineinabyss.bonfire.components.destroyBonfire
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
@@ -10,9 +11,11 @@ import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.extensions.bonfireData
+import com.mineinabyss.bonfire.extensions.isBonfireModel
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.bonfire.logging.BonfireLogger
+import com.mineinabyss.geary.minecraft.access.geary
 import com.mineinabyss.geary.minecraft.dsl.attachToGeary
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
 import com.mineinabyss.idofront.plugin.registerEvents
@@ -23,6 +26,7 @@ import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
 import org.bukkit.Particle
 import org.bukkit.block.Campfire
+import org.bukkit.entity.ArmorStand
 import org.bukkit.plugin.java.JavaPlugin
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -78,7 +82,7 @@ class BonfirePlugin : JavaPlugin() {
         }
 
         schedule {
-            repeating(1)
+            repeating(20)
             while (true) {
                 transaction {
                     Bonfire
@@ -89,19 +93,37 @@ class BonfirePlugin : JavaPlugin() {
                             val player = row[location].getNearbyPlayers(BonfireConfig.data.effectRadius)
                                 .find { row[Players.playerUUID] == it.uniqueId } ?: return@forEach
 
-                            player.location.world.spawnParticle(
-                                if ((1..2).random() == 1) Particle.SOUL else Particle.SOUL_FIRE_FLAME,
-                                player.location,
-                                1,
-                                0.5,
-                                1.0,
-                                0.5,
-                                0.0
-                            )
+                            geary(player).set(BonfireEffectArea(row[Bonfire.entityUUID]))
 
-                            player.saturation = BonfireConfig.data.effectStrength
-                            player.saturatedRegenRate = BonfireConfig.data.effectRegenRate
                         }
+                }
+                yield()
+            }
+        }
+
+        schedule {
+            repeating(1)
+            while (true) {
+                Bukkit.getOnlinePlayers().forEach { player ->
+                    val effect = geary(player).get<BonfireEffectArea>() ?: return@forEach
+
+                    // Check if still near a bonfire
+                    player.location.getNearbyLivingEntities(BonfireConfig.data.effectRadius).firstOrNull {
+                        it is ArmorStand && it.isBonfireModel() && it.uniqueId == effect.uuid
+                    }?.let {
+                        player.location.world.spawnParticle(
+                            if ((1..2).random() == 1) Particle.SOUL else Particle.SOUL_FIRE_FLAME,
+                            player.location,
+                            1,
+                            0.5,
+                            1.0,
+                            0.5,
+                            0.0
+                        )
+
+                        player.saturation = BonfireConfig.data.effectStrength
+                        player.saturatedRegenRate = BonfireConfig.data.effectRegenRate
+                    } ?: geary(player).remove<BonfireEffectArea>()
                 }
                 yield()
             }
