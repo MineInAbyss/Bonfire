@@ -112,7 +112,11 @@ object PlayerListener : Listener {
     fun EntityDamageEvent.event() {
         if (!(entity is Player && cause == EntityDamageEvent.DamageCause.FIRE)) return
         val player = entity as Player
-        if (player.world.getBlockAt(player.location).state is Campfire) isCancelled = true
+        player.location.findLocationAround(radius = 1, scale = 0.3) {
+            it.block.state is Campfire
+        }?.let {
+            isCancelled = true
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
