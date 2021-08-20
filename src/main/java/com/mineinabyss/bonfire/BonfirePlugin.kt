@@ -20,6 +20,7 @@ import com.mineinabyss.geary.minecraft.dsl.attachToGeary
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
 import com.mineinabyss.idofront.plugin.registerEvents
 import com.mineinabyss.idofront.slimjar.LibraryLoaderInjector
+import com.okkero.skedule.SynchronizationContext
 import com.okkero.skedule.schedule
 import kotlinx.serialization.InternalSerializationApi
 import org.bukkit.Bukkit
@@ -81,21 +82,20 @@ class BonfirePlugin : JavaPlugin() {
             }
         }
 
-        schedule {
+        schedule(SynchronizationContext.ASYNC) {
             repeating(20)
             while (true) {
-                transaction {
-                    Bonfire
-                        .leftJoin(Players, { entityUUID }, { bonfireUUID })
-                        .selectAll()
-                        .forEach { row ->
-                            if (!row[location].isChunkLoaded) return@forEach
-                            val player = row[location].getNearbyPlayers(BonfireConfig.data.effectRadius)
-                                .find { row[Players.playerUUID] == it.uniqueId } ?: return@forEach
+                switchContext(SynchronizationContext.ASYNC)
+                val rows =
+                    transaction { Bonfire.leftJoin(Players, { entityUUID }, { bonfireUUID }).selectAll().toList() }
+                switchContext(SynchronizationContext.SYNC)
+                rows.forEach { row ->
+                    if (!row[location].isChunkLoaded) return@forEach
+                    val player = row[location].getNearbyPlayers(BonfireConfig.data.effectRadius)
+                        .find { row[Players.playerUUID] == it.uniqueId } ?: return@forEach
 
-                            geary(player).set(BonfireEffectArea(row[Bonfire.entityUUID]))
+                    geary(player).set(BonfireEffectArea(row[Bonfire.entityUUID]))
 
-                        }
                 }
                 yield()
             }
@@ -112,7 +112,7 @@ class BonfirePlugin : JavaPlugin() {
                         it is ArmorStand && it.isBonfireModel() && it.uniqueId == effect.uuid
                     }?.let {
                         player.location.world.spawnParticle(
-                            if ((1..2).random() == 1) Particle.SOUL else Particle.SOUL_FIRE_FLAME,
+                            listOf(Particle.SOUL, Particle.SOUL_FIRE_FLAME).random(),
                             player.location,
                             1,
                             0.5,
