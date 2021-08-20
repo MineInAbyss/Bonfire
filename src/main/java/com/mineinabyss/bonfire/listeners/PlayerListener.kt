@@ -14,6 +14,7 @@ import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.util.toMCKey
+import com.okkero.skedule.SynchronizationContext
 import com.okkero.skedule.schedule
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -80,19 +81,17 @@ object PlayerListener : Listener {
                 return
             }
 
-            transaction {
-                val playerFromDB = Players
-                    .select { Players.playerUUID eq player.uniqueId }
-                    .firstOrNull()
+            bonfirePlugin.schedule(SynchronizationContext.ASYNC) {
+                val playersInBonfire = transaction { Players.select { bonfireUUID eq bonfire.uuid }.toList() }
+                switchContext(SynchronizationContext.SYNC)
 
-                if (playerFromDB != null && bonfire.uuid == playerFromDB[bonfireUUID]) {
+                if (playersInBonfire.firstOrNull { it[Players.playerUUID] == player.uniqueId } !== null) {
                     if (!player.removeBonfireSpawnLocation(bonfire.uuid)) {
                         player.error("This is not your respawn point")
                     }
                 } else {  //add player to bonfire if bonfire not maxed out
-                    val playerCount = Players.select { bonfireUUID eq bonfire.uuid }.count()
-                    if (playerCount >= BonfireConfig.data.maxPlayerCount) {
-                        return@transaction player.error("This bonfire is full!")
+                    if (playersInBonfire.count() >= BonfireConfig.data.maxPlayerCount) {
+                        return@schedule player.error("This bonfire is full!")
                     } else {
                         player.setRespawnLocation(bonfire.uuid)
                     }
@@ -101,10 +100,6 @@ object PlayerListener : Listener {
 
             isCancelled = true //I think we can cancel this event in any situation where we set/unset respawn.
             // We don't want to have any regular behavior happen.
-
-            if (isBlockInHand) {
-                isCancelled = true
-            }
         }
     }
 
@@ -145,7 +140,8 @@ object PlayerListener : Listener {
                             }
                         }
 
-                        val height = respawnBonfireLocation.distance(getHighestAirBlock(respawnBonfireLocation.block).location)
+                        val height =
+                            respawnBonfireLocation.distance(getHighestAirBlock(respawnBonfireLocation.block).location)
                         val entitiesOnRespawn = respawnBonfireLocation.world.getNearbyEntities(
                             respawnCenterLocation, 0.5, height + 0.5, 0.5
                         )
