@@ -12,6 +12,7 @@ import com.mineinabyss.geary.minecraft.store.encode
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.serialization.UUIDSerializer
+import com.okkero.skedule.SynchronizationContext
 import com.okkero.skedule.schedule
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -84,14 +85,16 @@ fun BonfireData.updateFire() {
     if (block.state !is Campfire) return
     val bonfireData = block.blockData as BlockDataTypeCampfire
 
-    transaction {
-        Players.select { Players.bonfireUUID eq this@updateFire.uuid }.forEach {
-            Bukkit.getScheduler().schedule(bonfirePlugin) {
-                waitFor(2)
+    bonfirePlugin.schedule(SynchronizationContext.ASYNC){
+        waitFor(2)
+        transaction {
+            Players.select { Players.bonfireUUID eq this@updateFire.uuid }.forEach {
                 val player = Bukkit.getPlayer(it[Players.playerUUID])
-                player?.sendBlockChange(block.location, (Material.SOUL_CAMPFIRE.createBlockData() as BlockDataTypeCampfire).apply {
-                    this.facing = bonfireData.facing
-                })
+                player?.sendBlockChange(
+                    block.location,
+                    (Material.SOUL_CAMPFIRE.createBlockData() as BlockDataTypeCampfire).apply {
+                        this.facing = bonfireData.facing
+                    })
             }
         }
     }
