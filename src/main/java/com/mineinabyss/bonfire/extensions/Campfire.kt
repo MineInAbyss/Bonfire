@@ -18,7 +18,8 @@ fun Campfire.save(data: BonfireData) = persistentDataContainer.encode(data)
 
 fun Campfire.makeBonfire(newBonfireUUID: UUID, playerUUID: UUID) {
     val bonfireData = BonfireData(newBonfireUUID)
-    this.save(bonfireData)
+    save(bonfireData)
+    update()
 
     transaction {
         Bonfire.insert {

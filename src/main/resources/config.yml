@@ -13,6 +13,9 @@ bonfireRecipe:
     amount: 1
     custom-model-data: 1
     display-name: §aBonfire
+modelItem:
+  type: WOODEN_SHOVEL
+  custom-model-data: 1
 maxPlayerCount: 4
 bonfireExpirationTime: 1m
 expirationCheckInterval: 10s

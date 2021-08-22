@@ -6,12 +6,12 @@ import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.components.destroyBonfire
 import com.mineinabyss.bonfire.components.save
 import com.mineinabyss.bonfire.components.updateFire
+import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Bonfire.ownerUUID
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
-import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
 import com.okkero.skedule.schedule
 import org.bukkit.Bukkit
@@ -26,7 +26,6 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.*
 import org.bukkit.event.entity.EntityChangeBlockEvent
-import org.bukkit.inventory.ItemStack
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.math.floor
@@ -41,11 +40,7 @@ object BlockListener : Listener {
             return
         }
 
-        if (
-            itemInHand.type === Material.CAMPFIRE
-            && itemInHand.itemMeta.hasCustomModelData()
-            && itemInHand.itemMeta.customModelData == 1
-        ) {
+        if (itemInHand.isSimilar(BonfireConfig.data.bonfireRecipe.result.toItemStack())) {
             if (blockPlaced.getRelative(BlockFace.UP).type != Material.AIR ||
                 blockPlaced.getRelative(BlockFace.UP, 2).type != Material.AIR
             ) {
@@ -58,8 +53,7 @@ object BlockListener : Listener {
             // we need to save this as a respawn campfire instead of just a regular campfire
             val respawnCampfire = blockPlaced.state as Campfire
             val campfireData = blockPlaced.blockData as CampfireBlockData
-            campfireData.isLit = false
-            respawnCampfire.blockData = campfireData
+            respawnCampfire.blockData = campfireData.apply { isLit = true }
 
             // Spawn armor stand
             val armorStand = blockPlaced.location.world.spawnEntity(
@@ -72,17 +66,9 @@ object BlockListener : Listener {
             armorStand.isSmall = true
             armorStand.isMarker = true
             armorStand.setBonfireModel()
-            // TODO: Add to config
-            val modelStick = (ItemStack(Material.WOODEN_SHOVEL))
-            val modelStickMeta = modelStick.itemMeta
-            modelStickMeta.setCustomModelData(1)
-            modelStick.itemMeta = modelStickMeta
-            armorStand.equipment?.helmet = modelStick.editItemMeta { setCustomModelData(1) }
+            armorStand.equipment?.helmet = BonfireConfig.data.modelItem.toItemStack()
 
-            respawnCampfire.run {
-                makeBonfire(armorStand.uniqueId, player.uniqueId)
-                update()
-            }
+            respawnCampfire.makeBonfire(armorStand.uniqueId, player.uniqueId)
 
             BonfireLogger.logBonfirePlace(blockPlaced.location, player)
         }

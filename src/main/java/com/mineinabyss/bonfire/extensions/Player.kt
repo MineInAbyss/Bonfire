@@ -59,7 +59,7 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
             if(oldBonfireBlock != null){
                 BonfireLogger.logRespawnUnset(oldBonfireBlock.location, this@setRespawnLocation)
 
-                oldBonfireBlock.bonfireData()?.save()
+                oldBonfireBlock.bonfireData()?.save() // update old bonfire model
             }
         } else if (playerRow == null) {
             Players.insert {

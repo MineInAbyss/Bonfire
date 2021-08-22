@@ -33,7 +33,6 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
 
-
 val bonfirePlugin: BonfirePlugin by lazy { JavaPlugin.getPlugin(BonfirePlugin::class.java) }
 
 class BonfirePlugin : JavaPlugin() {
@@ -44,7 +43,6 @@ class BonfirePlugin : JavaPlugin() {
         LibraryLoaderInjector.inject(this)
         saveDefaultConfig()
         BonfireConfig.load()
-        BonfireConfig.save()
 
         Database.connect("jdbc:sqlite:" + this.dataFolder.path + "/data.db", "org.sqlite.JDBC")
 
