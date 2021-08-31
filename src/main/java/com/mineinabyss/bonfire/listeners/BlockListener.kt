@@ -3,13 +3,13 @@ package com.mineinabyss.bonfire.listeners
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent
 import com.mineinabyss.bonfire.Permissions
 import com.mineinabyss.bonfire.bonfirePlugin
-import com.mineinabyss.bonfire.components.destroyBonfire
-import com.mineinabyss.bonfire.components.save
-import com.mineinabyss.bonfire.components.updateFire
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Bonfire.ownerUUID
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.ecs.components.destroyBonfire
+import com.mineinabyss.bonfire.ecs.components.save
+import com.mineinabyss.bonfire.ecs.components.updateFire
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.messaging.error

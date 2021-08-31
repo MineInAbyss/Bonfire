@@ -1,6 +1,5 @@
 package com.mineinabyss.bonfire
 
-import com.mineinabyss.bonfire.components.destroyBonfire
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Bonfire.location
@@ -9,11 +8,12 @@ import com.mineinabyss.bonfire.data.Bonfire.timeUntilDestroy
 import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
+import com.mineinabyss.bonfire.ecs.components.destroyBonfire
+import com.mineinabyss.bonfire.ecs.systems.BonfireEffectSystem
 import com.mineinabyss.bonfire.extensions.bonfireData
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.bonfire.logging.BonfireLogger
-import com.mineinabyss.bonfire.systems.BonfireEffectSystem
 import com.mineinabyss.geary.minecraft.dsl.attachToGeary
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
 import com.mineinabyss.idofront.plugin.registerEvents

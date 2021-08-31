@@ -1,4 +1,4 @@
-package com.mineinabyss.bonfire.components
+package com.mineinabyss.bonfire.ecs.components
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

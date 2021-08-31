@@ -1,7 +1,7 @@
-package com.mineinabyss.bonfire.systems
+package com.mineinabyss.bonfire.ecs.systems
 
-import com.mineinabyss.bonfire.components.BonfireEffectArea
 import com.mineinabyss.bonfire.config.BonfireConfig
+import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
 import com.mineinabyss.bonfire.extensions.isBonfireModel
 import com.mineinabyss.geary.ecs.api.systems.TickingSystem
 import com.mineinabyss.geary.ecs.engine.iteration.QueryResult

@@ -1,11 +1,11 @@
 package com.mineinabyss.bonfire.extensions
 
-import com.mineinabyss.bonfire.components.BonfireEffectArea
-import com.mineinabyss.bonfire.components.destroyBonfire
-import com.mineinabyss.bonfire.components.save
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
+import com.mineinabyss.bonfire.ecs.components.destroyBonfire
+import com.mineinabyss.bonfire.ecs.components.save
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.minecraft.access.geary
 import com.mineinabyss.idofront.messaging.error
