@@ -1,7 +1,7 @@
 package com.mineinabyss.bonfire.config
 
 import com.mineinabyss.bonfire.bonfirePlugin
-import com.mineinabyss.bonfire.components.SoundEffect
+import com.mineinabyss.bonfire.ecs.components.SoundEffect
 import com.mineinabyss.idofront.config.IdofrontConfig
 import com.mineinabyss.idofront.config.ReloadScope
 import com.mineinabyss.idofront.recpies.register

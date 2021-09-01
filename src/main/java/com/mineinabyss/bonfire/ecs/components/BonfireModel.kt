@@ -1,4 +1,4 @@
-package com.mineinabyss.bonfire.components
+package com.mineinabyss.bonfire.ecs.components
 
 import com.mineinabyss.geary.ecs.api.autoscan.AutoscanComponent
 import kotlinx.serialization.SerialName

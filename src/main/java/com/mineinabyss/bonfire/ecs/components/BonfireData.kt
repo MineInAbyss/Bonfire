@@ -1,11 +1,13 @@
 @file:UseSerializers(UUIDSerializer::class)
 
-package com.mineinabyss.bonfire.components
+package com.mineinabyss.bonfire.ecs.components
 
 import com.mineinabyss.bonfire.bonfirePlugin
+import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.extensions.setBonfireModel
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.ecs.api.autoscan.AutoscanComponent
 import com.mineinabyss.geary.minecraft.store.encode
@@ -21,21 +23,23 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Campfire
 import org.bukkit.entity.ArmorStand
+import org.bukkit.entity.EntityType
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
 import java.util.*
+import kotlin.math.floor
 import org.bukkit.block.data.type.Campfire as BlockDataTypeCampfire
 
 @Serializable
 @SerialName("bonfire:data")
 @AutoscanComponent
 class BonfireData(
-    val uuid: UUID,
+    var uuid: UUID,
 )
 
 fun BonfireData.updateModel() {
-    val model = Bukkit.getEntity(this.uuid)
+    val model = Bukkit.getEntity(this.uuid) ?: createModel()
     if (model !is ArmorStand) return
     val block = model.world.getBlockAt(model.location)
     if (block.state !is Campfire) return
@@ -54,6 +58,33 @@ fun BonfireData.updateModel() {
 
     bonfire.blockData = bonfireData
     bonfire.update()
+}
+
+fun BonfireData.createModel(): ArmorStand? {
+    @Suppress("RemoveExplicitTypeArguments")
+    return transaction<ArmorStand?> {
+        val bonfireRow =
+            Bonfire.select { Bonfire.entityUUID eq this@createModel.uuid }.firstOrNull() ?: return@transaction null
+
+        // Spawn armor stand
+        val armorStand = bonfireRow[Bonfire.location].world.spawnEntity(
+            bonfireRow[Bonfire.location].toCenterLocation().apply { this.y = floor(y) }, EntityType.ARMOR_STAND
+        ) as ArmorStand
+        armorStand.setGravity(false)
+        armorStand.isInvulnerable = true
+        armorStand.isInvisible = true
+        armorStand.isPersistent = true
+        armorStand.isSmall = true
+        armorStand.isMarker = true
+        armorStand.setBonfireModel()
+        armorStand.equipment?.helmet = BonfireConfig.data.modelItem.toItemStack()
+
+        Bonfire.update({ Bonfire.entityUUID eq this@createModel.uuid }) {
+            it[entityUUID] = armorStand.uniqueId
+        }
+
+        return@transaction armorStand
+    }
 }
 
 fun BonfireData.save() {

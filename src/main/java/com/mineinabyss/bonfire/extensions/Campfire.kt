@@ -1,7 +1,7 @@
 package com.mineinabyss.bonfire.extensions
 
-import com.mineinabyss.bonfire.components.BonfireData
 import com.mineinabyss.bonfire.data.Bonfire
+import com.mineinabyss.bonfire.ecs.components.BonfireData
 import com.mineinabyss.geary.minecraft.store.decode
 import com.mineinabyss.geary.minecraft.store.encode
 import com.mineinabyss.geary.minecraft.store.has

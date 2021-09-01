@@ -1,11 +1,13 @@
 package com.mineinabyss.bonfire.extensions
 
-import com.mineinabyss.bonfire.components.destroyBonfire
-import com.mineinabyss.bonfire.components.save
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
+import com.mineinabyss.bonfire.ecs.components.destroyBonfire
+import com.mineinabyss.bonfire.ecs.components.save
 import com.mineinabyss.bonfire.logging.BonfireLogger
+import com.mineinabyss.geary.minecraft.access.geary
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import org.bukkit.OfflinePlayer
@@ -71,6 +73,10 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
         newBonfireData.save()
         this@setRespawnLocation.player?.let { BonfireConfig.data.respawnSetSound.playSound(it) }
         this@setRespawnLocation.player?.success("Respawn point set")
+        val p = this@setRespawnLocation.player;
+        if (p != null) {
+            geary(p).setPersisting(BonfireEffectArea(newBonfireData.uuid))
+        }
 
         BonfireLogger.logRespawnSet(newBonfireBlock.location, this@setRespawnLocation)
     }
@@ -89,16 +95,21 @@ fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
 
         val deleteCode = Players.deleteWhere {
             (Players.playerUUID eq this@removeBonfireSpawnLocation.uniqueId) and
-            (Players.bonfireUUID eq bonfireUUID)
+                    (Players.bonfireUUID eq bonfireUUID)
         }
-        if(deleteCode == 0) return@transaction false
+        if (deleteCode == 0) return@transaction false
 
         this@removeBonfireSpawnLocation.player?.let { BonfireConfig.data.respawnUnsetSound.playSound(it) }
         this@removeBonfireSpawnLocation.player?.error("Respawn point has been removed")
 
+        val p = this@removeBonfireSpawnLocation.player
+        if (p != null) {
+            geary(p).remove<BonfireEffectArea>()
+        }
+
         Bonfire
-            .select{Bonfire.entityUUID eq bonfireUUID}
-            .firstOrNull()?.get(Bonfire.location)?.let{
+            .select { Bonfire.entityUUID eq bonfireUUID }
+            .firstOrNull()?.get(Bonfire.location)?.let {
                 BonfireLogger.logRespawnUnset(it, this@removeBonfireSpawnLocation)
             }
 
