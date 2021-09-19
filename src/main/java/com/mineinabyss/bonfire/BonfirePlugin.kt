@@ -16,12 +16,13 @@ import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.minecraft.dsl.attachToGeary
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
+import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.idofront.plugin.registerEvents
+import com.mineinabyss.idofront.plugin.registerService
+import com.mineinabyss.idofront.serialization.SerializablePrefabItemService
 import com.mineinabyss.idofront.slimjar.LibraryLoaderInjector
 import com.okkero.skedule.schedule
 import kotlinx.serialization.InternalSerializationApi
-import org.bukkit.Bukkit
-import org.bukkit.NamespacedKey
 import org.bukkit.block.Campfire
 import org.bukkit.plugin.java.JavaPlugin
 import org.jetbrains.exposed.sql.*
@@ -61,6 +62,10 @@ class BonfirePlugin : JavaPlugin() {
 
         BonfireCommandExecutor
 
+        if (isPluginEnabled("Looty")) {
+            registerService<SerializablePrefabItemService>(BonfireSerializablePrefabItemService)
+        }
+
         schedule {
             repeating(BonfireConfig.data.expirationCheckInterval.inTicks)
             while (true) {
@@ -83,7 +88,6 @@ class BonfirePlugin : JavaPlugin() {
 
     override fun onDisable() {
         // Plugin shutdown logic
-        Bukkit.getServer().removeRecipe(NamespacedKey.fromString(BonfireConfig.data.bonfireRecipe.key)!!)
 //        ProtocolLibrary.getProtocolManager().removePacketListener(ChatPacketAdapter);
 
     }

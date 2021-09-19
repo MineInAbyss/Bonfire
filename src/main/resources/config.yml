@@ -1,18 +1,5 @@
-bonfireRecipe:
-  key: 'bonfire:bonfire'
-  ingredients:
-    items:
-      S:
-        type: STICK
-    configuration: |-
-      SSS
-      SSS
-      SSS
-  result:
-    type: CAMPFIRE
-    amount: 1
-    custom-model-data: 1
-    display-name: §aBonfire
+bonfireItem:
+  prefab: looty:bonfire
 modelItem:
   type: WOODEN_SHOVEL
   custom-model-data: 1

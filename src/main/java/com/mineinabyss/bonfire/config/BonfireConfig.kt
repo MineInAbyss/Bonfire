@@ -3,10 +3,7 @@ package com.mineinabyss.bonfire.config
 import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.ecs.components.SoundEffect
 import com.mineinabyss.idofront.config.IdofrontConfig
-import com.mineinabyss.idofront.config.ReloadScope
-import com.mineinabyss.idofront.recpies.register
 import com.mineinabyss.idofront.serialization.SerializableItemStack
-import com.mineinabyss.idofront.serialization.SerializableRecipe
 import com.mineinabyss.idofront.time.TimeSpan
 import com.mineinabyss.idofront.time.days
 import com.mineinabyss.idofront.time.weeks
@@ -16,7 +13,7 @@ import org.bukkit.Material
 object BonfireConfig : IdofrontConfig<BonfireConfig.Data>(bonfirePlugin, Data.serializer()) {
     @Serializable
     data class Data(
-        var bonfireRecipe: SerializableRecipe,
+        var bonfireItem: SerializableItemStack,
         var modelItem: SerializableItemStack = SerializableItemStack(Material.WOODEN_SHOVEL, 1, 1),
         var maxPlayerCount: Int = 4,
         var bonfireExpirationTime: TimeSpan = 1.weeks,
@@ -28,10 +25,4 @@ object BonfireConfig : IdofrontConfig<BonfireConfig.Data>(bonfirePlugin, Data.se
         var effectStrength: Float = 10f,
         var effectRegenRate: Int = 7
     )
-
-    override fun ReloadScope.load() {
-        "Registering bonfire recipe" {
-            data.bonfireRecipe.toCraftingRecipe().register()
-        }
-    }
 }
