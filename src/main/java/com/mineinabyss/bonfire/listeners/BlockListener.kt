@@ -40,7 +40,7 @@ object BlockListener : Listener {
             return
         }
 
-        if (itemInHand.isSimilar(BonfireConfig.data.bonfireRecipe.result.toItemStack())) {
+        if (itemInHand.isSimilar(BonfireConfig.data.bonfireItem.toItemStack())) {
             if (blockPlaced.getRelative(BlockFace.UP).type != Material.AIR ||
                 blockPlaced.getRelative(BlockFace.UP, 2).type != Material.AIR
             ) {
