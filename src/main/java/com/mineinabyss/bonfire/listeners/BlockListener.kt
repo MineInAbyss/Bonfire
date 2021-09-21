@@ -79,12 +79,11 @@ object BlockListener : Listener {
     @EventHandler
     fun BlockSyncEvent.sync() {
         val corr = block.location.correspondingLocation?.block ?: return
-        if (block.type != Material.CAMPFIRE && corr.type != Material.CAMPFIRE) return
 
         val blockIsBonfire = block.state is Campfire && (block.state as Campfire).isBonfire
         val corrIsBonfire = corr.state is Campfire && (corr.state as Campfire).isBonfire
 
-        isCancelled = blockIsBonfire || corrIsBonfire
+        isCancelled = blockIsBonfire || corrIsBonfire || block.hasBonfireBelow() || corr.hasBonfireBelow()
     }
 
     @EventHandler
