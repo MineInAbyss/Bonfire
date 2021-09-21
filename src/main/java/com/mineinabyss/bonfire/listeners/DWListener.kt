@@ -6,13 +6,14 @@ import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.bonfire.listeners.BlockListener.hasBonfireBelow
 import org.bukkit.block.Campfire
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
 
 object DWListener : Listener {
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     fun BlockSyncEvent.event() {
         val corr = block.location.correspondingLocation?.block ?: return
 
@@ -22,7 +23,7 @@ object DWListener : Listener {
         isCancelled = blockIsBonfire || corrIsBonfire || block.hasBonfireBelow() || corr.hasBonfireBelow()
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     fun BlockPlaceEvent.event() {
         val corr = block.location.correspondingLocation?.block ?: return
 
@@ -31,7 +32,7 @@ object DWListener : Listener {
         isCancelled = corrIsBonfire || corr.hasBonfireBelow()
     }
 
-    @EventHandler
+    @EventHandler()
     fun BlockBreakEvent.event() {
         val corr = block.location.correspondingLocation?.block ?: return
 

@@ -23,6 +23,7 @@ import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.ThrownPotion
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.*
 import org.bukkit.event.entity.EntityChangeBlockEvent
@@ -33,7 +34,7 @@ import org.bukkit.block.data.type.Campfire as CampfireBlockData
 
 object BlockListener : Listener {
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     fun BlockPlaceEvent.place() {
         if(blockPlaced.hasBonfireBelow()){
             isCancelled = true
