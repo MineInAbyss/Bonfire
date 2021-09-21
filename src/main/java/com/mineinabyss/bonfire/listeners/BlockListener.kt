@@ -81,7 +81,10 @@ object BlockListener : Listener {
         val corr = block.location.correspondingLocation?.block ?: return
         if (block.type != Material.CAMPFIRE && corr.type != Material.CAMPFIRE) return
 
-        isCancelled = (block.state as Campfire).isBonfire || (corr.state as Campfire).isBonfire
+        val blockIsBonfire = block.state is Campfire && (block.state as Campfire).isBonfire
+        val corrIsBonfire = corr.state is Campfire && (corr.state as Campfire).isBonfire
+
+        isCancelled = blockIsBonfire || corrIsBonfire
     }
 
     @EventHandler
