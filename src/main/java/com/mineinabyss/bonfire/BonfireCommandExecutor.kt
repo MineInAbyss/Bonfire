@@ -195,7 +195,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
             }
             "give"(desc = "Give yourself a bonfire"){ //TODO: Add this command to idofront/MiA for any custom item
                 playerAction{
-                    player.inventory.addItem(BonfireConfig.data.bonfireRecipe.result.toItemStack())
+                    player.inventory.addItem(BonfireConfig.data.bonfireItem.toItemStack())
                 }
             }
         }
