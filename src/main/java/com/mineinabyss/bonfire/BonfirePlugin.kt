@@ -12,6 +12,7 @@ import com.mineinabyss.bonfire.ecs.components.destroyBonfire
 import com.mineinabyss.bonfire.ecs.systems.BonfireEffectSystem
 import com.mineinabyss.bonfire.extensions.bonfireData
 import com.mineinabyss.bonfire.listeners.BlockListener
+import com.mineinabyss.bonfire.listeners.DWListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.minecraft.dsl.attachToGeary
@@ -64,6 +65,10 @@ class BonfirePlugin : JavaPlugin() {
 
         if (isPluginEnabled("Looty")) {
             registerService<SerializablePrefabItemService>(BonfireSerializablePrefabItemService)
+        }
+
+        if (isPluginEnabled("Looty")) {
+            registerEvents(DWListener)
         }
 
         schedule {
