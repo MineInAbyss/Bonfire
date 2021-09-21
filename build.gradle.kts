@@ -21,6 +21,7 @@ dependencies {
 
     // Plugin APIs
     compileOnly("com.mineinabyss:looty:0.3.19")
+    compileOnly("com.derongan.minecraft:deeperworld:0.3.67")
 
     // Shaded
     implementation("com.mineinabyss:idofront:1.17.1-0.6.23")

@@ -1,5 +1,7 @@
 package com.mineinabyss.bonfire.listeners
 
+import com.derongan.minecraft.deeperworld.event.BlockSyncEvent
+import com.derongan.minecraft.deeperworld.world.section.correspondingLocation
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent
 import com.mineinabyss.bonfire.Permissions
 import com.mineinabyss.bonfire.bonfirePlugin
@@ -72,6 +74,14 @@ object BlockListener : Listener {
 
             BonfireLogger.logBonfirePlace(blockPlaced.location, player)
         }
+    }
+
+    @EventHandler
+    fun BlockSyncEvent.sync() {
+        val corr = block.location.correspondingLocation?.block ?: return
+        if (block.type != Material.CAMPFIRE && corr.type != Material.CAMPFIRE) return
+
+        isCancelled = (block.state as Campfire).isBonfire || (corr.state as Campfire).isBonfire
     }
 
     @EventHandler
