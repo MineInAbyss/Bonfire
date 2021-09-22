@@ -32,7 +32,7 @@ object DWListener : Listener {
         isCancelled = corrIsBonfire || corr.hasBonfireBelow()
     }
 
-    @EventHandler()
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     fun BlockBreakEvent.event() {
         val corr = block.location.correspondingLocation?.block ?: return
 

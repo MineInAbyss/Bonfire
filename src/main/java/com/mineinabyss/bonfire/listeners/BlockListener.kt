@@ -75,7 +75,7 @@ object BlockListener : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     fun BlockBreakEvent.breakBlock() {
         if (block.type != Material.CAMPFIRE && block.type != Material.SOUL_CAMPFIRE) return
 
