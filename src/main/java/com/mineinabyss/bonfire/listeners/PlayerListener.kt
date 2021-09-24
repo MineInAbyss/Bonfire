@@ -13,7 +13,6 @@ import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
-import com.mineinabyss.idofront.util.toMCKey
 import com.okkero.skedule.SynchronizationContext
 import com.okkero.skedule.schedule
 import org.bukkit.Bukkit
@@ -179,7 +178,6 @@ object PlayerListener : Listener {
 
     @EventHandler
     fun PlayerJoinEvent.joinServer() {
-        player.discoverRecipe(BonfireConfig.data.bonfireRecipe.key.toMCKey())
 
         transaction {
             val respawnBonfire = Players

@@ -14,12 +14,14 @@ import java.util.*
 val Campfire.isBonfire: Boolean get() = persistentDataContainer.has<BonfireData>()
 fun Campfire.isBonfire(uuid: UUID): Boolean = bonfireData()?.uuid == uuid
 fun Campfire.bonfireData(): BonfireData? = persistentDataContainer.decode()
-fun Campfire.save(data: BonfireData) = persistentDataContainer.encode(data)
+fun Campfire.save(data: BonfireData) {
+    persistentDataContainer.encode(data)
+    update()
+}
 
 fun Campfire.makeBonfire(newBonfireUUID: UUID, playerUUID: UUID) {
     val bonfireData = BonfireData(newBonfireUUID)
     save(bonfireData)
-    update()
 
     transaction {
         Bonfire.insert {

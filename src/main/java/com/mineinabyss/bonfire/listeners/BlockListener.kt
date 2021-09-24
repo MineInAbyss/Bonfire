@@ -8,7 +8,7 @@ import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Bonfire.ownerUUID
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.ecs.components.destroyBonfire
-import com.mineinabyss.bonfire.ecs.components.save
+import com.mineinabyss.bonfire.ecs.components.update
 import com.mineinabyss.bonfire.ecs.components.updateFire
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
@@ -23,6 +23,7 @@ import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.ThrownPotion
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.*
 import org.bukkit.event.entity.EntityChangeBlockEvent
@@ -33,14 +34,14 @@ import org.bukkit.block.data.type.Campfire as CampfireBlockData
 
 object BlockListener : Listener {
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     fun BlockPlaceEvent.place() {
         if(blockPlaced.hasBonfireBelow()){
             isCancelled = true
             return
         }
 
-        if (itemInHand.isSimilar(BonfireConfig.data.bonfireRecipe.result.toItemStack())) {
+        if (itemInHand.isSimilar(BonfireConfig.data.bonfireItem.toItemStack())) {
             if (blockPlaced.getRelative(BlockFace.UP).type != Material.AIR ||
                 blockPlaced.getRelative(BlockFace.UP, 2).type != Material.AIR
             ) {
@@ -53,7 +54,7 @@ object BlockListener : Listener {
             // we need to save this as a respawn campfire instead of just a regular campfire
             val respawnCampfire = blockPlaced.state as Campfire
             val campfireData = blockPlaced.blockData as CampfireBlockData
-            respawnCampfire.blockData = campfireData.apply { isLit = true }
+            respawnCampfire.blockData = campfireData.apply { isLit = false }
 
             // Spawn armor stand
             val armorStand = blockPlaced.location.world.spawnEntity(
@@ -74,7 +75,7 @@ object BlockListener : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     fun BlockBreakEvent.breakBlock() {
         if (block.type != Material.CAMPFIRE && block.type != Material.SOUL_CAMPFIRE) return
 
@@ -103,7 +104,7 @@ object BlockListener : Listener {
             }
             else{
                 val campfire = entity.location.block.state as Campfire
-                campfire.bonfireData()?.save()
+                campfire.bonfireData()?.update()
             }
         }
     }
@@ -149,7 +150,7 @@ object BlockListener : Listener {
         }
     }
 
-    private fun Block.hasBonfireBelow() : Boolean {
+    fun Block.hasBonfireBelow(): Boolean {
         val blockBelow = getRelative(BlockFace.DOWN)
         val blockBelowBelowBlock = blockBelow.getRelative(BlockFace.DOWN)
 

@@ -19,6 +19,10 @@ dependencies {
     compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json")
     compileOnly("com.charleskorn.kaml:kaml")
 
+    // Plugin APIs
+    compileOnly("com.mineinabyss:looty:0.3.19")
+    compileOnly("com.derongan.minecraft:deeperworld:0.3.67")
+
     // Shaded
     implementation("com.mineinabyss:idofront:1.17.1-0.6.23")
     implementation("com.github.okkero:Skedule:v1.2.6")
@@ -27,7 +31,7 @@ dependencies {
     slim("org.jetbrains.exposed:exposed-core:$exposedVersion") { isTransitive = false }
     slim("org.jetbrains.exposed:exposed-dao:$exposedVersion") { isTransitive = false }
     slim("org.jetbrains.exposed:exposed-jdbc:$exposedVersion") { isTransitive = false }
-    slim("org.jetbrains.exposed:exposed-java-time:$exposedVersion") {isTransitive = false }
+    slim("org.jetbrains.exposed:exposed-java-time:$exposedVersion") { isTransitive = false }
 
     // Sqlite
     slim("org.xerial:sqlite-jdbc:3.30.1")
