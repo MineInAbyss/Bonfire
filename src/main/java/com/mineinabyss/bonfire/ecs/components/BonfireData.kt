@@ -81,10 +81,10 @@ fun BonfireData.createModel(): ArmorStand? {
         armorStand.setBonfireModel()
         armorStand.equipment?.helmet = BonfireConfig.data.modelItem.toItemStack()
 
-        val players = Players.select { Players.bonfireUUID eq this@createModel.uuid }
+        val playerCount = Players.select { Players.bonfireUUID eq this@createModel.uuid }.count()
 
         armorStand.equipment?.helmet =
-            armorStand.equipment?.helmet?.editItemMeta { setCustomModelData(1 + players.count().toInt()) }
+            armorStand.equipment?.helmet?.editItemMeta { setCustomModelData(1 + playerCount.toInt()) }
 
         Bonfire.update({ Bonfire.entityUUID eq this@createModel.uuid }) {
             it[entityUUID] = armorStand.uniqueId
@@ -96,7 +96,7 @@ fun BonfireData.createModel(): ArmorStand? {
 
         this@createModel.uuid = armorStand.uniqueId
 
-        players.forEach {
+        Players.select { Players.bonfireUUID eq this@createModel.uuid }.forEach {
             val p = Bukkit.getPlayer(it[playerUUID]) ?: return@forEach
             geary(p).setPersisting(BonfireEffectArea(this@createModel.uuid))
         }
