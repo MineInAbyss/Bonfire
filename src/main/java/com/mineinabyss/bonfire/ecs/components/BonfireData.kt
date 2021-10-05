@@ -56,6 +56,21 @@ fun BonfireData.updateModel() {
 
         model.equipment?.helmet = item?.editItemMeta { setCustomModelData(1 + playerCount.toInt()) }
         bonfireData.isLit = playerCount > 0
+
+        val duplicates = Bonfire.select {
+            (Bonfire.location eq model.location) and (Bonfire.entityUUID neq this@updateModel.uuid)
+        }
+        if (duplicates.any()) {
+            duplicates.forEach { dupe ->
+                Players.update({ Players.bonfireUUID eq dupe[Bonfire.entityUUID] }) {
+                    it[bonfireUUID] = this@updateModel.uuid
+                }
+
+                Bukkit.getEntity(dupe[Bonfire.entityUUID])?.remove()
+            }
+
+            Bonfire.deleteWhere { (Bonfire.location eq model.location) and (Bonfire.entityUUID neq this@updateModel.uuid) }
+        }
     }
 
     bonfire.blockData = bonfireData
@@ -128,7 +143,7 @@ fun BonfireData.updateFire() {
     if (block.state !is Campfire) return
     val bonfireData = block.blockData as BlockDataTypeCampfire
 
-    bonfirePlugin.schedule(SynchronizationContext.ASYNC){
+    bonfirePlugin.schedule(SynchronizationContext.ASYNC) {
         waitFor(2)
         transaction {
             Players.select { Players.bonfireUUID eq this@updateFire.uuid }.forEach {
