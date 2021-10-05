@@ -8,7 +8,7 @@ import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Bonfire.ownerUUID
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.ecs.components.destroyBonfire
-import com.mineinabyss.bonfire.ecs.components.save
+import com.mineinabyss.bonfire.ecs.components.update
 import com.mineinabyss.bonfire.ecs.components.updateFire
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
@@ -54,7 +54,7 @@ object BlockListener : Listener {
             // we need to save this as a respawn campfire instead of just a regular campfire
             val respawnCampfire = blockPlaced.state as Campfire
             val campfireData = blockPlaced.blockData as CampfireBlockData
-            respawnCampfire.blockData = campfireData.apply { isLit = true }
+            respawnCampfire.blockData = campfireData.apply { isLit = false }
 
             // Spawn armor stand
             val armorStand = blockPlaced.location.world.spawnEntity(
@@ -104,7 +104,7 @@ object BlockListener : Listener {
             }
             else{
                 val campfire = entity.location.block.state as Campfire
-                campfire.bonfireData()?.save()
+                campfire.bonfireData()?.update()
             }
         }
     }

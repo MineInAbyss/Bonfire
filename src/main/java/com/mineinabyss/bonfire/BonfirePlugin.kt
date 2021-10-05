@@ -67,7 +67,7 @@ class BonfirePlugin : JavaPlugin() {
             registerService<SerializablePrefabItemService>(BonfireSerializablePrefabItemService)
         }
 
-        if (isPluginEnabled("Looty")) {
+        if (isPluginEnabled("DeeperWorld")) {
             registerEvents(DWListener)
         }
 

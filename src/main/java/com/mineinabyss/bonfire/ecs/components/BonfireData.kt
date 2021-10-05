@@ -7,10 +7,12 @@ import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.data.Players.playerUUID
+import com.mineinabyss.bonfire.extensions.save
 import com.mineinabyss.bonfire.extensions.setBonfireModel
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.ecs.api.autoscan.AutoscanComponent
-import com.mineinabyss.geary.minecraft.store.encode
+import com.mineinabyss.geary.minecraft.access.geary
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.serialization.UUIDSerializer
@@ -79,38 +81,48 @@ fun BonfireData.createModel(): ArmorStand? {
         armorStand.setBonfireModel()
         armorStand.equipment?.helmet = BonfireConfig.data.modelItem.toItemStack()
 
+        val playerCount = Players.select { Players.bonfireUUID eq this@createModel.uuid }.count()
+
+        armorStand.equipment?.helmet =
+            armorStand.equipment?.helmet?.editItemMeta { setCustomModelData(1 + playerCount.toInt()) }
+
         Bonfire.update({ Bonfire.entityUUID eq this@createModel.uuid }) {
             it[entityUUID] = armorStand.uniqueId
         }
+
+        Players.update({ Players.bonfireUUID eq this@createModel.uuid }) {
+            it[bonfireUUID] = armorStand.uniqueId
+        }
+
+        this@createModel.uuid = armorStand.uniqueId
+
+        Players.select { Players.bonfireUUID eq this@createModel.uuid }.forEach {
+            val p = Bukkit.getPlayer(it[playerUUID]) ?: return@forEach
+            geary(p).setPersisting(BonfireEffectArea(this@createModel.uuid))
+        }
+
+        (bonfireRow[Bonfire.location].block.state as Campfire).save(BonfireData(armorStand.uniqueId))
 
         return@transaction armorStand
     }
 }
 
-fun BonfireData.save() {
+fun BonfireData.update() {
     transaction {
-        if (Players.select { Players.bonfireUUID eq this@save.uuid }.empty()) {
-            Bonfire.update({ Bonfire.entityUUID eq this@save.uuid }) {
+        if (Players.select { Players.bonfireUUID eq this@update.uuid }.empty()) {
+            Bonfire.update({ Bonfire.entityUUID eq this@update.uuid }) {
                 it[stateChangedTimestamp] = LocalDateTime.now()
             }
         }
     }
 
-    this.updateModel()
-
-    val model = Bukkit.getEntity(this.uuid)
-    if (model !is ArmorStand) return
-    val block = model.world.getBlockAt(model.location)
-    if (block.state !is Campfire) return
-    val bonfire = block.state as Campfire
-
-    bonfire.persistentDataContainer.encode(this) //FIXME: is this necessary?
+    updateModel()
 
     updateFire()
 }
 
 fun BonfireData.updateFire() {
-    val model = Bukkit.getEntity(this.uuid)
+    val model = Bukkit.getEntity(this.uuid) ?: createModel()
     if (model !is ArmorStand) return
     val block = model.world.getBlockAt(model.location)
     if (block.state !is Campfire) return
