@@ -3,6 +3,7 @@ package com.mineinabyss.bonfire
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.ecs.components.updateModel
 import com.mineinabyss.bonfire.extensions.bonfireData
 import com.mineinabyss.bonfire.extensions.removeBonfireSpawnLocation
 import com.mineinabyss.bonfire.extensions.setRespawnLocation
@@ -13,14 +14,21 @@ import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
 import com.mineinabyss.idofront.commands.execution.stopCommand
 import com.mineinabyss.idofront.commands.extensions.actions.playerAction
+import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
+import com.okkero.skedule.BukkitSchedulerController
+import com.okkero.skedule.CoroutineTask
+import com.okkero.skedule.schedule
 import org.bukkit.Bukkit
+import org.bukkit.Chunk
 import org.bukkit.Location
 import org.bukkit.block.Campfire
+import org.bukkit.entity.ArmorStand
 import org.jetbrains.exposed.sql.leftJoin
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
 @ExperimentalCommandDSL
@@ -163,8 +171,8 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                         }
                     }
                 }
-                "players"(desc = "Get the players registered with the bonfire at location"){
-                    playerAction{
+                "players"(desc = "Get the players registered with the bonfire at location") {
+                    playerAction {
                         val bonfireUUID = (Location(
                             player.world,
                             bonfireLocX.toDouble(),
@@ -172,17 +180,17 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                             bonfireLocZ.toDouble()
                         ).block.state as? Campfire)?.bonfireData()?.uuid
 
-                        if(bonfireUUID == null){
+                        if (bonfireUUID == null) {
                             command.stopCommand("No bonfire found at this location.")
-                        }else{
-                            transaction{
-                                val registeredPlayers = Players.select{Players.bonfireUUID eq bonfireUUID}
+                        } else {
+                            transaction {
+                                val registeredPlayers = Players.select { Players.bonfireUUID eq bonfireUUID }
 
-                                if(registeredPlayers.empty()){
+                                if (registeredPlayers.empty()) {
                                     sender.info("No players registered with this bonfire.")
-                                }else{
-                                    val playersString = registeredPlayers.map{ registeredPlayer ->
-                                        Bukkit.getOfflinePlayers().first{
+                                } else {
+                                    val playersString = registeredPlayers.map { registeredPlayer ->
+                                        Bukkit.getOfflinePlayers().first {
                                             it.uniqueId == registeredPlayer[Players.playerUUID]
                                         }.name
                                     }.joinToString(",")
@@ -193,11 +201,67 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                     }
                 }
             }
-            "give"(desc = "Give yourself a bonfire"){ //TODO: Add this command to idofront/MiA for any custom item
-                playerAction{
+            "give"(desc = "Give yourself a bonfire") { //TODO: Add this command to idofront/MiA for any custom item
+                playerAction {
                     player.inventory.addItem(BonfireConfig.data.bonfireItem.toItemStack())
                 }
             }
+            "updateAllModels"(desc = "Clear any armorstands associated with bonfires and update model of all bonfires.") {
+                playerAction {
+                    pauseExpirationChecks = true
+                    transaction {
+                        val bonfireLocations = Bonfire.slice(Bonfire.location).selectAll()
+                            .groupBy(keySelector = { it[Bonfire.location].chunk },
+                                valueTransform = { it[Bonfire.location] })
+
+                        player.broadcastVal("Starting chunk scan. DO NOT MESS WITH BONFIRES UNTIL DONE")
+
+                        val tasks = mutableListOf<CoroutineTask>()
+                        bonfireLocations.forEach { (chunk, locations) ->
+                            tasks.add(bonfirePlugin.schedule {
+                                updateChunkBonfires(chunk, locations)
+                            })
+                        }
+
+                        bonfirePlugin.schedule {
+                            repeating(20)
+                            val scheduler = Bukkit.getScheduler()
+                            var tasksAreFinished = false
+                            while (!tasksAreFinished) {
+                                yield()
+                                tasks.forEach {
+                                    val currentTask = it.currentTask
+                                    if (currentTask != null && scheduler.isCurrentlyRunning(currentTask.taskId)) {
+                                        tasksAreFinished = false
+                                        return@forEach
+                                    }
+                                }
+                                tasksAreFinished = true
+                            }
+                            player.broadcastVal("Chunk scan finished.")
+                            pauseExpirationChecks = false
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun BukkitSchedulerController.updateChunkBonfires(chunk: Chunk, bfLocations: List<Location>) {
+        chunk.load()
+
+        val bonfireArmorstands = chunk.entities
+            .filterIsInstance<ArmorStand>()
+            .filter { it.isMarker && it.location in bfLocations }
+
+        bonfireArmorstands.forEach {
+            it.remove()
+            yield()
+        }
+
+        bfLocations.forEach {
+            (it.block.state as? Campfire)?.bonfireData()?.updateModel()
+            yield()
         }
     }
 }

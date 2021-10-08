@@ -31,6 +31,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
 
 val bonfirePlugin: BonfirePlugin by lazy { JavaPlugin.getPlugin(BonfirePlugin::class.java) }
+var pauseExpirationChecks = false
 
 class BonfirePlugin : JavaPlugin() {
 
@@ -74,17 +75,19 @@ class BonfirePlugin : JavaPlugin() {
         schedule {
             repeating(BonfireConfig.data.expirationCheckInterval.inTicks)
             while (true) {
-                transaction {
-                    Bonfire
-                        .leftJoin(Players, { entityUUID }, { bonfireUUID })
-                        .select { bonfireUUID.isNull() }
-                        .forEach {
-                            if ((it[stateChangedTimestamp] + it[timeUntilDestroy]) <= LocalDateTime.now()) {
-                                (it[location].block.state as? Campfire)?.bonfireData()?.destroyBonfire(true)
-                                    ?: return@forEach
-                                BonfireLogger.logBonfireExpired(it[location])
+                if(!pauseExpirationChecks) {
+                    transaction {
+                        Bonfire
+                            .leftJoin(Players, { entityUUID }, { bonfireUUID })
+                            .select { bonfireUUID.isNull() }
+                            .forEach {
+                                if ((it[stateChangedTimestamp] + it[timeUntilDestroy]) <= LocalDateTime.now()) {
+                                    (it[location].block.state as? Campfire)?.bonfireData()?.destroyBonfire(true)
+                                        ?: return@forEach
+                                    BonfireLogger.logBonfireExpired(it[location])
+                                }
                             }
-                        }
+                    }
                 }
                 yield()
             }
