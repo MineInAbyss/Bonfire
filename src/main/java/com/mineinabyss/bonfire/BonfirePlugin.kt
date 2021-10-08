@@ -15,12 +15,13 @@ import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.DWListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.bonfire.logging.BonfireLogger
-import com.mineinabyss.geary.minecraft.dsl.attachToGeary
+import com.mineinabyss.geary.minecraft.dsl.gearyAddon
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
 import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.idofront.plugin.registerEvents
 import com.mineinabyss.idofront.plugin.registerService
 import com.mineinabyss.idofront.serialization.SerializablePrefabItemService
+import com.mineinabyss.idofront.slimjar.IdofrontSlimjar
 import com.mineinabyss.idofront.slimjar.LibraryLoaderInjector
 import com.okkero.skedule.schedule
 import kotlinx.serialization.InternalSerializationApi
@@ -38,7 +39,7 @@ class BonfirePlugin : JavaPlugin() {
     @InternalSerializationApi
     @ExperimentalCommandDSL
     override fun onEnable() {
-        LibraryLoaderInjector.inject(this)
+        IdofrontSlimjar.loadToLibraryLoader(this)
         saveDefaultConfig()
         BonfireConfig.load()
 
@@ -55,7 +56,7 @@ class BonfirePlugin : JavaPlugin() {
             BlockListener
         )
 
-        attachToGeary {
+        gearyAddon {
             autoscanComponents()
             systems(
                 BonfireEffectSystem()
