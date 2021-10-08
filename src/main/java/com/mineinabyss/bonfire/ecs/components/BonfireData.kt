@@ -12,7 +12,7 @@ import com.mineinabyss.bonfire.extensions.save
 import com.mineinabyss.bonfire.extensions.setBonfireModel
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.ecs.api.autoscan.AutoscanComponent
-import com.mineinabyss.geary.minecraft.access.geary
+import com.mineinabyss.geary.minecraft.access.toGeary
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.serialization.UUIDSerializer
@@ -37,7 +37,7 @@ import org.bukkit.block.data.type.Campfire as BlockDataTypeCampfire
 @SerialName("bonfire:data")
 @AutoscanComponent
 class BonfireData(
-    var uuid: UUID,
+        var uuid: UUID,
 )
 
 fun BonfireData.updateModel() {
@@ -47,14 +47,14 @@ fun BonfireData.updateModel() {
     if (block.state !is Campfire) return
     val bonfire = block.state as Campfire
     val bonfireData = block.blockData as BlockDataTypeCampfire
-    val item = model.equipment?.helmet
+    val item = model.equipment.helmet
 
     transaction {
         val playerCount = Players.select { Players.bonfireUUID eq this@updateModel.uuid }.count()
 
         //broadcast("Updating model for bonfire at x:${model.location.x} y:${model.location.y} z:${model.location.z} for $playerCount number of players.")
 
-        model.equipment?.helmet = item?.editItemMeta { setCustomModelData(1 + playerCount.toInt()) }
+        model.equipment.helmet = item?.editItemMeta { setCustomModelData(1 + playerCount.toInt()) }
         bonfireData.isLit = playerCount > 0
     }
 
@@ -66,11 +66,11 @@ fun BonfireData.createModel(): ArmorStand? {
     @Suppress("RemoveExplicitTypeArguments")
     return transaction<ArmorStand?> {
         val bonfireRow =
-            Bonfire.select { Bonfire.entityUUID eq this@createModel.uuid }.firstOrNull() ?: return@transaction null
+                Bonfire.select { Bonfire.entityUUID eq this@createModel.uuid }.firstOrNull() ?: return@transaction null
 
         // Spawn armor stand
         val armorStand = bonfireRow[Bonfire.location].world.spawnEntity(
-            bonfireRow[Bonfire.location].toCenterLocation().apply { this.y = floor(y) }, EntityType.ARMOR_STAND
+                bonfireRow[Bonfire.location].toCenterLocation().apply { this.y = floor(y) }, EntityType.ARMOR_STAND
         ) as ArmorStand
         armorStand.setGravity(false)
         armorStand.isInvulnerable = true
@@ -79,12 +79,12 @@ fun BonfireData.createModel(): ArmorStand? {
         armorStand.isSmall = true
         armorStand.isMarker = true
         armorStand.setBonfireModel()
-        armorStand.equipment?.helmet = BonfireConfig.data.modelItem.toItemStack()
+        armorStand.equipment.helmet = BonfireConfig.data.modelItem.toItemStack()
 
         val playerCount = Players.select { Players.bonfireUUID eq this@createModel.uuid }.count()
 
-        armorStand.equipment?.helmet =
-            armorStand.equipment?.helmet?.editItemMeta { setCustomModelData(1 + playerCount.toInt()) }
+        armorStand.equipment.helmet =
+                armorStand.equipment.helmet?.editItemMeta { setCustomModelData(1 + playerCount.toInt()) }
 
         Bonfire.update({ Bonfire.entityUUID eq this@createModel.uuid }) {
             it[entityUUID] = armorStand.uniqueId
@@ -98,7 +98,7 @@ fun BonfireData.createModel(): ArmorStand? {
 
         Players.select { Players.bonfireUUID eq this@createModel.uuid }.forEach {
             val p = Bukkit.getPlayer(it[playerUUID]) ?: return@forEach
-            geary(p).setPersisting(BonfireEffectArea(this@createModel.uuid))
+            p.toGeary().setPersisting(BonfireEffectArea(this@createModel.uuid))
         }
 
         (bonfireRow[Bonfire.location].block.state as Campfire).save(BonfireData(armorStand.uniqueId))
@@ -128,16 +128,16 @@ fun BonfireData.updateFire() {
     if (block.state !is Campfire) return
     val bonfireData = block.blockData as BlockDataTypeCampfire
 
-    bonfirePlugin.schedule(SynchronizationContext.ASYNC){
+    bonfirePlugin.schedule(SynchronizationContext.ASYNC) {
         waitFor(2)
         transaction {
             Players.select { Players.bonfireUUID eq this@updateFire.uuid }.forEach {
                 val player = Bukkit.getPlayer(it[Players.playerUUID])
                 player?.sendBlockChange(
-                    block.location,
-                    (Material.SOUL_CAMPFIRE.createBlockData() as BlockDataTypeCampfire).apply {
-                        this.facing = bonfireData.facing
-                    })
+                        block.location,
+                        (Material.SOUL_CAMPFIRE.createBlockData() as BlockDataTypeCampfire).apply {
+                            this.facing = bonfireData.facing
+                        })
             }
         }
     }
@@ -151,26 +151,26 @@ fun BonfireData.destroyBonfire(destroyBlock: Boolean) {
     transaction {
         if (model == null) {
             blockLocation = Bonfire
-                .select { Bonfire.entityUUID eq this@destroyBonfire.uuid }
-                .firstOrNull()?.get(Bonfire.location)
+                    .select { Bonfire.entityUUID eq this@destroyBonfire.uuid }
+                    .firstOrNull()?.get(Bonfire.location)
         }
 
         Players
-            .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
-            .select { Players.bonfireUUID eq this@destroyBonfire.uuid }
-            .forEach { row ->
-                BonfireLogger.logRespawnUnset(row[Bonfire.location], Bukkit.getOfflinePlayer(row[Players.playerUUID]))
-                val unsetMessage = "Your respawn point was unset because the bonfire was broken by the owner"
-                val player = Bukkit.getPlayer(row[Players.playerUUID])
-                if (player != null) {
-                    player.error(unsetMessage)
-                } else {
-                    MessageQueue.insert {
-                        it[content] = unsetMessage
-                        it[playerUUID] = row[Players.playerUUID]
+                .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
+                .select { Players.bonfireUUID eq this@destroyBonfire.uuid }
+                .forEach { row ->
+                    BonfireLogger.logRespawnUnset(row[Bonfire.location], Bukkit.getOfflinePlayer(row[Players.playerUUID]))
+                    val unsetMessage = "Your respawn point was unset because the bonfire was broken by the owner"
+                    val player = Bukkit.getPlayer(row[Players.playerUUID])
+                    if (player != null) {
+                        player.error(unsetMessage)
+                    } else {
+                        MessageQueue.insert {
+                            it[content] = unsetMessage
+                            it[playerUUID] = row[Players.playerUUID]
+                        }
                     }
                 }
-            }
         Bonfire.deleteWhere { Bonfire.entityUUID eq this@destroyBonfire.uuid }
         Players.deleteWhere { Players.bonfireUUID eq this@destroyBonfire.uuid }
     }

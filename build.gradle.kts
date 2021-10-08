@@ -1,10 +1,13 @@
 val exposedVersion: String by project
+val idofrontVersion: String by project
 
 plugins {
     id("com.mineinabyss.conventions.kotlin")
     kotlin("plugin.serialization")
     id("com.mineinabyss.conventions.papermc")
     id("com.mineinabyss.conventions.publication")
+    id("com.mineinabyss.conventions.copyjar")
+    id("com.mineinabyss.conventions.slimjar")
 }
 
 repositories {
@@ -24,7 +27,7 @@ dependencies {
     compileOnly("com.derongan.minecraft:deeperworld:0.3.67")
 
     // Shaded
-    implementation("com.mineinabyss:idofront:1.17.1-0.6.23")
+    implementation("com.mineinabyss:idofront:$idofrontVersion")
     implementation("com.github.okkero:Skedule:v1.2.6")
 
     // Database
@@ -37,7 +40,7 @@ dependencies {
     slim("org.xerial:sqlite-jdbc:3.30.1")
 
     // Plugin dependencies
-    compileOnly ("com.mineinabyss:geary-platform-papermc:0.6.48")
+    compileOnly ("com.mineinabyss:geary-platform-papermc:0.7.59")
 }
 
 //tasks.shadowJar {

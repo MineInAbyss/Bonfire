@@ -7,7 +7,7 @@ import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
 import com.mineinabyss.bonfire.ecs.components.destroyBonfire
 import com.mineinabyss.bonfire.ecs.components.update
 import com.mineinabyss.bonfire.logging.BonfireLogger
-import com.mineinabyss.geary.minecraft.access.geary
+import com.mineinabyss.geary.minecraft.access.toGeary
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import org.bukkit.OfflinePlayer
@@ -75,7 +75,7 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
         this@setRespawnLocation.player?.success("Respawn point set")
         val p = this@setRespawnLocation.player;
         if (p != null) {
-            geary(p).setPersisting(BonfireEffectArea(newBonfireData.uuid))
+            p.toGeary().setPersisting(BonfireEffectArea(newBonfireData.uuid))
         }
 
         BonfireLogger.logRespawnSet(newBonfireBlock.location, this@setRespawnLocation)
@@ -104,7 +104,7 @@ fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
 
         val p = this@removeBonfireSpawnLocation.player
         if (p != null) {
-            geary(p).remove<BonfireEffectArea>()
+            p.toGeary().remove<BonfireEffectArea>()
         }
 
         Bonfire
