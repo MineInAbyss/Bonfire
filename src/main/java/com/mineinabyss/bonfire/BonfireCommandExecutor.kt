@@ -3,10 +3,10 @@ package com.mineinabyss.bonfire
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
-import com.mineinabyss.bonfire.ecs.components.updateModel
-import com.mineinabyss.bonfire.extensions.bonfireData
 import com.mineinabyss.bonfire.extensions.removeBonfireSpawnLocation
 import com.mineinabyss.bonfire.extensions.setRespawnLocation
+import com.mineinabyss.bonfire.extensions.updateBonfire
+import com.mineinabyss.bonfire.extensions.uuid
 import com.mineinabyss.idofront.commands.CommandHolder
 import com.mineinabyss.idofront.commands.arguments.intArg
 import com.mineinabyss.idofront.commands.arguments.stringArg
@@ -97,7 +97,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                             bonfireLocX.toDouble(),
                             bonfireLocY.toDouble(),
                             bonfireLocZ.toDouble()
-                        ).block.state as? Campfire)?.bonfireData()?.uuid
+                        ).block.state as? Campfire)?.uuid
 
                         if (bonfireUUID == null) {
                             command.stopCommand("No bonfire found at this location.")
@@ -156,7 +156,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                             bonfireLocX.toDouble(),
                             bonfireLocY.toDouble(),
                             bonfireLocZ.toDouble()
-                        ).block.state as? Campfire)?.bonfireData()?.uuid
+                        ).block.state as? Campfire)?.uuid
 
                         if (bonfireUUID == null) {
                             command.stopCommand("No bonfire found at this location.")
@@ -178,7 +178,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                             bonfireLocX.toDouble(),
                             bonfireLocY.toDouble(),
                             bonfireLocZ.toDouble()
-                        ).block.state as? Campfire)?.bonfireData()?.uuid
+                        ).block.state as? Campfire)?.uuid
 
                         if (bonfireUUID == null) {
                             command.stopCommand("No bonfire found at this location.")
@@ -260,7 +260,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
         }
 
         bfLocations.forEach {
-            (it.block.state as? Campfire)?.bonfireData()?.updateModel()
+            (it.block.state as? Campfire)?.updateBonfire()
             yield()
         }
     }

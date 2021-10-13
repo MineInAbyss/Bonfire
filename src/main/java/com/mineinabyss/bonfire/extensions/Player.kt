@@ -4,8 +4,6 @@ import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
-import com.mineinabyss.bonfire.ecs.components.destroyBonfire
-import com.mineinabyss.bonfire.ecs.components.update
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.minecraft.access.toGeary
 import com.mineinabyss.idofront.messaging.error
@@ -29,8 +27,8 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
         val newBonfire = Bonfire
             .select { Bonfire.entityUUID eq bonfireUUID }
             .firstOrNull() ?: return@transaction
-        val newBonfireBlock = newBonfire[Bonfire.location].block.state as? Campfire ?: return@transaction
-        val newBonfireData = newBonfireBlock.bonfireData() ?: return@transaction
+        val newCampfire = newBonfire[Bonfire.location].block.state as? Campfire ?: return@transaction
+        newCampfire.isBonfire || return@transaction
 
         if (Players.select { Players.bonfireUUID eq bonfireUUID }.empty()) {
             val newTimeUntilDestroy = Duration.between(
@@ -39,7 +37,7 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
             )
 
             if (newTimeUntilDestroy.isNegative) {
-                newBonfireData.destroyBonfire(true)
+                newCampfire.destroy(true)
                 this@setRespawnLocation.player?.error("The bonfire has expired and turned to ash")
                 return@transaction
             } else {
@@ -61,7 +59,7 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
             if(oldBonfireBlock != null) {
                 BonfireLogger.logRespawnUnset(oldBonfireBlock.location, this@setRespawnLocation)
 
-                oldBonfireBlock.bonfireData()?.update() // update old bonfire model
+                if (oldBonfireBlock.chunk.isEntitiesLoaded) oldBonfireBlock.updateBonfire() // update old bonfire model
             }
         } else if (playerRow == null) {
             Players.insert {
@@ -70,15 +68,13 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
             }
         }
 
-        newBonfireData.update()
+        newCampfire.updateBonfire()
         this@setRespawnLocation.player?.let { BonfireConfig.data.respawnSetSound.playSound(it) }
         this@setRespawnLocation.player?.success("Respawn point set")
-        val p = this@setRespawnLocation.player;
-        if (p != null) {
-            p.toGeary().setPersisting(BonfireEffectArea(newBonfireData.uuid))
-        }
+        val p = this@setRespawnLocation.player
+        p?.toGeary()?.setPersisting(BonfireEffectArea(newCampfire.uuid))
 
-        BonfireLogger.logRespawnSet(newBonfireBlock.location, this@setRespawnLocation)
+        BonfireLogger.logRespawnSet(newCampfire.location, this@setRespawnLocation)
     }
 }
 
@@ -103,9 +99,7 @@ fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
         this@removeBonfireSpawnLocation.player?.error("Respawn point has been removed")
 
         val p = this@removeBonfireSpawnLocation.player
-        if (p != null) {
-            p.toGeary().remove<BonfireEffectArea>()
-        }
+        p?.toGeary()?.remove<BonfireEffectArea>()
 
         Bonfire
             .select { Bonfire.entityUUID eq bonfireUUID }
@@ -116,7 +110,7 @@ fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
         val bonfire = Bonfire
             .select { Bonfire.entityUUID eq dbPlayer[Players.bonfireUUID] }
             .firstOrNull()?.get(Bonfire.location)?.block?.state as? Campfire
-        bonfire?.bonfireData()?.update()
+        bonfire?.updateBonfire()
         return@transaction true
     }
 }
