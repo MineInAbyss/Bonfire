@@ -65,7 +65,6 @@ fun Campfire.createBonfire(newBonfireUUID: UUID, playerUUID: UUID) {
 
 fun Campfire.updateDisplay() {
     val block = block
-    val bonfireData = block.blockData as org.bukkit.block.data.type.Campfire
 
     if (!block.chunk.isEntitiesLoaded) return
 
@@ -77,7 +76,8 @@ fun Campfire.updateDisplay() {
         //broadcast("Updating model for bonfire at x:${model.location.x} y:${model.location.y} z:${model.location.z} for $playerCount number of players.")
 
         model.equipment.helmet = model.equipment.helmet?.editItemMeta { setCustomModelData(1 + playerCount.toInt()) }
-        bonfireData.apply { isLit = playerCount > 0 }
+        blockData = (blockData as org.bukkit.block.data.type.Campfire).apply { isLit = playerCount > 0 }
+        update()
 
         val duplicates = Bonfire.select {
             (Bonfire.location eq model.location) and (Bonfire.entityUUID neq this@updateDisplay.uuid)
@@ -94,8 +94,6 @@ fun Campfire.updateDisplay() {
             Bonfire.deleteWhere { (Bonfire.location eq model.location) and (Bonfire.entityUUID neq this@updateDisplay.uuid) }
         }
     }
-
-    update()
 }
 
 fun Campfire.createModel(): ArmorStand? {
@@ -122,7 +120,7 @@ fun Campfire.createModel(): ArmorStand? {
         armorStand.equipment.helmet =
             armorStand.equipment.helmet?.editItemMeta { setCustomModelData(playerCount.toInt()) }
 
-        (blockData as org.bukkit.block.data.type.Campfire).apply { isLit = playerCount > 0 }
+        blockData = (blockData as org.bukkit.block.data.type.Campfire).apply { isLit = playerCount > 0 }
         update()
 
         Bonfire.update({ Bonfire.entityUUID eq this@createModel.uuid }) {
