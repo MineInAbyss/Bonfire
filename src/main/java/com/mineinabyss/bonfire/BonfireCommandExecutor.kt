@@ -13,11 +13,9 @@ import com.mineinabyss.idofront.commands.arguments.stringArg
 import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
 import com.mineinabyss.idofront.commands.execution.stopCommand
+import com.mineinabyss.idofront.commands.extensions.actions.ensureSenderIsPlayer
 import com.mineinabyss.idofront.commands.extensions.actions.playerAction
-import com.mineinabyss.idofront.messaging.broadcastVal
-import com.mineinabyss.idofront.messaging.error
-import com.mineinabyss.idofront.messaging.info
-import com.mineinabyss.idofront.messaging.success
+import com.mineinabyss.idofront.messaging.*
 import com.okkero.skedule.BukkitSchedulerController
 import com.okkero.skedule.CoroutineTask
 import com.okkero.skedule.schedule
@@ -26,6 +24,7 @@ import org.bukkit.Chunk
 import org.bukkit.Location
 import org.bukkit.block.Campfire
 import org.bukkit.entity.ArmorStand
+import org.bukkit.entity.Player
 import org.jetbrains.exposed.sql.leftJoin
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
@@ -147,58 +146,57 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                 val bonfireLocY by intArg { name = "Y" }
                 val bonfireLocZ by intArg { name = "Z" }
                 "dbcheck"(desc = "Check if a bonfire at location is stored in the database") {
-//                    val bonfireLocX by intArg { name = "X" }
-//                    val bonfireLocY by intArg { name = "Y" }
-//                    val bonfireLocZ by intArg { name = "Z" }
-                    playerAction {
-                        val bonfireUUID = (Location(
-                            player.world,
-                            bonfireLocX.toDouble(),
-                            bonfireLocY.toDouble(),
-                            bonfireLocZ.toDouble()
-                        ).block.state as? Campfire)?.uuid
+                    ensureSenderIsPlayer()
+                    val player = sender as Player
+                    val bonfireUUID = (Location(
+                        player.world,
+                        bonfireLocX.toDouble(),
+                        bonfireLocY.toDouble(),
+                        bonfireLocZ.toDouble()
+                    ).block.state as? Campfire)?.uuid
 
-                        if (bonfireUUID == null) {
-                            command.stopCommand("No bonfire found at this location.")
-                        } else {
-                            transaction {
-                                if (Bonfire.select { Bonfire.entityUUID eq bonfireUUID }.any()) {
-                                    sender.success("Bonfire is registered in the database.")
-                                } else {
-                                    sender.error("Bonfire is not registered in the database.")
-                                }
+                    if (bonfireUUID == null) {
+                        stopCommand("No bonfire found at this location.")
+                    } else {
+                        transaction {
+                            if (Bonfire.select { Bonfire.entityUUID eq bonfireUUID }.any()) {
+                                sender.success("Bonfire is registered in the database.")
+                            } else {
+                                sender.error("Bonfire is not registered in the database.")
                             }
                         }
+
                     }
                 }
                 "players"(desc = "Get the players registered with the bonfire at location") {
-                    playerAction {
-                        val bonfireUUID = (Location(
-                            player.world,
-                            bonfireLocX.toDouble(),
-                            bonfireLocY.toDouble(),
-                            bonfireLocZ.toDouble()
-                        ).block.state as? Campfire)?.uuid
+                    ensureSenderIsPlayer()
+                    val player = sender as Player
+                    val bonfireUUID = (Location(
+                        player.world,
+                        bonfireLocX.toDouble(),
+                        bonfireLocY.toDouble(),
+                        bonfireLocZ.toDouble()
+                    ).block.state as? Campfire)?.uuid
 
-                        if (bonfireUUID == null) {
-                            command.stopCommand("No bonfire found at this location.")
-                        } else {
-                            transaction {
-                                val registeredPlayers = Players.select { Players.bonfireUUID eq bonfireUUID }
+                    if (bonfireUUID == null) {
+                        stopCommand("No bonfire found at this location.")
+                    } else {
+                        transaction {
+                            val registeredPlayers = Players.select { Players.bonfireUUID eq bonfireUUID }
 
-                                if (registeredPlayers.empty()) {
-                                    sender.info("No players registered with this bonfire.")
-                                } else {
-                                    val playersString = registeredPlayers.map { registeredPlayer ->
-                                        Bukkit.getOfflinePlayers().first {
-                                            it.uniqueId == registeredPlayer[Players.playerUUID]
-                                        }.name
-                                    }.joinToString(",")
-                                    sender.info("The following players are registered with this bonfire: $playersString")
-                                }
+                            if (registeredPlayers.empty()) {
+                                sender.info("No players registered with this bonfire.")
+                            } else {
+                                val playersString = registeredPlayers.map { registeredPlayer ->
+                                    Bukkit.getOfflinePlayers().first {
+                                        it.uniqueId == registeredPlayer[Players.playerUUID]
+                                    }.name
+                                }.joinToString(",")
+                                sender.info("The following players are registered with this bonfire: $playersString")
                             }
                         }
                     }
+
                 }
             }
             "give"(desc = "Give yourself a bonfire") { //TODO: Add this command to idofront/MiA for any custom item
@@ -207,40 +205,40 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                 }
             }
             "updateAllModels"(desc = "Clear any armorstands associated with bonfires and update model of all bonfires.") {
-                playerAction {
-                    pauseExpirationChecks = true
-                    transaction {
-                        val bonfireLocations = Bonfire.slice(Bonfire.location).selectAll()
-                            .groupBy(keySelector = { it[Bonfire.location].chunk },
-                                valueTransform = { it[Bonfire.location] })
+                pauseExpirationChecks = true
+                transaction {
+                    val bonfireLocations = Bonfire.slice(Bonfire.location).selectAll()
+                        .groupBy(keySelector = { it[Bonfire.location].chunk },
+                            valueTransform = { it[Bonfire.location] })
 
-                        player.broadcastVal("Starting chunk scan. DO NOT MESS WITH BONFIRES UNTIL DONE")
+                    sender.warn("Starting chunk scan. &l&4DO NOT MESS WITH BONFIRES UNTIL DONE".color())
+                    sender.warn("Total chunks to scan: " + bonfireLocations.keys.size)
 
-                        val tasks = mutableListOf<CoroutineTask>()
-                        bonfireLocations.forEach { (chunk, locations) ->
-                            tasks.add(bonfirePlugin.schedule {
-                                updateChunkBonfires(chunk, locations)
-                            })
-                        }
+                    val tasks = mutableListOf<CoroutineTask>()
+                    bonfireLocations.forEach { (chunk, locations) ->
+                        tasks.add(bonfirePlugin.schedule {
+                            sender.warn("Processing chunk $chunk")
+                            updateChunkBonfires(chunk, locations)
+                        })
+                    }
 
-                        bonfirePlugin.schedule {
-                            repeating(20)
-                            val scheduler = Bukkit.getScheduler()
-                            var tasksAreFinished = false
-                            while (!tasksAreFinished) {
-                                yield()
-                                tasks.forEach {
-                                    val currentTask = it.currentTask
-                                    if (currentTask != null && scheduler.isCurrentlyRunning(currentTask.taskId)) {
-                                        tasksAreFinished = false
-                                        return@forEach
-                                    }
+                    bonfirePlugin.schedule {
+                        repeating(20)
+                        val scheduler = Bukkit.getScheduler()
+                        var tasksAreFinished = false
+                        while (!tasksAreFinished) {
+                            yield()
+                            tasks.forEach {
+                                val currentTask = it.currentTask
+                                if (currentTask != null && scheduler.isCurrentlyRunning(currentTask.taskId)) {
+                                    tasksAreFinished = false
+                                    return@forEach
                                 }
-                                tasksAreFinished = true
                             }
-                            player.broadcastVal("Chunk scan finished.")
-                            pauseExpirationChecks = false
+                            tasksAreFinished = true
                         }
+                        sender.success("Chunk scan finished.")
+                        pauseExpirationChecks = false
                     }
                 }
             }
