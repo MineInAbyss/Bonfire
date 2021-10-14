@@ -8,9 +8,8 @@ import com.mineinabyss.bonfire.data.Bonfire.timeUntilDestroy
 import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
-import com.mineinabyss.bonfire.ecs.components.destroyBonfire
 import com.mineinabyss.bonfire.ecs.systems.BonfireEffectSystem
-import com.mineinabyss.bonfire.extensions.bonfireData
+import com.mineinabyss.bonfire.extensions.destroy
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.DWListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
@@ -22,7 +21,6 @@ import com.mineinabyss.idofront.plugin.registerEvents
 import com.mineinabyss.idofront.plugin.registerService
 import com.mineinabyss.idofront.serialization.SerializablePrefabItemService
 import com.mineinabyss.idofront.slimjar.IdofrontSlimjar
-import com.mineinabyss.idofront.slimjar.LibraryLoaderInjector
 import com.okkero.skedule.schedule
 import kotlinx.serialization.InternalSerializationApi
 import org.bukkit.block.Campfire
@@ -83,7 +81,7 @@ class BonfirePlugin : JavaPlugin() {
                             .select { bonfireUUID.isNull() }
                             .forEach {
                                 if ((it[stateChangedTimestamp] + it[timeUntilDestroy]) <= LocalDateTime.now()) {
-                                    (it[location].block.state as? Campfire)?.bonfireData()?.destroyBonfire(true)
+                                    (it[location].block.state as? Campfire)?.destroy(true)
                                         ?: return@forEach
                                     BonfireLogger.logBonfireExpired(it[location])
                                 }

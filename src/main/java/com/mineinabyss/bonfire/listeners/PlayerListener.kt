@@ -7,7 +7,6 @@ import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.MessageQueue.content
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
-import com.mineinabyss.bonfire.ecs.components.updateFire
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.entities.rightClicked
@@ -43,7 +42,7 @@ import kotlin.math.abs
 object PlayerListener : Listener {
 
     @EventHandler
-    fun EntityDeathEvent.click() {
+    fun EntityDeathEvent.death() {
         if (entityType == EntityType.ARMOR_STAND && entity.killer != null) {
             val campfireModel = entity as ArmorStand
             if (campfireModel.isBonfireModel()) {
@@ -67,39 +66,38 @@ object PlayerListener : Listener {
             return
         }
 
-        if (clicked.type == Material.CAMPFIRE) {
-            val respawnCampfire = clicked.state as Campfire
-            val bonfire = respawnCampfire.bonfireData() ?: return
+        val campfire = clicked.state as? Campfire ?: return
+        campfire.isBonfire || return
 
-            if (!player.isSneaking) {
-                if (!(player.inventory.itemInMainHand.isCookableOnCampfire())) isCancelled = true
-                return bonfire.updateFire()
-            }
+        if (!player.isSneaking) {
+            if (player.inventory.itemInMainHand.isCookableOnCampfire()) return campfire.updateFire()
+            isCancelled = true
+            return campfire.updateFire()
+        }
 
-            if (player.fallDistance > BonfireConfig.data.minFallDist) {
-                return
-            }
+        if (player.fallDistance > BonfireConfig.data.minFallDist) {
+            return
+        }
 
-            bonfirePlugin.schedule(SynchronizationContext.ASYNC) {
-                val playersInBonfire = transaction { Players.select { bonfireUUID eq bonfire.uuid }.toList() }
-                switchContext(SynchronizationContext.SYNC)
+        bonfirePlugin.schedule(SynchronizationContext.ASYNC) {
+            val playersInBonfire = transaction { Players.select { bonfireUUID eq campfire.uuid }.toList() }
+            switchContext(SynchronizationContext.SYNC)
 
-                if (playersInBonfire.firstOrNull { it[Players.playerUUID] == player.uniqueId } !== null) {
-                    if (!player.removeBonfireSpawnLocation(bonfire.uuid)) {
-                        player.error("This is not your respawn point")
-                    }
-                } else {  //add player to bonfire if bonfire not maxed out
-                    if (playersInBonfire.count() >= BonfireConfig.data.maxPlayerCount) {
-                        return@schedule player.error("This bonfire is full!")
-                    } else {
-                        player.setRespawnLocation(bonfire.uuid)
-                    }
+            if (playersInBonfire.firstOrNull { it[Players.playerUUID] == player.uniqueId } !== null) {
+                if (!player.removeBonfireSpawnLocation(campfire.uuid)) {
+                    player.error("This is not your respawn point")
+                }
+            } else {  //add player to bonfire if bonfire not maxed out
+                if (playersInBonfire.count() >= BonfireConfig.data.maxPlayerCount) {
+                    return@schedule player.error("This bonfire is full!")
+                } else {
+                    player.setRespawnLocation(campfire.uuid)
                 }
             }
-
-            isCancelled = true //I think we can cancel this event in any situation where we set/unset respawn.
-            // We don't want to have any regular behavior happen.
         }
+
+        isCancelled = true //I think we can cancel this event in any situation where we set/unset respawn.
+        // We don't want to have any regular behavior happen.
     }
 
     @EventHandler
@@ -151,7 +149,7 @@ object PlayerListener : Listener {
                         player.info("Respawning at bonfire")
                         respawnLocation = respawnCenterLocation
                         BonfireLogger.logRespawnAtBonfire(player, respawnBonfireLocation)
-                        campfire.bonfireData()?.updateFire()
+                        campfire.updateFire()
                         return@transaction
                     }
                 }
@@ -190,7 +188,7 @@ object PlayerListener : Listener {
             if (respawnBlock.state is Campfire) {
                 val campfire = respawnBlock.state as Campfire
                 if (campfire.isBonfire(respawnBonfire[Bonfire.entityUUID])) {
-                    campfire.bonfireData()?.updateFire()
+                    campfire.updateFire()
                 }
             }
         }
