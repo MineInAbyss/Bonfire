@@ -1,5 +1,6 @@
 val exposedVersion: String by project
 val idofrontVersion: String by project
+val gearyVersion: String by project
 
 plugins {
     id("com.mineinabyss.conventions.kotlin")
@@ -40,7 +41,7 @@ dependencies {
     slim("org.xerial:sqlite-jdbc:3.30.1")
 
     // Plugin dependencies
-    compileOnly ("com.mineinabyss:geary-platform-papermc:0.7.59")
+    compileOnly("com.mineinabyss:geary-platform-papermc:$gearyVersion")
 }
 
 //tasks.shadowJar {
