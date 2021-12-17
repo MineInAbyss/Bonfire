@@ -10,7 +10,6 @@ import com.mineinabyss.bonfire.extensions.uuid
 import com.mineinabyss.idofront.commands.CommandHolder
 import com.mineinabyss.idofront.commands.arguments.intArg
 import com.mineinabyss.idofront.commands.arguments.stringArg
-import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
 import com.mineinabyss.idofront.commands.execution.stopCommand
 import com.mineinabyss.idofront.commands.extensions.actions.ensureSenderIsPlayer
@@ -30,7 +29,6 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
-@ExperimentalCommandDSL
 object BonfireCommandExecutor : IdofrontCommandExecutor() {
     override val commands: CommandHolder = commands(bonfirePlugin) {
         ("bonfire" / "bf")(desc = "Commands for Bonfire") {

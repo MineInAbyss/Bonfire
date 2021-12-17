@@ -15,14 +15,13 @@ import com.mineinabyss.bonfire.listeners.DWListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.minecraft.dsl.gearyAddon
-import com.mineinabyss.idofront.commands.execution.ExperimentalCommandDSL
+import com.mineinabyss.idofront.platforms.IdofrontPlatforms
 import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.idofront.plugin.registerEvents
 import com.mineinabyss.idofront.plugin.registerService
 import com.mineinabyss.idofront.serialization.SerializablePrefabItemService
-import com.mineinabyss.idofront.slimjar.IdofrontSlimjar
+import com.mineinabyss.idofront.time.inWholeTicks
 import com.okkero.skedule.schedule
-import kotlinx.serialization.InternalSerializationApi
 import org.bukkit.block.Campfire
 import org.bukkit.plugin.java.JavaPlugin
 import org.jetbrains.exposed.sql.*
@@ -33,11 +32,11 @@ val bonfirePlugin: BonfirePlugin by lazy { JavaPlugin.getPlugin(BonfirePlugin::c
 var pauseExpirationChecks = false
 
 class BonfirePlugin : JavaPlugin() {
+    override fun onLoad() {
+        IdofrontPlatforms.load(this, "mineinabyss")
+    }
 
-    @InternalSerializationApi
-    @ExperimentalCommandDSL
     override fun onEnable() {
-        IdofrontSlimjar.loadToLibraryLoader(this)
         saveDefaultConfig()
         BonfireConfig.load()
 
@@ -55,7 +54,7 @@ class BonfirePlugin : JavaPlugin() {
         )
 
         gearyAddon {
-            autoscanComponents()
+            autoScanComponents()
             systems(
                 BonfireEffectSystem()
             )
@@ -72,9 +71,9 @@ class BonfirePlugin : JavaPlugin() {
         }
 
         schedule {
-            repeating(BonfireConfig.data.expirationCheckInterval.inTicks)
+            repeating(BonfireConfig.data.expirationCheckInterval.inWholeTicks)
             while (true) {
-                if(!pauseExpirationChecks) {
+                if (!pauseExpirationChecks) {
                     transaction {
                         Bonfire
                             .leftJoin(Players, { entityUUID }, { bonfireUUID })

@@ -1,7 +1,7 @@
 package com.mineinabyss.bonfire.listeners
 
-import com.derongan.minecraft.deeperworld.event.BlockSyncEvent
-import com.derongan.minecraft.deeperworld.world.section.correspondingLocation
+import com.mineinabyss.deeperworld.event.BlockSyncEvent
+import com.mineinabyss.deeperworld.world.section.correspondingLocation
 import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.bonfire.listeners.BlockListener.hasBonfireBelow
 import org.bukkit.block.Campfire
