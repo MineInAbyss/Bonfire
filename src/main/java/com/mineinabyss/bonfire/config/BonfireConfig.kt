@@ -20,7 +20,6 @@ object BonfireConfig : IdofrontConfig<BonfireConfig.Data>(bonfirePlugin, Data.se
         var modelItem: SerializableItemStack = SerializableItemStack(Material.WOODEN_SHOVEL, 1, 1),
         var maxPlayerCount: Int = 4,
         var bonfireExpirationTime: Duration = 7.days,
-        var expirationCheckInterval: Duration = 1.days,
         var respawnSetSound: SoundEffect,
         var respawnUnsetSound: SoundEffect,
         var minFallDist: Int = 3,
