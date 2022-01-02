@@ -22,7 +22,6 @@ import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.transactions.transaction
 
 val bonfirePlugin: BonfirePlugin by lazy { JavaPlugin.getPlugin(BonfirePlugin::class.java) }
-var pauseExpirationChecks = false
 
 class BonfirePlugin : JavaPlugin() {
     override fun onLoad() {
