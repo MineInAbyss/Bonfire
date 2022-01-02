@@ -1,7 +1,6 @@
 package com.mineinabyss.bonfire.extensions
 
 import com.mineinabyss.bonfire.bonfirePlugin
-import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.Players
@@ -26,6 +25,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
 import java.util.*
 import kotlin.math.floor
+import org.bukkit.block.data.type.Campfire as CampfireBlockData
 
 
 val Campfire.isBonfire: Boolean get() = persistentDataContainer.has<BonfireData>()
@@ -76,7 +76,7 @@ fun Campfire.updateDisplay() {
         //broadcast("Updating model for bonfire at x:${model.location.x} y:${model.location.y} z:${model.location.z} for $playerCount number of players.")
 
         model.equipment.helmet = model.equipment.helmet?.editItemMeta { setCustomModelData(1 + playerCount.toInt()) }
-        blockData = (blockData as org.bukkit.block.data.type.Campfire).apply { isLit = playerCount > 0 }
+        blockData = (blockData as CampfireBlockData).apply { isLit = playerCount > 0 }
         update()
 
         val duplicates = Bonfire.select {
@@ -103,24 +103,16 @@ fun Campfire.createModel(): ArmorStand? {
             Bonfire.select { Bonfire.entityUUID eq this@createModel.uuid }.firstOrNull() ?: return@transaction null
 
         // Spawn armor stand
-        val armorStand = bonfireRow[Bonfire.location].world.spawnEntity(
+        val armorStand = (bonfireRow[Bonfire.location].world.spawnEntity(
             bonfireRow[Bonfire.location].toCenterLocation().apply { this.y = floor(y) }, EntityType.ARMOR_STAND
-        ) as ArmorStand
-        armorStand.setGravity(false)
-        armorStand.isInvulnerable = true
-        armorStand.isInvisible = true
-        armorStand.isPersistent = true
-        armorStand.isSmall = true
-        armorStand.isMarker = true
-        armorStand.setBonfireModel()
-        armorStand.equipment.helmet = BonfireConfig.data.modelItem.toItemStack()
+        ) as ArmorStand).setDefaults()
 
         val playerCount = Players.select { Players.bonfireUUID eq this@createModel.uuid }.count()
 
         armorStand.equipment.helmet =
             armorStand.equipment.helmet?.editItemMeta { setCustomModelData(playerCount.toInt()) }
 
-        blockData = (blockData as org.bukkit.block.data.type.Campfire).apply { isLit = playerCount > 0 }
+        blockData = (blockData as CampfireBlockData).apply { isLit = playerCount > 0 }
         update()
 
         Bonfire.update({ Bonfire.entityUUID eq this@createModel.uuid }) {
@@ -144,15 +136,19 @@ fun Campfire.createModel(): ArmorStand? {
     }
 }
 
-fun Campfire.updateBonfire() {
+fun Campfire.markStateChanged() {
     transaction {
-        if (Players.select { Players.bonfireUUID eq this@updateBonfire.uuid }.empty()) {
-            Bonfire.update({ Bonfire.entityUUID eq this@updateBonfire.uuid }) {
+        if (Players.select { Players.bonfireUUID eq this@markStateChanged.uuid }.empty()) {
+            Bonfire.update({ Bonfire.entityUUID eq this@markStateChanged.uuid }) {
                 it[stateChangedTimestamp] = LocalDateTime.now()
             }
         }
     }
 
+    updateBonfire()
+}
+
+fun Campfire.updateBonfire() {
     if (!block.chunk.isLoaded && !block.chunk.isEntitiesLoaded) return
 
     updateDisplay()
@@ -160,7 +156,7 @@ fun Campfire.updateBonfire() {
 }
 
 fun Campfire.updateFire() {
-    val bonfireData = this.block.blockData as org.bukkit.block.data.type.Campfire
+    val bonfireData = this.block.blockData as CampfireBlockData
 
     bonfirePlugin.schedule(SynchronizationContext.ASYNC) {
         waitFor(2)
@@ -169,7 +165,7 @@ fun Campfire.updateFire() {
                 val player = Bukkit.getPlayer(it[Players.playerUUID])
                 player?.sendBlockChange(
                     block.location,
-                    (Material.SOUL_CAMPFIRE.createBlockData() as org.bukkit.block.data.type.Campfire).apply {
+                    (Material.SOUL_CAMPFIRE.createBlockData() as CampfireBlockData).apply {
                         this.facing = bonfireData.facing
                     })
             }

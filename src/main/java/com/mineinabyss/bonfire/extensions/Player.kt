@@ -59,7 +59,7 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
             if(oldBonfireBlock != null) {
                 BonfireLogger.logRespawnUnset(oldBonfireBlock.location, this@setRespawnLocation)
 
-                if (oldBonfireBlock.chunk.isEntitiesLoaded) oldBonfireBlock.updateBonfire() // update old bonfire model
+                oldBonfireBlock.markStateChanged()
             }
         } else if (playerRow == null) {
             Players.insert {
@@ -68,7 +68,7 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
             }
         }
 
-        newCampfire.updateBonfire()
+        newCampfire.markStateChanged()
         this@setRespawnLocation.player?.let { BonfireConfig.data.respawnSetSound.playSound(it) }
         this@setRespawnLocation.player?.success("Respawn point set")
         val p = this@setRespawnLocation.player
@@ -110,7 +110,7 @@ fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
         val bonfire = Bonfire
             .select { Bonfire.entityUUID eq dbPlayer[Players.bonfireUUID] }
             .firstOrNull()?.get(Bonfire.location)?.block?.state as? Campfire
-        bonfire?.updateBonfire()
+        bonfire?.markStateChanged()
         return@transaction true
     }
 }
