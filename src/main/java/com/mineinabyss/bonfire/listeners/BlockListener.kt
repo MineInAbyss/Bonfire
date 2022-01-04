@@ -1,6 +1,7 @@
 package com.mineinabyss.bonfire.listeners
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent
+import com.mineinabyss.bonfire.BonfireContext
 import com.mineinabyss.bonfire.Permissions
 import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.config.BonfireConfig
@@ -72,7 +73,7 @@ object BlockListener : Listener {
         val campfire = (block.state as Campfire)
         campfire.isBonfire || return
 
-        transaction {
+        transaction(BonfireContext.db) {
             val hasRegisteredPlayers = Players.select { Players.bonfireUUID eq campfire.uuid }.any()
             val bonfireRow = Bonfire.select { Bonfire.entityUUID eq campfire.uuid }.firstOrNull()
 

@@ -16,6 +16,7 @@ import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.geary.minecraft.dsl.gearyAddon
 import com.mineinabyss.idofront.platforms.IdofrontPlatforms
+import com.mineinabyss.idofront.plugin.getService
 import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.idofront.plugin.registerEvents
 import com.mineinabyss.idofront.plugin.registerService
@@ -31,6 +32,11 @@ import java.time.LocalDateTime
 val bonfirePlugin: BonfirePlugin by lazy { JavaPlugin.getPlugin(BonfirePlugin::class.java) }
 var pauseExpirationChecks = false
 
+interface BonfireContext {
+    companion object : BonfireContext by getService()
+    val db: Database
+}
+
 class BonfirePlugin : JavaPlugin() {
     override fun onLoad() {
         IdofrontPlatforms.load(this, "mineinabyss")
@@ -39,10 +45,12 @@ class BonfirePlugin : JavaPlugin() {
     override fun onEnable() {
         saveDefaultConfig()
         BonfireConfig.load()
+        registerService<BonfireContext>(object : BonfireContext {
+            override val db = Database.connect("jdbc:sqlite:" + dataFolder.path + "/data.db", "org.sqlite.JDBC")
+        })
 
-        Database.connect("jdbc:sqlite:" + this.dataFolder.path + "/data.db", "org.sqlite.JDBC")
 
-        transaction {
+        transaction(BonfireContext.db) {
             addLogger(StdOutSqlLogger)
 
             SchemaUtils.createMissingTablesAndColumns(Bonfire, Players, MessageQueue)
@@ -74,7 +82,7 @@ class BonfirePlugin : JavaPlugin() {
             repeating(BonfireConfig.data.expirationCheckInterval.inWholeTicks)
             while (true) {
                 if (!pauseExpirationChecks) {
-                    transaction {
+                    transaction(BonfireContext.db) {
                         Bonfire
                             .leftJoin(Players, { entityUUID }, { bonfireUUID })
                             .select { bonfireUUID.isNull() }

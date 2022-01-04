@@ -1,5 +1,6 @@
 package com.mineinabyss.bonfire.extensions
 
+import com.mineinabyss.bonfire.BonfireContext
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
@@ -19,7 +20,7 @@ import java.util.*
 fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
     val playerUUID = uniqueId
 
-    transaction {
+    transaction(BonfireContext.db) {
         val playerRow = Players
             .select { Players.playerUUID eq playerUUID }
             .firstOrNull()
@@ -80,7 +81,7 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
 
 
 fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
-    return transaction{
+    return transaction(BonfireContext.db){
         val dbPlayer = Players
             .select{Players.playerUUID eq this@removeBonfireSpawnLocation.uniqueId}
             .firstOrNull() ?: return@transaction true

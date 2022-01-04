@@ -1,5 +1,6 @@
 package com.mineinabyss.bonfire.extensions
 
+import com.mineinabyss.bonfire.BonfireContext
 import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.MessageQueue
@@ -53,7 +54,7 @@ fun Campfire.createBonfire(newBonfireUUID: UUID, playerUUID: UUID) {
     val bonfireData = BonfireData(newBonfireUUID)
     save(bonfireData)
 
-    transaction {
+    transaction(BonfireContext.db) {
         Bonfire.insert {
             it[entityUUID] = newBonfireUUID
             it[location] = this@createBonfire.location
@@ -70,7 +71,7 @@ fun Campfire.updateDisplay() {
 
     val model = getModel() ?: error("Couldn't get model")
 
-    transaction {
+    transaction(BonfireContext.db) {
         val playerCount = Players.select { Players.bonfireUUID eq this@updateDisplay.uuid }.count()
 
         //broadcast("Updating model for bonfire at x:${model.location.x} y:${model.location.y} z:${model.location.z} for $playerCount number of players.")
@@ -137,7 +138,7 @@ fun Campfire.createModel(): ArmorStand? {
 }
 
 fun Campfire.markStateChanged() {
-    transaction {
+    transaction(BonfireContext.db) {
         if (Players.select { Players.bonfireUUID eq this@markStateChanged.uuid }.empty()) {
             Bonfire.update({ Bonfire.entityUUID eq this@markStateChanged.uuid }) {
                 it[stateChangedTimestamp] = LocalDateTime.now()
@@ -160,7 +161,7 @@ fun Campfire.updateFire() {
 
     bonfirePlugin.schedule(SynchronizationContext.ASYNC) {
         waitFor(2)
-        transaction {
+        transaction(BonfireContext.db) {
             Players.select { Players.bonfireUUID eq this@updateFire.uuid }.forEach {
                 val player = Bukkit.getPlayer(it[Players.playerUUID])
                 player?.sendBlockChange(
@@ -178,7 +179,7 @@ fun Campfire.destroy(destroyBlock: Boolean) {
 
     var blockLocation = model?.location
 
-    transaction {
+    transaction(BonfireContext.db) {
         if (model == null) {
             blockLocation = Bonfire
                 .select { Bonfire.entityUUID eq this@destroy.uuid }

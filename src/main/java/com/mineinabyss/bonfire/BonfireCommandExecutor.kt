@@ -50,7 +50,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                             sender.warn("Multiple players found with that name, checking respawn for all.")
                         }
 
-                        transaction {
+                        transaction(BonfireContext.db) {
                             val dbPlayers = Players
                                 .leftJoin(Bonfire, { bonfireUUID }, { entityUUID })
                                 .select { Players.playerUUID inList offlineTargetsUUIDs }
@@ -126,7 +126,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
 
                         val targetPlayer = offlineTargets.first()
 
-                        transaction {
+                        transaction(BonfireContext.db) {
                             val bonfireUUID = Players
                                 .select { Players.playerUUID eq targetPlayer.uniqueId }
                                 .firstOrNull()?.get(Players.bonfireUUID)
@@ -162,7 +162,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                             sender.error("No bonfire found at this location.")
                             return@playerAction
                         } else {
-                            transaction {
+                            transaction(BonfireContext.db) {
                                 if (Bonfire.select { Bonfire.entityUUID eq bonfireUUID }.any()) {
                                     sender.success("Bonfire is registered in the database.")
                                 } else {
@@ -190,7 +190,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                             sender.error("No bonfire found at this location")
                             return@playerAction
                         } else {
-                            transaction {
+                            transaction(BonfireContext.db) {
                                 val registeredPlayers = Players.select { Players.bonfireUUID eq bonfireUUID }
 
                                 if (registeredPlayers.empty()) {
@@ -217,7 +217,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
             }
             "updateAllModels"(desc = "Clear any armorstands associated with bonfires and update model of all bonfires.") {
                 pauseExpirationChecks = true
-                transaction {
+                transaction(BonfireContext.db) {
                     val bonfireLocations = Bonfire.slice(Bonfire.location).selectAll()
                         .groupBy(keySelector = { it[Bonfire.location].chunk },
                             valueTransform = { it[Bonfire.location] })

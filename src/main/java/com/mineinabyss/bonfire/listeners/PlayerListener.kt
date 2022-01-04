@@ -1,5 +1,6 @@
 package com.mineinabyss.bonfire.listeners
 
+import com.mineinabyss.bonfire.BonfireContext
 import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
@@ -80,7 +81,7 @@ object PlayerListener : Listener {
         }
 
         bonfirePlugin.schedule(SynchronizationContext.ASYNC) {
-            val playersInBonfire = transaction { Players.select { bonfireUUID eq campfire.uuid }.toList() }
+            val playersInBonfire = transaction(BonfireContext.db) { Players.select { bonfireUUID eq campfire.uuid }.toList() }
             switchContext(SynchronizationContext.SYNC)
 
             if (playersInBonfire.firstOrNull { it[Players.playerUUID] == player.uniqueId } !== null) {
@@ -113,7 +114,7 @@ object PlayerListener : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun PlayerRespawnEvent.event() {
-        transaction {
+        transaction(BonfireContext.db) {
             val respawnBonfire = Players
                 .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
                 .select { Players.playerUUID eq player.uniqueId }
@@ -177,7 +178,7 @@ object PlayerListener : Listener {
     @EventHandler
     fun PlayerJoinEvent.joinServer() {
 
-        transaction {
+        transaction(BonfireContext.db) {
             val respawnBonfire = Players
                 .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
                 .select { Players.playerUUID eq player.uniqueId }
@@ -194,7 +195,7 @@ object PlayerListener : Listener {
         }
         bonfirePlugin.schedule {
             waitFor(20)
-            transaction {
+            transaction(BonfireContext.db) {
                 MessageQueue.select { MessageQueue.playerUUID eq player.uniqueId }.forEach {
                     player.error(it[content])
                 }
