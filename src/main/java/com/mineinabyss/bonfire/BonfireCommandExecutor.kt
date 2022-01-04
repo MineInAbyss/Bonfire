@@ -216,7 +216,6 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                 }
             }
             "updateAllModels"(desc = "Clear any armorstands associated with bonfires and update model of all bonfires.") {
-                pauseExpirationChecks = true
                 transaction(BonfireContext.db) {
                     val bonfireLocations = Bonfire.slice(Bonfire.location).selectAll()
                         .groupBy(keySelector = { it[Bonfire.location].chunk },
@@ -249,7 +248,6 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                             tasksAreFinished = true
                         }
                         sender.success("Chunk scan finished.")
-                        pauseExpirationChecks = false
                     }
                 }
             }
