@@ -1,6 +1,7 @@
 package com.mineinabyss.bonfire.listeners
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent
+import com.mineinabyss.bonfire.BonfireContext
 import com.mineinabyss.bonfire.Permissions
 import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.config.BonfireConfig
@@ -56,17 +57,9 @@ object BlockListener : Listener {
         respawnCampfire.blockData = campfireData.apply { isLit = false }
 
         // Spawn armor stand
-        val armorStand = blockPlaced.location.world.spawnEntity(
+        val armorStand = (blockPlaced.location.world.spawnEntity(
             blockPlaced.location.toCenterLocation().apply { this.y = floor(y) }, EntityType.ARMOR_STAND
-        ) as ArmorStand
-        armorStand.setGravity(false)
-        armorStand.isInvulnerable = true
-        armorStand.isInvisible = true
-        armorStand.isPersistent = true
-        armorStand.isSmall = true
-        armorStand.isMarker = true
-        armorStand.setBonfireModel()
-        armorStand.equipment.helmet = BonfireConfig.data.modelItem.toItemStack()
+        ) as ArmorStand).setDefaults()
 
         respawnCampfire.createBonfire(armorStand.uniqueId, player.uniqueId)
 
@@ -80,7 +73,7 @@ object BlockListener : Listener {
         val campfire = (block.state as Campfire)
         campfire.isBonfire || return
 
-        transaction {
+        transaction(BonfireContext.db) {
             val hasRegisteredPlayers = Players.select { Players.bonfireUUID eq campfire.uuid }.any()
             val bonfireRow = Bonfire.select { Bonfire.entityUUID eq campfire.uuid }.firstOrNull()
 
@@ -111,7 +104,7 @@ object BlockListener : Listener {
             entities.filterIsInstance<ArmorStand>().filter { it.isMarker && it.isBonfireModel() }.forEach {
                 val campfire = it.location.block.state as? Campfire ?: return it.remove()
                 if (campfire.uuid != it.uniqueId) it.remove()
-                campfire.updateBonfire()
+                else campfire.updateBonfire()
             }
         }
     }

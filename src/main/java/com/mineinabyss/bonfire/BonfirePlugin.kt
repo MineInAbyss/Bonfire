@@ -10,6 +10,7 @@ import com.mineinabyss.bonfire.listeners.DWListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.geary.minecraft.dsl.gearyAddon
 import com.mineinabyss.idofront.platforms.IdofrontPlatforms
+import com.mineinabyss.idofront.plugin.getService
 import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.idofront.plugin.registerEvents
 import com.mineinabyss.idofront.plugin.registerService
@@ -23,6 +24,11 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 val bonfirePlugin: BonfirePlugin by lazy { JavaPlugin.getPlugin(BonfirePlugin::class.java) }
 
+interface BonfireContext {
+    companion object : BonfireContext by getService()
+    val db: Database
+}
+
 class BonfirePlugin : JavaPlugin() {
     override fun onLoad() {
         IdofrontPlatforms.load(this, "mineinabyss")
@@ -31,10 +37,12 @@ class BonfirePlugin : JavaPlugin() {
     override fun onEnable() {
         saveDefaultConfig()
         BonfireConfig.load()
+        registerService<BonfireContext>(object : BonfireContext {
+            override val db = Database.connect("jdbc:sqlite:" + dataFolder.path + "/data.db", "org.sqlite.JDBC")
+        })
 
-        Database.connect("jdbc:sqlite:" + this.dataFolder.path + "/data.db", "org.sqlite.JDBC")
 
-        transaction {
+        transaction(BonfireContext.db) {
             addLogger(StdOutSqlLogger)
 
             SchemaUtils.createMissingTablesAndColumns(Bonfire, Players, MessageQueue)
@@ -61,7 +69,6 @@ class BonfirePlugin : JavaPlugin() {
         if (isPluginEnabled("DeeperWorld")) {
             registerEvents(DWListener)
         }
-
     }
 
     override fun onDisable() {

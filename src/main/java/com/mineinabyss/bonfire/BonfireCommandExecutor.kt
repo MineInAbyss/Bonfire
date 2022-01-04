@@ -12,7 +12,6 @@ import com.mineinabyss.idofront.commands.arguments.intArg
 import com.mineinabyss.idofront.commands.arguments.stringArg
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
 import com.mineinabyss.idofront.commands.execution.stopCommand
-import com.mineinabyss.idofront.commands.extensions.actions.ensureSenderIsPlayer
 import com.mineinabyss.idofront.commands.extensions.actions.playerAction
 import com.mineinabyss.idofront.messaging.*
 import com.okkero.skedule.BukkitSchedulerController
@@ -43,14 +42,15 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                         val offlineTargetsUUIDs = offlineTargets.map { it.uniqueId }
 
                         if (offlineTargets.isEmpty()) {
-                            command.stopCommand("No player found with that name")
+                            sender.error("No player found with that name")
+                            return@playerAction
                         }
 
                         if (offlineTargets.size > 1) {
-                            sender.info("Multiple players found with that name, checking respawn for all.")
+                            sender.warn("Multiple players found with that name, checking respawn for all.")
                         }
 
-                        transaction {
+                        transaction(BonfireContext.db) {
                             val dbPlayers = Players
                                 .leftJoin(Bonfire, { bonfireUUID }, { entityUUID })
                                 .select { Players.playerUUID inList offlineTargetsUUIDs }
@@ -59,12 +59,13 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                                 val dbPlayer = dbPlayers.firstOrNull { it[Players.playerUUID] == player.uniqueId }
 
                                 if (dbPlayer == null) {
-                                    sender.info("Player ${player.name} does not have a bonfire respawn set.")
+                                    sender.error("Player ${player.name} does not have a bonfire respawn set.")
                                 } else {
+                                    val location = dbPlayer[Bonfire.location]
                                     if (!dbPlayer.hasValue(Bonfire.entityUUID)) {
                                         sender.error("Bonfire for player ${player.name} not found in the database. This is bad and should not happen!")
                                     } else {
-                                        sender.info("Bonfire for player ${player.name} is at ${dbPlayer[Bonfire.location]}.")
+                                        sender.success("Bonfire for player ${player.name} is at x: ${location.x}, y: ${location.y}, z: ${location.z}.")
                                     }
                                 }
                             }
@@ -82,11 +83,13 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                             .distinctBy { it.uniqueId }
 
                         if (offlineTargets.isEmpty()) {
-                            command.stopCommand("No player found with that name")
+                            sender.error("No player found with that name")
+                            return@playerAction
                         }
 
                         if (offlineTargets.size > 1) {
-                            command.stopCommand("Multiple players found with that name, not setting respawn.")
+                            player.warn("Multiple players found with that name, not setting respawn.")
+                            return@playerAction
                         }
 
                         val bonfireUUID = (Location(
@@ -101,7 +104,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                         } else {
                             val targetPlayer = offlineTargets.first()
                             targetPlayer.setRespawnLocation(bonfireUUID)
-                            sender.info("Respawn set for player ${targetPlayer.name}")
+                            sender.success("Respawn set for player ${targetPlayer.name}")
                         }
                     }
                 }
@@ -112,22 +115,24 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                             .distinctBy { it.uniqueId }
 
                         if (offlineTargets.isEmpty()) {
-                            command.stopCommand("No player found with that name.")
+                            sender.error("No player found with that name.")
+                            return@playerAction
                         }
 
                         if (offlineTargets.size > 1) {
-                            command.stopCommand("Multiple players found with that name, not removing respawn.")
+                            sender.error("Multiple players found with that name, not removing respawn.")
+                            return@playerAction
                         }
 
                         val targetPlayer = offlineTargets.first()
 
-                        transaction {
+                        transaction(BonfireContext.db) {
                             val bonfireUUID = Players
                                 .select { Players.playerUUID eq targetPlayer.uniqueId }
                                 .firstOrNull()?.get(Players.bonfireUUID)
 
                             if (bonfireUUID == null) {
-                                command.stopCommand("Player does not have a respawn set.")
+                                sender.error("Player does not have a respawn set.")
                             } else {
                                 if (targetPlayer.removeBonfireSpawnLocation(bonfireUUID)) {
                                     sender.info("Respawn removed from player ${targetPlayer.name}.")
@@ -140,57 +145,65 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                 }
             }
             "info"(desc = "Commands to get bonfire info") {
-                val bonfireLocX by intArg { name = "X" }
-                val bonfireLocY by intArg { name = "Y" }
-                val bonfireLocZ by intArg { name = "Z" }
                 "dbcheck"(desc = "Check if a bonfire at location is stored in the database") {
-                    ensureSenderIsPlayer()
-                    val player = sender as Player
-                    val bonfireUUID = (Location(
-                        player.world,
-                        bonfireLocX.toDouble(),
-                        bonfireLocY.toDouble(),
-                        bonfireLocZ.toDouble()
-                    ).block.state as? Campfire)?.uuid
+                    val bonfireLocX by intArg { name = "X" }
+                    val bonfireLocY by intArg { name = "Y" }
+                    val bonfireLocZ by intArg { name = "Z" }
+                    playerAction {
+                        val player = sender as Player
+                        val bonfireUUID = (Location(
+                            player.world,
+                            bonfireLocX.toDouble(),
+                            bonfireLocY.toDouble(),
+                            bonfireLocZ.toDouble()
+                        ).block.state as? Campfire)?.uuid
 
-                    if (bonfireUUID == null) {
-                        stopCommand("No bonfire found at this location.")
-                    } else {
-                        transaction {
-                            if (Bonfire.select { Bonfire.entityUUID eq bonfireUUID }.any()) {
-                                sender.success("Bonfire is registered in the database.")
-                            } else {
-                                sender.error("Bonfire is not registered in the database.")
+                        if (bonfireUUID == null) {
+                            sender.error("No bonfire found at this location.")
+                            return@playerAction
+                        } else {
+                            transaction(BonfireContext.db) {
+                                if (Bonfire.select { Bonfire.entityUUID eq bonfireUUID }.any()) {
+                                    sender.success("Bonfire is registered in the database.")
+                                } else {
+                                    sender.error("Bonfire is not registered in the database.")
+                                }
                             }
                         }
-
                     }
                 }
                 "players"(desc = "Get the players registered with the bonfire at location") {
-                    ensureSenderIsPlayer()
-                    val player = sender as Player
-                    val bonfireUUID = (Location(
-                        player.world,
-                        bonfireLocX.toDouble(),
-                        bonfireLocY.toDouble(),
-                        bonfireLocZ.toDouble()
-                    ).block.state as? Campfire)?.uuid
+                    val bonfireLocX by intArg { name = "X" }
+                    val bonfireLocY by intArg { name = "Y" }
+                    val bonfireLocZ by intArg { name = "Z" }
 
-                    if (bonfireUUID == null) {
-                        stopCommand("No bonfire found at this location.")
-                    } else {
-                        transaction {
-                            val registeredPlayers = Players.select { Players.bonfireUUID eq bonfireUUID }
+                    playerAction {
+                        val player = sender as Player
+                        val bonfireUUID = (Location(
+                            player.world,
+                            bonfireLocX.toDouble(),
+                            bonfireLocY.toDouble(),
+                            bonfireLocZ.toDouble()
+                        ).block.state as? Campfire)?.uuid
 
-                            if (registeredPlayers.empty()) {
-                                sender.info("No players registered with this bonfire.")
-                            } else {
-                                val playersString = registeredPlayers.map { registeredPlayer ->
-                                    Bukkit.getOfflinePlayers().first {
-                                        it.uniqueId == registeredPlayer[Players.playerUUID]
-                                    }.name
-                                }.joinToString(",")
-                                sender.info("The following players are registered with this bonfire: $playersString")
+                        if (bonfireUUID == null) {
+                            sender.error("No bonfire found at this location")
+                            return@playerAction
+                        } else {
+                            transaction(BonfireContext.db) {
+                                val registeredPlayers = Players.select { Players.bonfireUUID eq bonfireUUID }
+
+                                if (registeredPlayers.empty()) {
+                                    sender.error("No players registered at this bonfire.")
+                                } else {
+                                    val playersString = registeredPlayers.map { registeredPlayer ->
+                                        Bukkit.getOfflinePlayers().first {
+                                            it.uniqueId == registeredPlayer[Players.playerUUID]
+                                        }.name
+                                    }.joinToString(", ")
+                                    sender.success("The following players are registered at this bonfire:")
+                                    sender.info(playersString)
+                                }
                             }
                         }
                     }
@@ -203,7 +216,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                 }
             }
             "updateAllModels"(desc = "Clear any armorstands associated with bonfires and update model of all bonfires.") {
-                transaction {
+                transaction(BonfireContext.db) {
                     val bonfireLocations = Bonfire.slice(Bonfire.location).selectAll()
                         .groupBy(keySelector = { it[Bonfire.location].chunk },
                             valueTransform = { it[Bonfire.location] })
