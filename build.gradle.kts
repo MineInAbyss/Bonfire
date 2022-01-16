@@ -1,9 +1,8 @@
 import Com_mineinabyss_conventions_platform_gradle.Deps
 
 val idofrontVersion: String by project
-val gearyVersion: String by project
-val lootyVersion: String by project
 val deeperworldVersion: String by project
+val gearyPlatformVersion: String by project
 
 plugins {
     id("com.mineinabyss.conventions.kotlin")
@@ -32,10 +31,13 @@ dependencies {
     compileOnly(Deps.kotlinx.serialization.kaml)
     compileOnly(Deps.minecraft.skedule)
 
+    // Geary platform
+    compileOnly(platform("com.mineinabyss:geary-platform:$gearyPlatformVersion"))
+    compileOnly("com.mineinabyss:geary-platform-papermc")
+    compileOnly("com.mineinabyss:looty")
+
     // Other plugins
-    compileOnly("com.mineinabyss:looty:$lootyVersion")
     compileOnly("com.mineinabyss:deeperworld:$deeperworldVersion")
-    compileOnly("com.mineinabyss:geary-platform-papermc:$gearyVersion")
 
     // Shaded
     implementation("com.mineinabyss:idofront:$idofrontVersion")

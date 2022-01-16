@@ -3,18 +3,19 @@ package com.mineinabyss.bonfire.ecs.systems
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
 import com.mineinabyss.bonfire.extensions.isBonfireModel
-import com.mineinabyss.geary.ecs.accessors.ResultScope
-import com.mineinabyss.geary.ecs.api.autoscan.AutoScan
+import com.mineinabyss.geary.ecs.accessors.TargetScope
+import com.mineinabyss.geary.ecs.accessors.building.get
 import com.mineinabyss.geary.ecs.api.systems.TickingSystem
+import com.mineinabyss.idofront.time.ticks
 import org.bukkit.Particle
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Player
 
-class BonfireEffectSystem : TickingSystem(1) {
-    private val ResultScope.player by get<Player>()
-    private val ResultScope.effect by get<BonfireEffectArea>()
+class BonfireEffectSystem : TickingSystem(1.ticks) {
+    private val TargetScope.player by get<Player>()
+    private val TargetScope.effect by get<BonfireEffectArea>()
 
-    override fun ResultScope.tick() {
+    override fun TargetScope.tick() {
         // Check if still near a bonfire
         player.location.getNearbyLivingEntities(BonfireConfig.data.effectRadius).firstOrNull {
             it is ArmorStand && it.isBonfireModel() && it.uniqueId == effect.uuid
