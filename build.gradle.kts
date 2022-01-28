@@ -33,7 +33,7 @@ dependencies {
 
     // Geary platform
     compileOnly(platform("com.mineinabyss:geary-platform:$gearyPlatformVersion"))
-    compileOnly("com.mineinabyss:geary-platform-papermc")
+    compileOnly("com.mineinabyss:geary-papermc-core")
     compileOnly("com.mineinabyss:looty")
 
     // Other plugins
@@ -41,4 +41,8 @@ dependencies {
 
     // Shaded
     implementation("com.mineinabyss:idofront:$idofrontVersion")
+}
+
+tasks.shadowJar {
+    minimize()
 }

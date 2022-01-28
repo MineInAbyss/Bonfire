@@ -8,10 +8,10 @@ import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.ecs.components.BonfireData
 import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
 import com.mineinabyss.bonfire.logging.BonfireLogger
-import com.mineinabyss.geary.minecraft.access.toGeary
-import com.mineinabyss.geary.minecraft.store.decode
-import com.mineinabyss.geary.minecraft.store.encode
-import com.mineinabyss.geary.minecraft.store.has
+import com.mineinabyss.geary.papermc.access.toGeary
+import com.mineinabyss.geary.papermc.store.decode
+import com.mineinabyss.geary.papermc.store.encode
+import com.mineinabyss.geary.papermc.store.has
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
 import com.okkero.skedule.SynchronizationContext

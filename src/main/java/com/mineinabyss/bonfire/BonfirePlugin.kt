@@ -8,7 +8,7 @@ import com.mineinabyss.bonfire.ecs.systems.BonfireEffectSystem
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.DWListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
-import com.mineinabyss.geary.minecraft.dsl.gearyAddon
+import com.mineinabyss.geary.papermc.dsl.gearyAddon
 import com.mineinabyss.idofront.platforms.IdofrontPlatforms
 import com.mineinabyss.idofront.plugin.getService
 import com.mineinabyss.idofront.plugin.isPluginEnabled
@@ -26,6 +26,7 @@ val bonfirePlugin: BonfirePlugin by lazy { JavaPlugin.getPlugin(BonfirePlugin::c
 
 interface BonfireContext {
     companion object : BonfireContext by getService()
+
     val db: Database
 }
 

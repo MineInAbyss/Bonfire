@@ -6,7 +6,7 @@ import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
 import com.mineinabyss.bonfire.logging.BonfireLogger
-import com.mineinabyss.geary.minecraft.access.toGeary
+import com.mineinabyss.geary.papermc.access.toGeary
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import org.bukkit.OfflinePlayer
