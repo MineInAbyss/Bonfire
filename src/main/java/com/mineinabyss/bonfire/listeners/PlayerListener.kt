@@ -15,6 +15,7 @@ import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.okkero.skedule.SynchronizationContext
 import com.okkero.skedule.schedule
+import io.papermc.paper.event.entity.EntityInsideBlockEvent
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Block
@@ -24,11 +25,9 @@ import org.bukkit.block.data.type.Bed
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Boat
 import org.bukkit.entity.EntityType
-import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
-import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.player.*
 import org.bukkit.inventory.CampfireRecipe
@@ -102,14 +101,8 @@ object PlayerListener : Listener {
     }
 
     @EventHandler
-    fun EntityDamageEvent.event() {
-        if (!(entity is Player && cause == EntityDamageEvent.DamageCause.FIRE)) return
-        val player = entity as Player
-        player.location.findLocationAround(radius = 1, scale = 0.3) {
-            it.block.state is Campfire
-        }?.let {
-            isCancelled = true
-        }
+    fun EntityInsideBlockEvent.standingOnBonfire() {
+        if ((block.state as Campfire).isBonfire) isCancelled = true
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

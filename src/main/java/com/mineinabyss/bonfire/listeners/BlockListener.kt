@@ -25,7 +25,9 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.*
 import org.bukkit.event.entity.EntityChangeBlockEvent
+import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.world.EntitiesLoadEvent
+import org.bukkit.inventory.EquipmentSlot
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.math.floor
@@ -120,13 +122,13 @@ object BlockListener : Listener {
 
     @EventHandler
     fun BlockPistonExtendEvent.pistonExtend() {
-        if(block.getRelative(direction).hasBonfireBelow()){
+        if (block.getRelative(direction).hasBonfireBelow()) {
             isCancelled = true
             return
         }
 
         blocks.forEach {
-            if(it.getRelative(direction).hasBonfireBelow()){
+            if (it.getRelative(direction).hasBonfireBelow()) {
                 isCancelled = true
                 return
             }
@@ -135,13 +137,13 @@ object BlockListener : Listener {
 
     @EventHandler
     fun BlockPistonRetractEvent.pistonRetract() {
-        if(block.getRelative(direction).hasBonfireBelow()){
+        if (block.getRelative(direction).hasBonfireBelow()) {
             isCancelled = true
             return
         }
 
         blocks.forEach {
-            if(it.getRelative(direction).hasBonfireBelow()){
+            if (it.getRelative(direction).hasBonfireBelow()) {
                 isCancelled = true
                 return
             }
@@ -158,5 +160,15 @@ object BlockListener : Listener {
     @EventHandler
     fun EntityChangeBlockEvent.douseBonfire() {
         if (entity is ThrownPotion && (this.block.state as Campfire).isBonfire) isCancelled = true
+    }
+
+    @EventHandler
+    fun PlayerInteractEvent.onWaterlogging() {
+        if (action != Action.RIGHT_CLICK_BLOCK) return
+        if (hand != EquipmentSlot.HAND) return
+        if (((clickedBlock?.state as? Campfire)?.isBonfire == true ||
+            (interactionPoint?.block?.state as? Campfire)?.isBonfire == true) &&
+            item?.type == Material.WATER_BUCKET
+        ) isCancelled = true
     }
 }
