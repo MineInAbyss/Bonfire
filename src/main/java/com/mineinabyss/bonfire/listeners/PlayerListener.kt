@@ -102,7 +102,7 @@ object PlayerListener : Listener {
 
     @EventHandler
     fun EntityInsideBlockEvent.standingOnBonfire() {
-        if ((block.state as Campfire).isBonfire) isCancelled = true
+        if ((block.state as? Campfire)?.isBonfire == true) isCancelled = true
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
