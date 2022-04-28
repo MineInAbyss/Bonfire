@@ -54,7 +54,7 @@ class BonfirePlugin : JavaPlugin() {
             BlockListener
         )
 
-        gearyAddon {
+        gearyAddon("com.mineinabyss") {
             autoScanComponents()
             systems(
                 BonfireEffectSystem()
