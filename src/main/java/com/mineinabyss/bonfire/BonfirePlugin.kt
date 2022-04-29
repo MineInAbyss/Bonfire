@@ -4,10 +4,10 @@ import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.Players
-import com.mineinabyss.bonfire.ecs.systems.BonfireEffectSystem
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.DWListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
+import com.mineinabyss.geary.api.addon.autoscan
 import com.mineinabyss.geary.papermc.dsl.gearyAddon
 import com.mineinabyss.idofront.platforms.IdofrontPlatforms
 import com.mineinabyss.idofront.plugin.getService
@@ -54,11 +54,10 @@ class BonfirePlugin : JavaPlugin() {
             BlockListener
         )
 
-        gearyAddon("com.mineinabyss") {
-            autoScanComponents()
-            systems(
-                BonfireEffectSystem()
-            )
+        gearyAddon {
+            autoscan("com.mineinabyss") {
+                all()
+            }
         }
 
         BonfireCommandExecutor
