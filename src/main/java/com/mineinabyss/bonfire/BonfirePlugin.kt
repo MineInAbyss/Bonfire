@@ -56,11 +56,8 @@ class BonfirePlugin : JavaPlugin() {
 
         gearyAddon {
             autoscan("com.mineinabyss") {
-                components()
+                all()
             }
-            systems(
-                BonfireEffectSystem()
-            )
         }
 
         BonfireCommandExecutor
