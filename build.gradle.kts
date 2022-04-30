@@ -1,15 +1,13 @@
-import Com_mineinabyss_conventions_platform_gradle.Deps
-
 val idofrontVersion: String by project
 val deeperworldVersion: String by project
 val gearyPlatformVersion: String by project
 
 plugins {
     id("com.mineinabyss.conventions.kotlin")
-    kotlin("plugin.serialization")
     id("com.mineinabyss.conventions.papermc")
     id("com.mineinabyss.conventions.publication")
     id("com.mineinabyss.conventions.copyjar")
+    kotlin("plugin.serialization")
 }
 
 repositories {
@@ -21,15 +19,15 @@ repositories {
 
 dependencies {
     // MineInAbyss platform
-    compileOnly(Deps.`sqlite-jdbc`) { isTransitive = false }
-    compileOnly(Deps.exposed.core) { isTransitive = false }
-    compileOnly(Deps.exposed.dao) { isTransitive = false }
-    compileOnly(Deps.exposed.jdbc) { isTransitive = false }
-    compileOnly(Deps.exposed.`java-time`) { isTransitive = false }
+    compileOnly(libs.sqlite.jdbc) { isTransitive = false }
+    compileOnly(libs.exposed.core) { isTransitive = false }
+    compileOnly(libs.exposed.dao) { isTransitive = false }
+    compileOnly(libs.exposed.jdbc) { isTransitive = false }
+    compileOnly(libs.exposed.javatime) { isTransitive = false }
 
-    compileOnly(Deps.kotlinx.serialization.json)
-    compileOnly(Deps.kotlinx.serialization.kaml)
-    compileOnly(Deps.minecraft.skedule)
+    compileOnly(libs.kotlinx.serialization.json)
+    compileOnly(libs.kotlinx.serialization.kaml)
+    compileOnly(libs.minecraft.skedule)
 
     // Geary platform
     compileOnly(platform("com.mineinabyss:geary-platform:$gearyPlatformVersion"))

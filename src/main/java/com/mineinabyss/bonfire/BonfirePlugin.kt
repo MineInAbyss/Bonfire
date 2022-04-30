@@ -8,13 +8,13 @@ import com.mineinabyss.bonfire.ecs.systems.BonfireEffectSystem
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.DWListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
+import com.mineinabyss.geary.addon.autoscan
 import com.mineinabyss.geary.papermc.dsl.gearyAddon
 import com.mineinabyss.idofront.platforms.IdofrontPlatforms
 import com.mineinabyss.idofront.plugin.getService
 import com.mineinabyss.idofront.plugin.isPluginEnabled
 import com.mineinabyss.idofront.plugin.registerEvents
 import com.mineinabyss.idofront.plugin.registerService
-import com.mineinabyss.idofront.serialization.SerializablePrefabItemService
 import org.bukkit.plugin.java.JavaPlugin
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -55,17 +55,15 @@ class BonfirePlugin : JavaPlugin() {
         )
 
         gearyAddon {
-            autoScanComponents()
+            autoscan("com.mineinabyss") {
+                components()
+            }
             systems(
                 BonfireEffectSystem()
             )
         }
 
         BonfireCommandExecutor
-
-        if (isPluginEnabled("Looty")) {
-            registerService<SerializablePrefabItemService>(BonfireSerializablePrefabItemService)
-        }
 
         if (isPluginEnabled("DeeperWorld")) {
             registerEvents(DWListener)
