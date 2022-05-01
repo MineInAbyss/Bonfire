@@ -1,5 +1,6 @@
 package com.mineinabyss.bonfire
 
+import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
@@ -17,9 +18,7 @@ import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.messaging.warn
-import com.okkero.skedule.BukkitSchedulerController
-import com.okkero.skedule.CoroutineTask
-import com.okkero.skedule.schedule
+import kotlinx.coroutines.joinAll
 import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.Location
@@ -227,29 +226,15 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                     sender.warn("Starting chunk scan. <bold><dark_red>DO NOT MESS WITH BONFIRES UNTIL DONE")
                     sender.warn("Total chunks to scan: " + bonfireLocations.keys.size)
 
-                    val tasks = mutableListOf<CoroutineTask>()
-                    bonfireLocations.forEach { (chunk, locations) ->
-                        tasks.add(bonfirePlugin.schedule {
+                    val jobs = bonfireLocations.map { (chunk, locations) ->
+                        bonfirePlugin.launch {
                             sender.warn("Processing chunk $chunk")
                             updateChunkBonfires(chunk, locations)
-                        })
+                        }
                     }
 
-                    bonfirePlugin.schedule {
-                        repeating(20)
-                        val scheduler = Bukkit.getScheduler()
-                        var tasksAreFinished = false
-                        while (!tasksAreFinished) {
-                            yield()
-                            tasks.forEach {
-                                val currentTask = it.currentTask
-                                if (currentTask != null && scheduler.isCurrentlyRunning(currentTask.taskId)) {
-                                    tasksAreFinished = false
-                                    return@forEach
-                                }
-                            }
-                            tasksAreFinished = true
-                        }
+                    bonfirePlugin.launch {
+                        jobs.joinAll()
                         sender.success("Chunk scan finished.")
                     }
                 }
@@ -257,21 +242,17 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
         }
     }
 
-    private suspend fun BukkitSchedulerController.updateChunkBonfires(chunk: Chunk, bfLocations: List<Location>) {
+    private fun updateChunkBonfires(chunk: Chunk, bfLocations: List<Location>) {
         chunk.load()
 
         val bonfireArmorstands = chunk.entities
             .filterIsInstance<ArmorStand>()
             .filter { it.isMarker && it.location in bfLocations }
 
-        bonfireArmorstands.forEach {
-            it.remove()
-            yield()
-        }
+        bonfireArmorstands.forEach(ArmorStand::remove)
 
         bfLocations.forEach {
             (it.block.state as? Campfire)?.updateBonfire()
-            yield()
         }
     }
 }

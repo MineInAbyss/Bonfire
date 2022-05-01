@@ -17,14 +17,14 @@ object BonfireConfig : IdofrontConfig<BonfireConfig.Data>(bonfirePlugin, Data.se
     @Serializable
     data class Data(
         var bonfireItem: SerializableItemStack,
-        var modelItem: SerializableItemStack = SerializableItemStack(Material.WOODEN_SHOVEL, 1, 1),
-        var maxPlayerCount: Int = 4,
-        var bonfireExpirationTime: Duration = 7.days,
+        var modelItem: SerializableItemStack,
+        var maxPlayerCount: Int,
+        var bonfireExpirationTime: Duration,
         var respawnSetSound: SoundEffect,
         var respawnUnsetSound: SoundEffect,
-        var minFallDist: Int = 3,
-        var effectRadius: Double = 3.0,
-        var effectStrength: Float = 10f,
-        var effectRegenRate: Int = 7
+        var minFallDist: Int,
+        var effectRadius: Double,
+        var effectStrength: Float,
+        var effectRegenRate: Int
     )
 }

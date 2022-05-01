@@ -1,6 +1,4 @@
 val idofrontVersion: String by project
-val deeperworldVersion: String by project
-val gearyPlatformVersion: String by project
 
 plugins {
     kotlin("jvm")
@@ -28,18 +26,17 @@ dependencies {
 
     compileOnly(libs.kotlinx.serialization.json)
     compileOnly(libs.kotlinx.serialization.kaml)
-    compileOnly(libs.minecraft.skedule)
+    compileOnly(libs.minecraft.mccoroutine)
 
     // Geary platform
-    compileOnly(platform("com.mineinabyss:geary-platform:$gearyPlatformVersion"))
-    compileOnly("com.mineinabyss:geary-papermc-core")
-    compileOnly("com.mineinabyss:looty")
+    compileOnly(bflibs.geary.papermc.core)
+    compileOnly(bflibs.looty)
 
     // Other plugins
-    compileOnly("com.mineinabyss:deeperworld:$deeperworldVersion")
+    compileOnly(bflibs.deeperworld)
 
     // Shaded
-    implementation("com.mineinabyss:idofront:$idofrontVersion")
+    implementation(libs.idofront.core)
 }
 
 tasks.shadowJar {

@@ -1,5 +1,6 @@
 package com.mineinabyss.bonfire
 
+import com.github.shynixn.mccoroutine.bukkit.registerSuspendingEvents
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.MessageQueue
@@ -48,8 +49,9 @@ class BonfirePlugin : JavaPlugin() {
             SchemaUtils.createMissingTablesAndColumns(Bonfire, Players, MessageQueue)
         }
 
+        server.pluginManager.registerSuspendingEvents(PlayerListener, this)
+
         registerEvents(
-            PlayerListener,
             BlockListener
         )
 

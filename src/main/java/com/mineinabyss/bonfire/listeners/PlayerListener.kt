@@ -1,5 +1,8 @@
 package com.mineinabyss.bonfire.listeners
 
+import com.github.shynixn.mccoroutine.bukkit.asyncDispatcher
+import com.github.shynixn.mccoroutine.bukkit.launch
+import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import com.mineinabyss.bonfire.BonfireContext
 import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.config.BonfireConfig
@@ -13,10 +16,13 @@ import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
-import com.okkero.skedule.SynchronizationContext
-import com.okkero.skedule.schedule
 import io.papermc.paper.event.entity.EntityInsideBlockEvent
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
@@ -38,6 +44,7 @@ import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.seconds
 
 object PlayerListener : Listener {
 
@@ -79,20 +86,24 @@ object PlayerListener : Listener {
             return
         }
 
-        bonfirePlugin.schedule(SynchronizationContext.ASYNC) {
-            val playersInBonfire = transaction(BonfireContext.db) { Players.select { bonfireUUID eq campfire.uuid }.toList() }
-            switchContext(SynchronizationContext.SYNC)
+        bonfirePlugin.launch(bonfirePlugin.asyncDispatcher) {
+            val playersInBonfire = transaction(BonfireContext.db) {
+                Players.select { bonfireUUID eq campfire.uuid }.toList()
+            }
 
-            if (playersInBonfire.firstOrNull { it[Players.playerUUID] == player.uniqueId } !== null) {
-                if (!player.removeBonfireSpawnLocation(campfire.uuid)) {
-                    player.error("This is not your respawn point")
+            withContext(bonfirePlugin.minecraftDispatcher) {
+                if (playersInBonfire.firstOrNull { it[Players.playerUUID] == player.uniqueId } !== null) {
+                    if (!player.removeBonfireSpawnLocation(campfire.uuid)) {
+                        player.error("This is not your respawn point")
+                    }
+                } else {  //add player to bonfire if bonfire not maxed out
+                    if (playersInBonfire.count() >= BonfireConfig.data.maxPlayerCount) {
+                        return@withContext player.error("This bonfire is full!")
+                    } else {
+                        player.setRespawnLocation(campfire.uuid)
+                    }
                 }
-            } else {  //add player to bonfire if bonfire not maxed out
-                if (playersInBonfire.count() >= BonfireConfig.data.maxPlayerCount) {
-                    return@schedule player.error("This bonfire is full!")
-                } else {
-                    player.setRespawnLocation(campfire.uuid)
-                }
+
             }
         }
 
@@ -169,25 +180,22 @@ object PlayerListener : Listener {
     }
 
     @EventHandler
-    fun PlayerJoinEvent.joinServer() {
-
-        transaction(BonfireContext.db) {
-            val respawnBonfire = Players
-                .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
-                .select { Players.playerUUID eq player.uniqueId }
-                .firstOrNull() ?: return@transaction
-
-            val respawnBonfireLocation = respawnBonfire[Bonfire.location]
-            val respawnBlock = respawnBonfireLocation.world.getBlockAt(respawnBonfireLocation)
-            if (respawnBlock.state is Campfire) {
-                val campfire = respawnBlock.state as Campfire
-                if (campfire.isBonfire(respawnBonfire[Bonfire.entityUUID])) {
-                    campfire.updateFire()
-                }
+    suspend fun PlayerJoinEvent.joinServer() {
+        val (respawnBonfireLocation, uuid) = withContext(bonfirePlugin.asyncDispatcher) {
+            transaction(BonfireContext.db) {
+                val respawnBonfire = Players
+                    .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
+                    .select { Players.playerUUID eq player.uniqueId }
+                    .firstOrNull() ?: return@transaction null
+                respawnBonfire[Bonfire.location] to respawnBonfire[Bonfire.entityUUID]
             }
+        } ?: return
+        val respawnBlock = respawnBonfireLocation.world.getBlockAt(respawnBonfireLocation)
+        (respawnBlock.state as? Campfire)?.let {
+            if (it.isBonfire(uuid)) it.updateFire()
         }
-        bonfirePlugin.schedule {
-            waitFor(20)
+        withContext(bonfirePlugin.asyncDispatcher) {
+            delay(1.seconds)
             transaction(BonfireContext.db) {
                 MessageQueue.select { MessageQueue.playerUUID eq player.uniqueId }.forEach {
                     player.error(it[content])

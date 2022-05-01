@@ -1,6 +1,7 @@
 package com.mineinabyss.bonfire.listeners
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent
+import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.bonfire.BonfireContext
 import com.mineinabyss.bonfire.Permissions
 import com.mineinabyss.bonfire.bonfirePlugin
@@ -11,7 +12,8 @@ import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.messaging.error
-import com.okkero.skedule.schedule
+import com.mineinabyss.idofront.time.ticks
+import kotlinx.coroutines.delay
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Block
@@ -114,8 +116,8 @@ object BlockListener : Listener {
     @EventHandler
     fun BlockCookEvent.cook() {
         val campfire = block.state as? Campfire ?: return
-        Bukkit.getScheduler().schedule(bonfirePlugin) {
-            waitFor(1)
+        bonfirePlugin.launch {
+            delay(1.ticks)
             campfire.updateFire()
         }
     }

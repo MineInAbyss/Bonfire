@@ -1,5 +1,7 @@
 package com.mineinabyss.bonfire.extensions
 
+import com.github.shynixn.mccoroutine.bukkit.asyncDispatcher
+import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.bonfire.BonfireContext
 import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.data.Bonfire
@@ -14,8 +16,8 @@ import com.mineinabyss.geary.papermc.store.encode
 import com.mineinabyss.geary.papermc.store.has
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
-import com.okkero.skedule.SynchronizationContext
-import com.okkero.skedule.schedule
+import com.mineinabyss.idofront.time.ticks
+import kotlinx.coroutines.delay
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Campfire
@@ -159,8 +161,8 @@ fun Campfire.updateBonfire() {
 fun Campfire.updateFire() {
     val bonfireData = this.block.blockData as CampfireBlockData
 
-    bonfirePlugin.schedule(SynchronizationContext.ASYNC) {
-        waitFor(2)
+    bonfirePlugin.launch(bonfirePlugin.asyncDispatcher) {
+        delay(2.ticks)
         transaction(BonfireContext.db) {
             Players.select { Players.bonfireUUID eq this@updateFire.uuid }.forEach {
                 val player = Bukkit.getPlayer(it[Players.playerUUID])
