@@ -3,11 +3,12 @@ val deeperworldVersion: String by project
 val gearyPlatformVersion: String by project
 
 plugins {
+    kotlin("jvm")
+    kotlin("plugin.serialization")
     id("com.mineinabyss.conventions.kotlin")
     id("com.mineinabyss.conventions.papermc")
     id("com.mineinabyss.conventions.publication")
     id("com.mineinabyss.conventions.copyjar")
-    kotlin("plugin.serialization")
 }
 
 repositories {

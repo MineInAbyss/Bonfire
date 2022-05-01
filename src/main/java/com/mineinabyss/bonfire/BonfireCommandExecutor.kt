@@ -13,7 +13,10 @@ import com.mineinabyss.idofront.commands.arguments.stringArg
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
 import com.mineinabyss.idofront.commands.execution.stopCommand
 import com.mineinabyss.idofront.commands.extensions.actions.playerAction
-import com.mineinabyss.idofront.messaging.*
+import com.mineinabyss.idofront.messaging.error
+import com.mineinabyss.idofront.messaging.info
+import com.mineinabyss.idofront.messaging.success
+import com.mineinabyss.idofront.messaging.warn
 import com.okkero.skedule.BukkitSchedulerController
 import com.okkero.skedule.CoroutineTask
 import com.okkero.skedule.schedule
@@ -221,7 +224,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                         .groupBy(keySelector = { it[Bonfire.location].chunk },
                             valueTransform = { it[Bonfire.location] })
 
-                    sender.warn("Starting chunk scan. &l&4DO NOT MESS WITH BONFIRES UNTIL DONE".color())
+                    sender.warn("Starting chunk scan. <bold><dark_red>DO NOT MESS WITH BONFIRES UNTIL DONE")
                     sender.warn("Total chunks to scan: " + bonfireLocations.keys.size)
 
                     val tasks = mutableListOf<CoroutineTask>()
