@@ -11,7 +11,6 @@ plugins {
 
 repositories {
     mavenCentral()
-    mavenLocal()
     maven("https://repo.mineinabyss.com/releases")
     maven("https://repo.dmulloy2.net/repository/public") // Protocol Lib
     maven("https://jitpack.io")
