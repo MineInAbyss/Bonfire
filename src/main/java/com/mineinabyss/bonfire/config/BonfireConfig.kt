@@ -9,9 +9,7 @@ import com.mineinabyss.idofront.serialization.DurationSerializer
 import com.mineinabyss.idofront.serialization.SerializableItemStack
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import org.bukkit.Material
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.days
 
 object BonfireConfig : IdofrontConfig<BonfireConfig.Data>(bonfirePlugin, Data.serializer()) {
     @Serializable
@@ -20,6 +18,7 @@ object BonfireConfig : IdofrontConfig<BonfireConfig.Data>(bonfirePlugin, Data.se
         var modelItem: SerializableItemStack,
         var maxPlayerCount: Int,
         var bonfireExpirationTime: Duration,
+        var bonfireInteractCooldown: Duration,
         var respawnSetSound: SoundEffect,
         var respawnUnsetSound: SoundEffect,
         var minFallDist: Int,
