@@ -1,11 +1,11 @@
 [versions]
-geary = "0.15.89"
-mobzy = "0.14.60"
-looty = "0.6.48"
-deeperworld = "0.4.74"
+geary = "0.16.100"
+mobzy = "0.16.73"
+looty = "0.7.56"
+deeperworld = "0.5.76"
 
 [libraries]
-protocolburrito = "com.mineinabyss:protocolburrito:0.3.32"
+protocolburrito = "com.mineinabyss:protocolburrito:0.4.33"
 
 geary-papermc-core = { module = "com.mineinabyss:geary-papermc-core", version.ref = "geary" }
 looty = { module = "com.mineinabyss:looty", version.ref = "looty" }
