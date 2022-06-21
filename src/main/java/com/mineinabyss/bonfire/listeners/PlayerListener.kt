@@ -17,12 +17,9 @@ import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import io.papermc.paper.event.entity.EntityInsideBlockEvent
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
-import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
@@ -43,10 +40,13 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.util.*
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 
 object PlayerListener : Listener {
+
+    val cooldownMap = mutableListOf<UUID>()
 
     @EventHandler
     fun EntityDeathEvent.death() {
@@ -60,12 +60,9 @@ object PlayerListener : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun PlayerInteractEvent.rightClickCampfire() {
+        val config = BonfireConfig.data
         val clicked = clickedBlock ?: return // If no block was clicked, return
-
-        if (hand == EquipmentSlot.OFF_HAND) return  //the event is called twice, on for each hand. We want to ignore the offhand call
-
-        if (!rightClicked) return   //only do stuff when player rightclicks
-
+        if (hand == EquipmentSlot.OFF_HAND || !rightClicked) return  //the event is called twice, on for each hand. We want to ignore the offhand call
         if (abs(0 - player.velocity.y) < 0.001) return  // Only allow if player is on ground
 
         if (clicked.blockData is Bed) {
@@ -82,9 +79,8 @@ object PlayerListener : Listener {
             return campfire.updateFire()
         }
 
-        if (player.fallDistance > BonfireConfig.data.minFallDist) {
-            return
-        }
+        if (player.fallDistance > BonfireConfig.data.minFallDist) return
+        if (cooldownMap.contains(player.uniqueId)) return
 
         bonfirePlugin.launch(bonfirePlugin.asyncDispatcher) {
             val playersInBonfire = transaction(BonfireContext.db) {
@@ -97,10 +93,15 @@ object PlayerListener : Listener {
                         player.error("This is not your respawn point")
                     }
                 } else {  //add player to bonfire if bonfire not maxed out
-                    if (playersInBonfire.count() >= BonfireConfig.data.maxPlayerCount) {
+                    if (playersInBonfire.count() >= config.maxPlayerCount) {
                         return@withContext player.error("This bonfire is full!")
                     } else {
                         player.setRespawnLocation(campfire.uuid)
+                        cooldownMap.add(player.uniqueId)
+                        bonfirePlugin.launch {
+                            delay(config.bonfireInteractCooldown)
+                            cooldownMap.remove(player.uniqueId)
+                        }
                     }
                 }
 
