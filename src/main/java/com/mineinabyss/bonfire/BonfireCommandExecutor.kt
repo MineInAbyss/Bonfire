@@ -23,6 +23,9 @@ import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.Location
 import org.bukkit.block.Campfire
+import org.bukkit.command.Command
+import org.bukkit.command.CommandSender
+import org.bukkit.command.TabCompleter
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Player
 import org.jetbrains.exposed.sql.leftJoin
@@ -30,7 +33,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
-object BonfireCommandExecutor : IdofrontCommandExecutor() {
+object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
     override val commands: CommandHolder = commands(bonfirePlugin) {
         ("bonfire" / "bf")(desc = "Commands for Bonfire") {
             "respawn"(desc = "Commands to manipulate the Bonfire respawn of players") {
@@ -67,7 +70,12 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                                     if (!dbPlayer.hasValue(Bonfire.entityUUID)) {
                                         sender.error("Bonfire for player ${player.name} not found in the database. This is bad and should not happen!")
                                     } else {
-                                        sender.success("Bonfire for player ${player.name} is at x: ${location.x}, y: ${location.y}, z: ${location.z}.")
+                                        sender.success(
+                                            "Bonfire for player ${player.name} is at " +
+                                                    "<hover:show_text:Teleport to ${player.name} bonfire>" +
+                                                    "<b><click:run_command:/teleport ${location.blockX} ${location.blockY} ${location.blockZ}>" +
+                                                    "${location.blockX}, ${location.blockY}, ${location.blockZ}</click></b>."
+                                        )
                                     }
                                 }
                             }
@@ -240,6 +248,64 @@ object BonfireCommandExecutor : IdofrontCommandExecutor() {
                 }
             }
         }
+    }
+
+    override fun onTabComplete(
+        sender: CommandSender,
+        command: Command,
+        alias: String,
+        args: Array<out String>
+    ): List<String> {
+        val player = sender as Player
+        val playerList = mutableListOf<String>()
+        Bukkit.getOnlinePlayers().forEach { playerList.add(it.name) }
+        return if (command.name == "bonfire") {
+            when (args.size) {
+                1 -> listOf("respawn", "info", "give", "updateAllModels")
+                2 -> {
+                    when (args[0]) {
+                        "respawn" -> listOf("get", "set", "remove")
+                        "info" -> listOf("dbcheck", "players")
+                        else -> emptyList()
+                    }
+                }
+                3 -> {
+                    when (args[1]) {
+                        "players" -> listOf(player.location.blockX.toString())
+                        "dbcheck" -> listOf(player.location.blockX.toString())
+                        "set" -> playerList
+                        "get" -> playerList
+                        "remove" -> playerList
+                        else -> emptyList()
+                    }
+                }
+                4 -> {
+                    when (args[1]) {
+                        "players" -> listOf(player.location.blockY.toString())
+                        "dbcheck" -> listOf(player.location.blockY.toString())
+                        "set" -> listOf(player.location.blockX.toString())
+                        else -> emptyList()
+                    }
+                }
+                5 -> {
+                    when (args[1]) {
+                        "players" -> listOf(player.location.blockZ.toString())
+                        "dbcheck" -> listOf(player.location.blockZ.toString())
+                        "set" -> listOf(player.location.blockY.toString())
+                        else -> emptyList()
+                    }
+                }
+                6 -> {
+                    when (args[1]) {
+                        "players" -> listOf(player.location.blockZ.toString())
+                        "dbcheck" -> listOf(player.location.blockZ.toString())
+                        "set" -> listOf(player.location.blockZ.toString())
+                        else -> emptyList()
+                    }
+                }
+                else -> emptyList()
+            }
+        } else emptyList()
     }
 
     private fun updateChunkBonfires(chunk: Chunk, bfLocations: List<Location>) {
