@@ -11,8 +11,10 @@ import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.MessageQueue.content
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.data.Players.bonfireUUID
+import com.mineinabyss.bonfire.ecs.components.BonfireCooldown
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
+import com.mineinabyss.geary.papermc.access.toGeary
 import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
@@ -40,13 +42,10 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.util.*
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 
 object PlayerListener : Listener {
-
-    val cooldownMap = mutableListOf<UUID>()
 
     @EventHandler
     fun EntityDeathEvent.death() {
@@ -72,15 +71,14 @@ object PlayerListener : Listener {
 
         val campfire = clicked.state as? Campfire ?: return
         campfire.isBonfire || return
-
         if (!player.isSneaking) {
             if (player.inventory.itemInMainHand.isCookableOnCampfire()) return campfire.updateFire()
             isCancelled = true
             return campfire.updateFire()
         }
 
-        if (player.fallDistance > BonfireConfig.data.minFallDist) return
-        if (cooldownMap.contains(player.uniqueId)) return
+        if (player.fallDistance > config.minFallDist) return
+        if (player.toGeary().has<BonfireCooldown>()) return
 
         bonfirePlugin.launch(bonfirePlugin.asyncDispatcher) {
             val playersInBonfire = transaction(BonfireContext.db) {
@@ -97,10 +95,10 @@ object PlayerListener : Listener {
                         return@withContext player.error("This bonfire is full!")
                     } else {
                         player.setRespawnLocation(campfire.uuid)
-                        cooldownMap.add(player.uniqueId)
+                        player.toGeary().setPersisting(BonfireCooldown())
                         bonfirePlugin.launch {
                             delay(config.bonfireInteractCooldown)
-                            cooldownMap.remove(player.uniqueId)
+                            player.toGeary().remove<BonfireCooldown>()
                         }
                     }
                 }
