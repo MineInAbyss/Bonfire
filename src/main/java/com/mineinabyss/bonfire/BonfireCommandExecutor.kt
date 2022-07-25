@@ -252,8 +252,10 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                 }
                 "clearCooldowns"(desc="Remove the cooldowns on players if they dont automatically") {
                     action {
-                        if (arguments.isEmpty())
+                        if (arguments.isEmpty()) {
                             Bukkit.getOnlinePlayers().forEach { it.toGeary().remove<BonfireCooldown>() }
+                            sender.success("Removed bonfire cooldowns from all players.")
+                        }
                         else {
                             val player = Bukkit.getPlayer(arguments.first())
                             if (player != null) {
