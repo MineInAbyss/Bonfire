@@ -59,8 +59,10 @@ object PlayerListener : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun PlayerInteractEvent.rightClickCampfire() {
+        val gearyPlayer = player.toGeary()
         val config = BonfireConfig.data
         val clicked = clickedBlock ?: return // If no block was clicked, return
+
         if (hand == EquipmentSlot.OFF_HAND || !rightClicked) return  //the event is called twice, on for each hand. We want to ignore the offhand call
         if (abs(0 - player.velocity.y) < 0.001) return  // Only allow if player is on ground
 
@@ -78,7 +80,10 @@ object PlayerListener : Listener {
         }
 
         if (player.fallDistance > config.minFallDist) return
-        if (player.toGeary().has<BonfireCooldown>()) return
+        if (gearyPlayer.has<BonfireCooldown>()) {
+            if (gearyPlayer.get<BonfireCooldown>()?.bonfire == campfire.uuid) return
+            else gearyPlayer.remove<BonfireCooldown>() // Remove so setting it below corrects the uuid
+        }
 
         bonfirePlugin.launch(bonfirePlugin.asyncDispatcher) {
             val playersInBonfire = transaction(BonfireContext.db) {
@@ -95,10 +100,10 @@ object PlayerListener : Listener {
                         return@withContext player.error("This bonfire is full!")
                     } else {
                         player.setRespawnLocation(campfire.uuid)
-                        player.toGeary().setPersisting(BonfireCooldown())
+                        gearyPlayer.setPersisting(BonfireCooldown(campfire.uuid))
                         bonfirePlugin.launch {
                             delay(config.bonfireInteractCooldown)
-                            player.toGeary().remove<BonfireCooldown>()
+                            gearyPlayer.remove<BonfireCooldown>()
                         }
                     }
                 }
@@ -215,7 +220,8 @@ object PlayerListener : Listener {
         return valid
     }
 
+    @EventHandler
+    fun PlayerQuitEvent.onQuit() {
+        player.toGeary().remove<BonfireCooldown>()
+    }
 }
-
-
-

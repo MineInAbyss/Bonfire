@@ -4,10 +4,12 @@ import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.bonfire.config.BonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
+import com.mineinabyss.bonfire.ecs.components.BonfireCooldown
 import com.mineinabyss.bonfire.extensions.removeBonfireSpawnLocation
 import com.mineinabyss.bonfire.extensions.setRespawnLocation
 import com.mineinabyss.bonfire.extensions.updateBonfire
 import com.mineinabyss.bonfire.extensions.uuid
+import com.mineinabyss.geary.papermc.access.toGeary
 import com.mineinabyss.idofront.commands.CommandHolder
 import com.mineinabyss.idofront.commands.arguments.intArg
 import com.mineinabyss.idofront.commands.arguments.stringArg
@@ -244,6 +246,13 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                     bonfirePlugin.launch {
                         jobs.joinAll()
                         sender.success("Chunk scan finished.")
+                    }
+                }
+            }
+            "debug"(desc = "Debug commands") {
+                "clearCooldowns"(desc="Remove the cooldowns on players if they dont automatically") {
+                    playerAction {
+                        player.toGeary().remove<BonfireCooldown>()
                     }
                 }
             }
