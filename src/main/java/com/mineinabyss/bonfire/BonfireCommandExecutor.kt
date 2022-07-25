@@ -227,32 +227,41 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                     player.inventory.addItem(BonfireConfig.data.bonfireItem.toItemStack())
                 }
             }
-            "updateAllModels"(desc = "Clear any armorstands associated with bonfires and update model of all bonfires.") {
-                transaction(BonfireContext.db) {
-                    val bonfireLocations = Bonfire.slice(Bonfire.location).selectAll()
-                        .groupBy(keySelector = { it[Bonfire.location].chunk },
-                            valueTransform = { it[Bonfire.location] })
+            "debug"(desc = "Debug commands") {
+                "updateAllModels"(desc = "Clear any armorstands associated with bonfires and update model of all bonfires.") {
+                    transaction(BonfireContext.db) {
+                        val bonfireLocations = Bonfire.slice(Bonfire.location).selectAll()
+                            .groupBy(keySelector = { it[Bonfire.location].chunk },
+                                valueTransform = { it[Bonfire.location] })
 
-                    sender.warn("Starting chunk scan. <bold><dark_red>DO NOT MESS WITH BONFIRES UNTIL DONE")
-                    sender.warn("Total chunks to scan: " + bonfireLocations.keys.size)
+                        sender.warn("Starting chunk scan. <bold><dark_red>DO NOT MESS WITH BONFIRES UNTIL DONE")
+                        sender.warn("Total chunks to scan: " + bonfireLocations.keys.size)
 
-                    val jobs = bonfireLocations.map { (chunk, locations) ->
+                        val jobs = bonfireLocations.map { (chunk, locations) ->
+                            bonfirePlugin.launch {
+                                sender.warn("Processing chunk $chunk")
+                                updateChunkBonfires(chunk, locations)
+                            }
+                        }
+
                         bonfirePlugin.launch {
-                            sender.warn("Processing chunk $chunk")
-                            updateChunkBonfires(chunk, locations)
+                            jobs.joinAll()
+                            sender.success("Chunk scan finished.")
                         }
                     }
-
-                    bonfirePlugin.launch {
-                        jobs.joinAll()
-                        sender.success("Chunk scan finished.")
-                    }
                 }
-            }
-            "debug"(desc = "Debug commands") {
                 "clearCooldowns"(desc="Remove the cooldowns on players if they dont automatically") {
-                    playerAction {
-                        player.toGeary().remove<BonfireCooldown>()
+                    action {
+                        if (arguments.isEmpty())
+                            Bukkit.getOnlinePlayers().forEach { it.toGeary().remove<BonfireCooldown>() }
+                        else {
+                            val player = Bukkit.getPlayer(arguments.first())
+                            if (player != null) {
+                                player.toGeary().remove<BonfireCooldown>()
+                                sender.success("Removed cooldowns from player ${player.name}")
+                            }
+                            else sender.error("No player found with that name.")
+                        }
                     }
                 }
             }
@@ -270,11 +279,12 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
         Bukkit.getOnlinePlayers().forEach { playerList.add(it.name) }
         return if (command.name == "bonfire") {
             when (args.size) {
-                1 -> listOf("respawn", "info", "give", "updateAllModels")
+                1 -> listOf("respawn", "info", "give", "debug")
                 2 -> {
                     when (args[0]) {
                         "respawn" -> listOf("get", "set", "remove")
                         "info" -> listOf("dbcheck", "players")
+                        "debug" -> listOf("updateAllModels", "clearCooldowns")
                         else -> emptyList()
                     }
                 }
@@ -285,6 +295,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                         "set" -> playerList
                         "get" -> playerList
                         "remove" -> playerList
+                        "clearCooldowns" -> Bukkit.getOnlinePlayers().map { it.name }
                         else -> emptyList()
                     }
                 }
