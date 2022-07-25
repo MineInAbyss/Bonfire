@@ -29,7 +29,7 @@ dependencyResolutionManagement {
 
     versionCatalogs {
         create("libs").from("com.mineinabyss:catalog:$idofrontVersion")
-        create("bflibs").from(files("gradle/bflibs.versions.toml"))
+        create("bfLibs").from(files("gradle/bfLibs.versions.toml"))
     }
 }
 

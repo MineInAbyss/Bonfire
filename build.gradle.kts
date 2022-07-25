@@ -29,11 +29,11 @@ dependencies {
     compileOnly(libs.minecraft.mccoroutine)
 
     // Geary platform
-    compileOnly(bflibs.geary.papermc.core)
-    compileOnly(bflibs.looty)
+    compileOnly(bfLibs.geary.papermc.core)
+    compileOnly(bfLibs.looty)
 
     // Other plugins
-    compileOnly(bflibs.deeperworld)
+    compileOnly(bfLibs.deeperworld)
 
     // Shaded
     implementation(libs.idofront.core)

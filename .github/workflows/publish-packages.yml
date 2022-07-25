@@ -45,4 +45,4 @@ jobs:
           prerelease: false
           automatic_release_tag: v${{ steps.extract_version.outputs.version }}
           files: |
-            build/libs/*[0-9].jar
+            build/libs/*[0-9]-all.jar
