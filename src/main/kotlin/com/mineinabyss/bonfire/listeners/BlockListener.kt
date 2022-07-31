@@ -103,7 +103,7 @@ object BlockListener : Listener {
 
     @EventHandler
     fun EntitiesLoadEvent.load() {
-        val location = entities.first().location
+        val location = entities.firstOrNull()?.location ?: return
         if (!location.isWorldLoaded || !location.world.isChunkLoaded(location.chunk)) return
         if (chunk.isLoaded && chunk.isEntitiesLoaded) {
             entities.filterIsInstance<ArmorStand>().filter { it.isMarker && it.isBonfireModel() }.forEach {
