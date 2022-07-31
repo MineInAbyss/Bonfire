@@ -68,8 +68,8 @@ fun Campfire.createBonfire(newBonfireUUID: UUID, playerUUID: UUID) {
 
 
 fun Campfire.updateDisplay() {
-    val block = block
-
+    val location = block.location
+    if (!location.isWorldLoaded || !location.world.isChunkLoaded(location.chunk)) return
     if (!block.chunk.isEntitiesLoaded) return
 
     val model = getModel() ?: error("Couldn't get model")
