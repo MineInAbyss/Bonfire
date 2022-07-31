@@ -103,6 +103,8 @@ object BlockListener : Listener {
 
     @EventHandler
     fun EntitiesLoadEvent.load() {
+        val location = entities.first().location
+        if (!location.isWorldLoaded || !location.world.isChunkLoaded(location.chunk)) return
         if (chunk.isLoaded && chunk.isEntitiesLoaded) {
             entities.filterIsInstance<ArmorStand>().filter { it.isMarker && it.isBonfireModel() }.forEach {
                 val campfire = it.location.block.state as? Campfire ?: return it.remove()

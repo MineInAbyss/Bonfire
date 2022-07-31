@@ -14,6 +14,7 @@ import com.mineinabyss.geary.papermc.access.toGeary
 import com.mineinabyss.geary.papermc.store.decode
 import com.mineinabyss.geary.papermc.store.encode
 import com.mineinabyss.geary.papermc.store.has
+import com.mineinabyss.idofront.entities.toPlayer
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.time.ticks
@@ -152,6 +153,8 @@ fun Campfire.markStateChanged() {
 }
 
 fun Campfire.updateBonfire() {
+    val location = block.location
+    if (!location.isWorldLoaded || !location.world.isChunkLoaded(location.chunk)) return
     if (!block.chunk.isLoaded && !block.chunk.isEntitiesLoaded) return
 
     updateDisplay()
@@ -160,18 +163,16 @@ fun Campfire.updateBonfire() {
 
 fun Campfire.updateFire() {
     val bonfireData = this.block.blockData as CampfireBlockData
-
+    val soulCampfire =
+        (Material.SOUL_CAMPFIRE.createBlockData() as CampfireBlockData).apply { this.facing = bonfireData.facing }
     bonfirePlugin.launch(bonfirePlugin.asyncDispatcher) {
         delay(2.ticks)
         transaction(BonfireContext.db) {
-            Players.select { Players.bonfireUUID eq this@updateFire.uuid }.forEach {
-                val player = Bukkit.getPlayer(it[Players.playerUUID])
-                player?.sendBlockChange(
-                    block.location,
-                    (Material.SOUL_CAMPFIRE.createBlockData() as CampfireBlockData).apply {
-                        this.facing = bonfireData.facing
-                    })
-            }
+            Players.select { Players.bonfireUUID eq this@updateFire.uuid }
+                .forEach {
+                    val player = it[Players.playerUUID].toPlayer() ?: return@forEach
+                    player.sendBlockChange(block.location, soulCampfire)
+                }
         }
     }
 }
