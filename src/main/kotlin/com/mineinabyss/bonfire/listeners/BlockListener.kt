@@ -14,7 +14,6 @@ import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.time.ticks
 import kotlinx.coroutines.delay
-import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace

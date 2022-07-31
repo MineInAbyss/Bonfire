@@ -2,7 +2,7 @@
 geary = "0.16.100"
 mobzy = "0.16.73"
 looty = "0.7.56"
-deeperworld = "0.5.76"
+deeperworld = "0.5.77"
 
 [libraries]
 protocolburrito = "com.mineinabyss:protocolburrito:0.4.33"
