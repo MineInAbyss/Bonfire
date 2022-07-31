@@ -45,6 +45,7 @@ var Campfire.uuid: UUID
     set(value) = bonfireData()?.updateUUID(value) ?: error()
 
 fun Campfire.getModel(): ArmorStand? {
+    if (!block.location.isWorldLoaded && !block.location.isChunkLoaded) return null
     return block.chunk.entities
         .filterIsInstance<ArmorStand>()
         .find { it.uniqueId == uuid } ?: return createModel()
@@ -69,7 +70,7 @@ fun Campfire.createBonfire(newBonfireUUID: UUID, playerUUID: UUID) {
 
 fun Campfire.updateDisplay() {
     val location = block.location
-    if (!location.isWorldLoaded || !location.world.isChunkLoaded(location.chunk)) return
+    if (!location.isWorldLoaded || !location.isChunkLoaded) return
     if (!block.chunk.isEntitiesLoaded) return
 
     val model = getModel() ?: error("Couldn't get model")
@@ -102,9 +103,8 @@ fun Campfire.updateDisplay() {
 
 fun Campfire.createModel(): ArmorStand? {
     @Suppress("RemoveExplicitTypeArguments")
-    return transaction<ArmorStand?> {
-        val bonfireRow =
-            Bonfire.select { Bonfire.entityUUID eq this@createModel.uuid }.firstOrNull() ?: return@transaction null
+    return transaction<ArmorStand?>(BonfireContext.db) {
+        val bonfireRow = Bonfire.select { Bonfire.entityUUID eq this@createModel.uuid }.firstOrNull() ?: return@transaction null
 
         // Spawn armor stand
         val armorStand = (bonfireRow[Bonfire.location].world.spawnEntity(
@@ -153,8 +153,7 @@ fun Campfire.markStateChanged() {
 }
 
 fun Campfire.updateBonfire() {
-    val location = block.location
-    if (!location.isWorldLoaded || !location.world.isChunkLoaded(location.chunk)) return
+    if (!block.location.isWorldLoaded || !block.location.isChunkLoaded) return
     if (!block.chunk.isLoaded && !block.chunk.isEntitiesLoaded) return
 
     updateDisplay()
@@ -163,8 +162,8 @@ fun Campfire.updateBonfire() {
 
 fun Campfire.updateFire() {
     val bonfireData = this.block.blockData as CampfireBlockData
-    val soulCampfire =
-        (Material.SOUL_CAMPFIRE.createBlockData() as CampfireBlockData).apply { this.facing = bonfireData.facing }
+    val soulCampfire = (Material.SOUL_CAMPFIRE.createBlockData() as CampfireBlockData).apply { this.facing = bonfireData.facing }
+
     bonfirePlugin.launch(bonfirePlugin.asyncDispatcher) {
         delay(2.ticks)
         transaction(BonfireContext.db) {
@@ -179,7 +178,6 @@ fun Campfire.updateFire() {
 
 fun Campfire.destroy(destroyBlock: Boolean) {
     val model = Bukkit.getEntity(this.uuid) as? ArmorStand
-
     var blockLocation = model?.location
 
     transaction(BonfireContext.db) {

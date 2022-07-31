@@ -59,7 +59,6 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
 
             if(oldBonfireBlock != null) {
                 BonfireLogger.logRespawnUnset(oldBonfireBlock.location, this@setRespawnLocation)
-
                 oldBonfireBlock.markStateChanged()
             }
         } else if (playerRow == null) {
@@ -86,9 +85,8 @@ fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
             .select{Players.playerUUID eq this@removeBonfireSpawnLocation.uniqueId}
             .firstOrNull() ?: return@transaction true
 
-        if(dbPlayer[Players.bonfireUUID] != bonfireUUID){
+        if(dbPlayer[Players.bonfireUUID] != bonfireUUID)
             return@transaction false
-        }
 
         val deleteCode = Players.deleteWhere {
             (Players.playerUUID eq this@removeBonfireSpawnLocation.uniqueId) and

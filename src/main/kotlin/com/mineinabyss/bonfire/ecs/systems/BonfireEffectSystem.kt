@@ -22,12 +22,7 @@ class BonfireEffectSystem : TickingSystem(1.ticks) {
         }?.let {
             player.location.world.spawnParticle(
                 listOf(Particle.SOUL, Particle.SOUL_FIRE_FLAME).random(),
-                player.location,
-                1,
-                0.5,
-                1.0,
-                0.5,
-                0.0
+                player.location, 1, 0.5, 1.0, 0.5, 0.0
             )
 
             player.saturation = BonfireConfig.data.effectStrength
