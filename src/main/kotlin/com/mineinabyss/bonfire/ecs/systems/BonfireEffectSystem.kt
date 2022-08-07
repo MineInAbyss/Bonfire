@@ -5,7 +5,6 @@ import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
 import com.mineinabyss.bonfire.extensions.isBonfireModel
 import com.mineinabyss.geary.systems.TickingSystem
 import com.mineinabyss.geary.systems.accessors.TargetScope
-import com.mineinabyss.geary.systems.accessors.get
 import com.mineinabyss.idofront.time.ticks
 import org.bukkit.Particle
 import org.bukkit.entity.ArmorStand
