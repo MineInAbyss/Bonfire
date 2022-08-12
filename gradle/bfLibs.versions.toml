@@ -1,8 +1,8 @@
 [versions]
-geary = "0.16.100"
-mobzy = "0.16.73"
-looty = "0.7.56"
-deeperworld = "0.5.77"
+geary = "0.19.107"
+mobzy = "0.17.78"
+looty = "0.7.58"
+deeperworld = "0.5.78"
 
 [libraries]
 protocolburrito = "com.mineinabyss:protocolburrito:0.4.33"
