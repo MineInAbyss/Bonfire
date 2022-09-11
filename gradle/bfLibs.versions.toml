@@ -1,7 +1,7 @@
 [versions]
 geary = "0.20.114"
-mobzy = "0.18.85"
-looty = "0.8.68"
+mobzy = "0.19.85"
+looty = "0.8.69"
 deeperworld = "0.6.84"
 protocolburrito = "0.5.38"
 
