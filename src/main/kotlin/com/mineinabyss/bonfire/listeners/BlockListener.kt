@@ -5,7 +5,7 @@ import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.bonfire.BonfireContext
 import com.mineinabyss.bonfire.Permissions
 import com.mineinabyss.bonfire.bonfirePlugin
-import com.mineinabyss.bonfire.config.BonfireConfig
+import com.mineinabyss.bonfire.config.bonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Bonfire.ownerUUID
 import com.mineinabyss.bonfire.data.Players
@@ -43,14 +43,13 @@ object BlockListener : Listener {
             return
         }
 
-        itemInHand.isSimilar(BonfireConfig.data.bonfireItem.toItemStack()) || return
+        itemInHand.isSimilar(bonfireConfig.bonfireItem.toItemStack()) || return
 
-        if (blockPlaced.getRelative(BlockFace.UP).type != Material.AIR ||
-            blockPlaced.getRelative(BlockFace.UP, 2).type != Material.AIR
-        ) {
-            player.error("There is not enough space here for a bonfire.")
-            isCancelled = true
-            return
+        blockPlaced.getRelative(BlockFace.UP).run {
+            if (type != Material.AIR || getRelative(BlockFace.UP).type != Material.AIR) {
+                isCancelled = true
+                return
+            }
         }
 
         // If we are trying to place our custom campfire
@@ -125,31 +124,22 @@ object BlockListener : Listener {
 
     @EventHandler
     fun BlockPistonExtendEvent.pistonExtend() {
-        if (block.getRelative(direction).hasBonfireBelow()) {
+        if (block.getRelative(direction).hasBonfireBelow())
             isCancelled = true
-            return
+        else blocks.forEach {
+            if (it.getRelative(direction).hasBonfireBelow())
+                isCancelled = true
         }
 
-        blocks.forEach {
-            if (it.getRelative(direction).hasBonfireBelow()) {
-                isCancelled = true
-                return
-            }
-        }
     }
 
     @EventHandler
     fun BlockPistonRetractEvent.pistonRetract() {
-        if (block.getRelative(direction).hasBonfireBelow()) {
+        if (block.getRelative(direction).hasBonfireBelow())
             isCancelled = true
-            return
-        }
-
-        blocks.forEach {
-            if (it.getRelative(direction).hasBonfireBelow()) {
+        else blocks.forEach {
+            if (it.getRelative(direction).hasBonfireBelow())
                 isCancelled = true
-                return
-            }
         }
     }
 
@@ -167,11 +157,8 @@ object BlockListener : Listener {
 
     @EventHandler
     fun PlayerInteractEvent.onWaterlogging() {
-        if (action != Action.RIGHT_CLICK_BLOCK) return
-        if (hand != EquipmentSlot.HAND) return
-        if (((clickedBlock?.state as? Campfire)?.isBonfire == true ||
-            (interactionPoint?.block?.state as? Campfire)?.isBonfire == true) &&
-            item?.type == Material.WATER_BUCKET
-        ) isCancelled = true
+        if (action != Action.RIGHT_CLICK_BLOCK || hand != EquipmentSlot.HAND) return
+        if (item?.type != Material.WATER_BUCKET) return
+        if ((clickedBlock?.state as? Campfire)?.isBonfire == true || (interactionPoint?.block?.state as? Campfire)?.isBonfire == true) isCancelled = true
     }
 }

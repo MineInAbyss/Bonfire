@@ -16,7 +16,6 @@ object DWListener : Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     fun BlockSyncEvent.event() {
         val corr = block.location.correspondingLocation?.block ?: return
-
         val blockIsBonfire = block.state is Campfire && (block.state as Campfire).isBonfire
         val corrIsBonfire = corr.state is Campfire && (corr.state as Campfire).isBonfire
 
@@ -35,7 +34,6 @@ object DWListener : Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     fun BlockBreakEvent.event() {
         val corr = block.location.correspondingLocation?.block ?: return
-
         val corrIsBonfire = corr.state is Campfire && (corr.state as Campfire).isBonfire
 
         isCancelled = corrIsBonfire

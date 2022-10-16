@@ -36,9 +36,5 @@ dependencies {
     compileOnly(bfLibs.deeperworld)
 
     // Shaded
-    implementation(libs.idofront.core)
-}
-
-tasks.shadowJar {
-    minimize()
+    implementation(libs.bundles.idofront.core)
 }

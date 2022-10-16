@@ -8,13 +8,15 @@ import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.DWListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
+import com.mineinabyss.deeperworld.deeperWorld
 import com.mineinabyss.geary.addon.autoscan
 import com.mineinabyss.geary.papermc.dsl.gearyAddon
-import com.mineinabyss.idofront.platforms.IdofrontPlatforms
-import com.mineinabyss.idofront.plugin.getService
-import com.mineinabyss.idofront.plugin.isPluginEnabled
-import com.mineinabyss.idofront.plugin.registerEvents
-import com.mineinabyss.idofront.plugin.registerService
+import com.mineinabyss.idofront.config.IdofrontConfig
+import com.mineinabyss.idofront.config.config
+import com.mineinabyss.idofront.platforms.Platforms
+import com.mineinabyss.idofront.plugin.Services
+import com.mineinabyss.idofront.plugin.listeners
+import com.mineinabyss.idofront.plugin.service
 import org.bukkit.plugin.java.JavaPlugin
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -25,20 +27,20 @@ import org.jetbrains.exposed.sql.transactions.transaction
 val bonfirePlugin: BonfirePlugin by lazy { JavaPlugin.getPlugin(BonfirePlugin::class.java) }
 
 interface BonfireContext {
-    companion object : BonfireContext by getService()
+    companion object : BonfireContext by Services.get()
 
     val db: Database
 }
 
 class BonfirePlugin : JavaPlugin() {
+    lateinit var config: IdofrontConfig<BonfireConfig>
     override fun onLoad() {
-        IdofrontPlatforms.load(this, "mineinabyss")
+        Platforms.load(this, "mineinabyss")
     }
 
     override fun onEnable() {
-        saveDefaultConfig()
-        BonfireConfig.load()
-        registerService<BonfireContext>(object : BonfireContext {
+        config = config("config") { fromPluginPath(loadDefault = true)}
+        service<BonfireContext>(object : BonfireContext {
             override val db = Database.connect("jdbc:sqlite:" + dataFolder.path + "/data.db", "org.sqlite.JDBC")
         })
 
@@ -51,7 +53,7 @@ class BonfirePlugin : JavaPlugin() {
 
         server.pluginManager.registerSuspendingEvents(PlayerListener, this)
 
-        registerEvents(
+        listeners(
             BlockListener
         )
 
@@ -63,9 +65,8 @@ class BonfirePlugin : JavaPlugin() {
 
         BonfireCommandExecutor
 
-        if (isPluginEnabled("DeeperWorld")) {
-            registerEvents(DWListener)
-        }
+        if (deeperWorld.isEnabled)
+            listeners(DWListener)
     }
 
     override fun onDisable() {

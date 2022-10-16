@@ -52,7 +52,7 @@ fun Campfire.getModel(): ArmorStand? {
 }
 
 fun Campfire.error(): Nothing =
-    error("Bonfire data not found for campfire $this")
+    error("Bonfire data not found for campfire at ${this.location}")
 
 fun Campfire.createBonfire(newBonfireUUID: UUID, playerUUID: UUID) {
     val bonfireData = BonfireData(newBonfireUUID)

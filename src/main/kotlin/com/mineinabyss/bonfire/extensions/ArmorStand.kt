@@ -1,6 +1,6 @@
 package com.mineinabyss.bonfire.extensions
 
-import com.mineinabyss.bonfire.config.BonfireConfig
+import com.mineinabyss.bonfire.config.bonfireConfig
 import com.mineinabyss.bonfire.ecs.components.BonfireModel
 import com.mineinabyss.geary.papermc.store.encode
 import com.mineinabyss.geary.papermc.store.has
@@ -18,7 +18,7 @@ fun ArmorStand.setDefaults(): ArmorStand {
     this.isSmall = true
     this.isMarker = true
     this.setBonfireModel()
-    this.equipment.helmet = BonfireConfig.data.modelItem.toItemStack()
+    this.equipment.helmet = bonfireConfig.modelItem.toItemStack()
 
     return this
 }

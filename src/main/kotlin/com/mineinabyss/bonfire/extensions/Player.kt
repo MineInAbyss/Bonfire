@@ -1,7 +1,7 @@
 package com.mineinabyss.bonfire.extensions
 
 import com.mineinabyss.bonfire.BonfireContext
-import com.mineinabyss.bonfire.config.BonfireConfig
+import com.mineinabyss.bonfire.config.bonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
@@ -69,7 +69,7 @@ fun OfflinePlayer.setRespawnLocation(bonfireUUID: UUID) {
         }
 
         newCampfire.markStateChanged()
-        this@setRespawnLocation.player?.let { BonfireConfig.data.respawnSetSound.playSound(it) }
+        this@setRespawnLocation.player?.let { bonfireConfig.respawnSetSound.playSound(it) }
         this@setRespawnLocation.player?.success("Respawn point set")
         val p = this@setRespawnLocation.player
         p?.toGeary()?.setPersisting(BonfireEffectArea(newCampfire.uuid))
@@ -94,7 +94,7 @@ fun OfflinePlayer.removeBonfireSpawnLocation(bonfireUUID: UUID): Boolean {
         }
         if (deleteCode == 0) return@transaction false
 
-        this@removeBonfireSpawnLocation.player?.let { BonfireConfig.data.respawnUnsetSound.playSound(it) }
+        this@removeBonfireSpawnLocation.player?.let { bonfireConfig.respawnUnsetSound.playSound(it) }
         this@removeBonfireSpawnLocation.player?.error("Respawn point has been removed")
 
         val p = this@removeBonfireSpawnLocation.player
