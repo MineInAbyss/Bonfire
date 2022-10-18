@@ -5,7 +5,7 @@ import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import com.mineinabyss.bonfire.BonfireContext
 import com.mineinabyss.bonfire.bonfirePlugin
-import com.mineinabyss.bonfire.config.BonfireConfig
+import com.mineinabyss.bonfire.config.bonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.MessageQueue.content
@@ -60,7 +60,6 @@ object PlayerListener : Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     fun PlayerInteractEvent.rightClickCampfire() {
         val gearyPlayer = player.toGeary()
-        val config = BonfireConfig.data
         val clicked = clickedBlock ?: return // If no block was clicked, return
 
         if (hand == EquipmentSlot.OFF_HAND || !rightClicked) return  //the event is called twice, on for each hand. We want to ignore the offhand call
@@ -79,7 +78,7 @@ object PlayerListener : Listener {
             return campfire.updateFire()
         }
 
-        if (player.fallDistance > config.minFallDist) return
+        if (player.fallDistance > bonfireConfig.minFallDist) return
         if (gearyPlayer.has<BonfireCooldown>()) {
             if (gearyPlayer.get<BonfireCooldown>()?.bonfire == campfire.uuid) return
             else gearyPlayer.remove<BonfireCooldown>() // Remove so setting it below corrects the uuid
@@ -96,13 +95,13 @@ object PlayerListener : Listener {
                         player.error("This is not your respawn point")
                     }
                 } else {  //add player to bonfire if bonfire not maxed out
-                    if (playersInBonfire.count() >= config.maxPlayerCount) {
+                    if (playersInBonfire.count() >= bonfireConfig.maxPlayerCount) {
                         return@withContext player.error("This bonfire is full!")
                     } else {
                         player.setRespawnLocation(campfire.uuid)
                         gearyPlayer.setPersisting(BonfireCooldown(campfire.uuid))
                         bonfirePlugin.launch {
-                            delay(config.bonfireInteractCooldown)
+                            delay(bonfireConfig.bonfireInteractCooldown)
                             gearyPlayer.remove<BonfireCooldown>()
                         }
                     }
@@ -212,7 +211,7 @@ object PlayerListener : Listener {
     fun ItemStack.isCookableOnCampfire(): Boolean {
         var valid = false
         Bukkit.recipeIterator().forEach {
-            if (it is CampfireRecipe && it.input.isSimilar(this)) {
+            if (it is CampfireRecipe && it.inputChoice.test(this)) {
                 valid = true
             }
         }

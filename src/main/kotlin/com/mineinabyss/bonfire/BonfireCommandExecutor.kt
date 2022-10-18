@@ -1,7 +1,7 @@
 package com.mineinabyss.bonfire
 
 import com.github.shynixn.mccoroutine.bukkit.launch
-import com.mineinabyss.bonfire.config.BonfireConfig
+import com.mineinabyss.bonfire.config.bonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.ecs.components.BonfireCooldown
@@ -16,6 +16,7 @@ import com.mineinabyss.idofront.commands.arguments.stringArg
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
 import com.mineinabyss.idofront.commands.execution.stopCommand
 import com.mineinabyss.idofront.commands.extensions.actions.playerAction
+import com.mineinabyss.idofront.config.config
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
@@ -38,6 +39,11 @@ import org.jetbrains.exposed.sql.transactions.transaction
 object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
     override val commands: CommandHolder = commands(bonfirePlugin) {
         ("bonfire" / "bf")(desc = "Commands for Bonfire") {
+            "reload" {
+                action {
+                    bonfirePlugin.config = config("config") { bonfirePlugin.fromPluginPath(loadDefault = true) }
+                }
+            }
             "respawn"(desc = "Commands to manipulate the Bonfire respawn of players") {
                 val targetPlayerStr by stringArg { name = "player" }
 
@@ -224,7 +230,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
             }
             "give"(desc = "Give yourself a bonfire") { //TODO: Add this command to idofront/MiA for any custom item
                 playerAction {
-                    player.inventory.addItem(BonfireConfig.data.bonfireItem.toItemStack())
+                    player.inventory.addItem(bonfireConfig.bonfireItem.toItemStack())
                 }
             }
             "debug"(desc = "Debug commands") {

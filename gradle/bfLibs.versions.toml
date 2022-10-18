@@ -1,9 +1,9 @@
 [versions]
-geary = "0.20.115"
-mobzy = "0.19.85"
-looty = "0.8.69"
-deeperworld = "0.6.84"
-protocolburrito = "0.5.38"
+geary = "0.21.2"
+mobzy = "0.20.1"
+looty = "0.9.1"
+deeperworld = "0.7.0"
+protocolburrito = "0.6.3"
 
 [libraries]
 protocolburrito = { module = "com.mineinabyss:protocolburrito", version.ref = "protocolburrito" }
