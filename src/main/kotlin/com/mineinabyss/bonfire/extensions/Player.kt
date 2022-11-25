@@ -12,6 +12,7 @@ import com.mineinabyss.idofront.messaging.success
 import org.bukkit.OfflinePlayer
 import org.bukkit.block.Campfire
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.Duration
 import java.time.LocalDateTime

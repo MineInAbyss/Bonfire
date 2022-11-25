@@ -25,6 +25,8 @@ import org.bukkit.block.Campfire
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.EntityType
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
 import java.util.*
@@ -96,7 +98,7 @@ fun Campfire.updateDisplay() {
                 Bukkit.getEntity(dupe[Bonfire.entityUUID])?.remove()
             }
 
-            Bonfire.deleteWhere { (Bonfire.location eq model.location) and (Bonfire.entityUUID neq this@updateDisplay.uuid) }
+            Bonfire.deleteWhere { (Bonfire.location eq model.location) and (entityUUID neq this@updateDisplay.uuid) }
         }
     }
 }
@@ -203,7 +205,7 @@ fun Campfire.destroy(destroyBlock: Boolean) {
                     }
                 }
             }
-        Bonfire.deleteWhere { Bonfire.entityUUID eq this@destroy.uuid }
+        Bonfire.deleteWhere { entityUUID eq this@destroy.uuid }
         Players.deleteWhere { Players.bonfireUUID eq this@destroy.uuid }
     }
 

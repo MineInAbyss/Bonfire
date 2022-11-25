@@ -38,6 +38,7 @@ import org.bukkit.event.player.*
 import org.bukkit.inventory.CampfireRecipe
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.innerJoin
 import org.jetbrains.exposed.sql.select
@@ -164,8 +165,8 @@ object PlayerListener : Listener {
 
                 player.error("Bonfire not found")
                 BonfireLogger.logRespawnFailed(player, respawnBonfire[Bonfire.location])
-                Players.deleteWhere { Players.playerUUID eq player.uniqueId }
-                Bonfire.deleteWhere { Bonfire.entityUUID eq respawnBonfire[Bonfire.entityUUID] }
+                Players.deleteWhere { playerUUID eq player.uniqueId }
+                Bonfire.deleteWhere { entityUUID eq respawnBonfire[entityUUID] }
             }
             respawnLocation = player.server.worlds.first().spawnLocation
             BonfireLogger.logRespawnAtWorldSpawn(player)
