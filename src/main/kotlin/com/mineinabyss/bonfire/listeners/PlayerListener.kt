@@ -30,10 +30,13 @@ import org.bukkit.block.data.type.Bed
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Boat
 import org.bukkit.entity.EntityType
+import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDeathEvent
+import org.bukkit.event.inventory.ClickType
+import org.bukkit.event.inventory.InventoryCreativeEvent
 import org.bukkit.event.player.*
 import org.bukkit.inventory.CampfireRecipe
 import org.bukkit.inventory.EquipmentSlot
@@ -223,5 +226,20 @@ object PlayerListener : Listener {
     @EventHandler
     fun PlayerQuitEvent.onQuit() {
         player.toGeary().remove<BonfireCooldown>()
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    fun InventoryCreativeEvent.middleClickBonfire() {
+        if (click != ClickType.CREATIVE) return
+        val player = inventory.holder as? Player ?: return
+        if ((player.getTargetBlock(5)?.state as? Campfire)?.isBonfire != true) return
+
+        val existingSlot = (0..8).firstOrNull {
+            player.inventory.getItem(it) == bonfireConfig.bonfireItem.toItemStack()
+        }
+        if (existingSlot != null) {
+            player.inventory.heldItemSlot = existingSlot
+            isCancelled = true
+        } else cursor = bonfireConfig.bonfireItem.toItemStack()
     }
 }
