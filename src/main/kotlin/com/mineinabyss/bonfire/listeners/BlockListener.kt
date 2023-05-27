@@ -8,8 +8,6 @@ import com.mineinabyss.bonfire.data.Bonfire.ownerUUID
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
-import com.mineinabyss.geary.papermc.datastore.decodePrefabs
-import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.time.ticks
 import kotlinx.coroutines.delay
@@ -37,20 +35,12 @@ object BlockListener : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun BlockPlaceEvent.place() {
-        if (blockPlaced.hasBonfireBelow()) {
-            isCancelled = true
-            return
-        }
+        if (!itemInHand.isSimilar(bonfire.config.bonfireItem.toItemStack())) return
 
-        itemInHand.itemMeta?.persistentDataContainer?.decodePrefabs()?.firstOrNull().broadcastVal() ?: return
-        //itemInHand.isSimilar(bonfireConfig.bonfireItem.toItemStack()) || return
-
-        blockPlaced.getRelative(BlockFace.UP).run {
-            if (type != Material.AIR || getRelative(BlockFace.UP).type != Material.AIR) {
-                isCancelled = true
-                return
-            }
-        }
+        if (blockPlaced.hasBonfireBelow()) isCancelled = true
+        if (!blockPlaced.getRelative(BlockFace.UP).type.isAir) isCancelled = true
+        if (!blockPlaced.getRelative(BlockFace.UP, 2).type.isAir) isCancelled = true
+        if (isCancelled) return
 
         // If we are trying to place our custom campfire
         // we need to save this as a respawn campfire instead of just a regular campfire
