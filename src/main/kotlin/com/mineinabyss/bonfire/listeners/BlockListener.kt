@@ -78,12 +78,20 @@ object BlockListener : Listener {
     fun EntitiesLoadEvent.load() {
         val location = entities.firstOrNull()?.location ?: return
         if (!location.isWorldLoaded || !location.isChunkLoaded) return
-        if (chunk.isLoaded && chunk.isEntitiesLoaded) {
-            entities.filter { it.isBonfireModel() }.forEach {
-                val campfire = it.location.block.state as? Campfire ?: return it.remove()
-                if (campfire.uuid != it.uniqueId) it.remove()
-                else campfire.updateBonfire()
-            }
+        if (!chunk.isLoaded || !chunk.isEntitiesLoaded) return
+
+        entities.filter { it.isBonfireModel() }.forEach {
+            val campfire = it.location.block.state as? Campfire ?: return it.remove()
+            if (campfire.uuid != it.uniqueId) it.remove()
+            else campfire.updateBonfire()
+        }
+
+        // Attempt to convert old bonfires
+        entities.filter { it.isOldBonfireModel() }.forEach {
+            val campfire = it.location.block.state as? Campfire ?: return it.remove()
+            it.remove()
+            campfire.createModel()
+            campfire.updateBonfire()
         }
     }
 
