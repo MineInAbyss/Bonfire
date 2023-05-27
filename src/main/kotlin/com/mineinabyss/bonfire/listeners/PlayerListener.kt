@@ -3,9 +3,7 @@ package com.mineinabyss.bonfire.listeners
 import com.github.shynixn.mccoroutine.bukkit.asyncDispatcher
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
-import com.mineinabyss.bonfire.BonfireContext
-import com.mineinabyss.bonfire.bonfirePlugin
-import com.mineinabyss.bonfire.config.bonfireConfig
+import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.MessageQueue.content
@@ -14,7 +12,7 @@ import com.mineinabyss.bonfire.data.Players.bonfireUUID
 import com.mineinabyss.bonfire.ecs.components.BonfireCooldown
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
-import com.mineinabyss.geary.papermc.access.toGeary
+import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
@@ -66,7 +64,7 @@ object PlayerListener : Listener {
         val gearyPlayer = player.toGeary()
         val clicked = clickedBlock ?: return // If no block was clicked, return
 
-        if (hand == EquipmentSlot.OFF_HAND || !rightClicked) return  //the event is called twice, on for each hand. We want to ignore the offhand call
+        if (hand != EquipmentSlot.HAND || !rightClicked) return  //the event is called twice, on for each hand. We want to ignore the offhand call
         if (abs(0 - player.velocity.y) < 0.001) return  // Only allow if player is on ground
 
         if (clicked.blockData is Bed) {
@@ -82,30 +80,30 @@ object PlayerListener : Listener {
             return campfire.updateFire()
         }
 
-        if (player.fallDistance > bonfireConfig.minFallDist) return
+        if (player.fallDistance > bonfire.config.minFallDist) return
         if (gearyPlayer.has<BonfireCooldown>()) {
             if (gearyPlayer.get<BonfireCooldown>()?.bonfire == campfire.uuid) return
             else gearyPlayer.remove<BonfireCooldown>() // Remove so setting it below corrects the uuid
         }
 
-        bonfirePlugin.launch(bonfirePlugin.asyncDispatcher) {
-            val playersInBonfire = transaction(BonfireContext.db) {
+        bonfire.plugin.launch(bonfire.plugin.asyncDispatcher) {
+            val playersInBonfire = transaction(bonfire.db) {
                 Players.select { bonfireUUID eq campfire.uuid }.toList()
             }
 
-            withContext(bonfirePlugin.minecraftDispatcher) {
+            withContext(bonfire.plugin.minecraftDispatcher) {
                 if (playersInBonfire.firstOrNull { it[Players.playerUUID] == player.uniqueId } !== null) {
                     if (!player.removeBonfireSpawnLocation(campfire.uuid)) {
                         player.error("This is not your respawn point")
                     }
                 } else {  //add player to bonfire if bonfire not maxed out
-                    if (playersInBonfire.count() >= bonfireConfig.maxPlayerCount) {
+                    if (playersInBonfire.count() >= bonfire.config.maxPlayerCount) {
                         return@withContext player.error("This bonfire is full!")
                     } else {
                         player.setRespawnLocation(campfire.uuid)
                         gearyPlayer.setPersisting(BonfireCooldown(campfire.uuid))
-                        bonfirePlugin.launch {
-                            delay(bonfireConfig.bonfireInteractCooldown)
+                        bonfire.plugin.launch {
+                            delay(bonfire.config.bonfireInteractCooldown)
                             gearyPlayer.remove<BonfireCooldown>()
                         }
                     }
@@ -125,7 +123,7 @@ object PlayerListener : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun PlayerRespawnEvent.event() {
-        transaction(BonfireContext.db) {
+        transaction(bonfire.db) {
             val respawnBonfire = Players
                 .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
                 .select { Players.playerUUID eq player.uniqueId }
@@ -188,8 +186,8 @@ object PlayerListener : Listener {
 
     @EventHandler
     suspend fun PlayerJoinEvent.joinServer() {
-        val (respawnBonfireLocation, uuid) = withContext(bonfirePlugin.asyncDispatcher) {
-            transaction(BonfireContext.db) {
+        val (respawnBonfireLocation, uuid) = withContext(bonfire.plugin.asyncDispatcher) {
+            transaction(bonfire.db) {
                 val respawnBonfire = Players
                     .innerJoin(Bonfire, { bonfireUUID }, { entityUUID })
                     .select { Players.playerUUID eq player.uniqueId }
@@ -201,13 +199,13 @@ object PlayerListener : Listener {
         (respawnBlock.state as? Campfire)?.let {
             if (it.isBonfire(uuid)) it.updateFire()
         }
-        withContext(bonfirePlugin.asyncDispatcher) {
+        withContext(bonfire.plugin.asyncDispatcher) {
             delay(1.seconds)
-            transaction(BonfireContext.db) {
+            transaction(bonfire.db) {
                 MessageQueue.select { MessageQueue.playerUUID eq player.uniqueId }.forEach {
                     player.error(it[content])
                 }
-                MessageQueue.deleteWhere { MessageQueue.playerUUID eq player.uniqueId }
+                MessageQueue.deleteWhere { playerUUID eq player.uniqueId }
             }
         }
     }
@@ -232,14 +230,14 @@ object PlayerListener : Listener {
     fun InventoryCreativeEvent.middleClickBonfire() {
         if (click != ClickType.CREATIVE) return
         val player = inventory.holder as? Player ?: return
-        if ((player.getTargetBlock(5)?.state as? Campfire)?.isBonfire != true) return
+        if ((player.getTargetBlock(mutableSetOf(), 5).state as? Campfire)?.isBonfire != true) return
 
         val existingSlot = (0..8).firstOrNull {
-            player.inventory.getItem(it) == bonfireConfig.bonfireItem.toItemStack()
+            player.inventory.getItem(it) == bonfire.config.bonfireItem.toItemStack()
         }
         if (existingSlot != null) {
             player.inventory.heldItemSlot = existingSlot
             isCancelled = true
-        } else cursor = bonfireConfig.bonfireItem.toItemStack()
+        } else cursor = bonfire.config.bonfireItem.toItemStack()
     }
 }

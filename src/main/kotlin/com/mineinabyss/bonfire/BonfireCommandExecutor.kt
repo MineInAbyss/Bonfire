@@ -1,7 +1,6 @@
 package com.mineinabyss.bonfire
 
 import com.github.shynixn.mccoroutine.bukkit.launch
-import com.mineinabyss.bonfire.config.bonfireConfig
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.ecs.components.BonfireCooldown
@@ -9,14 +8,12 @@ import com.mineinabyss.bonfire.extensions.removeBonfireSpawnLocation
 import com.mineinabyss.bonfire.extensions.setRespawnLocation
 import com.mineinabyss.bonfire.extensions.updateBonfire
 import com.mineinabyss.bonfire.extensions.uuid
-import com.mineinabyss.geary.papermc.access.toGeary
-import com.mineinabyss.idofront.commands.CommandHolder
+import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.idofront.commands.arguments.intArg
 import com.mineinabyss.idofront.commands.arguments.stringArg
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
 import com.mineinabyss.idofront.commands.execution.stopCommand
 import com.mineinabyss.idofront.commands.extensions.actions.playerAction
-import com.mineinabyss.idofront.config.config
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
@@ -37,11 +34,11 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
-    override val commands: CommandHolder = commands(bonfirePlugin) {
+    override val commands = commands(bonfire.plugin) {
         ("bonfire" / "bf")(desc = "Commands for Bonfire") {
             "reload" {
                 action {
-                    bonfirePlugin.config = config("config") { bonfirePlugin.fromPluginPath(loadDefault = true) }
+                    bonfire.plugin.registerBonfireContext()
                 }
             }
             "respawn"(desc = "Commands to manipulate the Bonfire respawn of players") {
@@ -63,7 +60,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                             sender.warn("Multiple players found with that name, checking respawn for all.")
                         }
 
-                        transaction(BonfireContext.db) {
+                        transaction(bonfire.db) {
                             val dbPlayers = Players
                                 .leftJoin(Bonfire, { bonfireUUID }, { entityUUID })
                                 .select { Players.playerUUID inList offlineTargetsUUIDs }
@@ -144,7 +141,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
 
                         val targetPlayer = offlineTargets.first()
 
-                        transaction(BonfireContext.db) {
+                        transaction(bonfire.db) {
                             val bonfireUUID = Players
                                 .select { Players.playerUUID eq targetPlayer.uniqueId }
                                 .firstOrNull()?.get(Players.bonfireUUID)
@@ -180,7 +177,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                             sender.error("No bonfire found at this location.")
                             return@playerAction
                         } else {
-                            transaction(BonfireContext.db) {
+                            transaction(bonfire.db) {
                                 if (Bonfire.select { Bonfire.entityUUID eq bonfireUUID }.any()) {
                                     sender.success("Bonfire is registered in the database.")
                                 } else {
@@ -208,7 +205,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                             sender.error("No bonfire found at this location")
                             return@playerAction
                         } else {
-                            transaction(BonfireContext.db) {
+                            transaction(bonfire.db) {
                                 val registeredPlayers = Players.select { Players.bonfireUUID eq bonfireUUID }
 
                                 if (registeredPlayers.empty()) {
@@ -230,12 +227,12 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
             }
             "give"(desc = "Give yourself a bonfire") { //TODO: Add this command to idofront/MiA for any custom item
                 playerAction {
-                    player.inventory.addItem(bonfireConfig.bonfireItem.toItemStack())
+                    player.inventory.addItem(bonfire.config.bonfireItem.toItemStack())
                 }
             }
             "debug"(desc = "Debug commands") {
                 "updateAllModels"(desc = "Clear any armorstands associated with bonfires and update model of all bonfires.") {
-                    transaction(BonfireContext.db) {
+                    transaction(bonfire.db) {
                         val bonfireLocations = Bonfire.slice(Bonfire.location).selectAll()
                             .groupBy(keySelector = { it[Bonfire.location].chunk },
                                 valueTransform = { it[Bonfire.location] })
@@ -244,13 +241,13 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                         sender.warn("Total chunks to scan: " + bonfireLocations.keys.size)
 
                         val jobs = bonfireLocations.map { (chunk, locations) ->
-                            bonfirePlugin.launch {
+                            bonfire.plugin.launch {
                                 sender.warn("Processing chunk $chunk")
                                 updateChunkBonfires(chunk, locations)
                             }
                         }
 
-                        bonfirePlugin.launch {
+                        bonfire.plugin.launch {
                             jobs.joinAll()
                             sender.success("Chunk scan finished.")
                         }

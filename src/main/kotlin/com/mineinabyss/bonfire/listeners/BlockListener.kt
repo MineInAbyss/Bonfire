@@ -2,10 +2,8 @@ package com.mineinabyss.bonfire.listeners
 
 import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent
 import com.github.shynixn.mccoroutine.bukkit.launch
-import com.mineinabyss.bonfire.BonfireContext
 import com.mineinabyss.bonfire.Permissions
-import com.mineinabyss.bonfire.bonfirePlugin
-import com.mineinabyss.bonfire.config.bonfireConfig
+import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.Bonfire.ownerUUID
 import com.mineinabyss.bonfire.data.Players
@@ -43,7 +41,7 @@ object BlockListener : Listener {
             return
         }
 
-        itemInHand.isSimilar(bonfireConfig.bonfireItem.toItemStack()) || return
+        //itemInHand.isSimilar(bonfireConfig.bonfireItem.toItemStack()) || return
 
         blockPlaced.getRelative(BlockFace.UP).run {
             if (type != Material.AIR || getRelative(BlockFace.UP).type != Material.AIR) {
@@ -75,7 +73,7 @@ object BlockListener : Listener {
         val campfire = (block.state as Campfire)
         campfire.isBonfire || return
 
-        transaction(BonfireContext.db) {
+        transaction(bonfire.db) {
             val hasRegisteredPlayers = Players.select { Players.bonfireUUID eq campfire.uuid }.any()
             val bonfireRow = Bonfire.select { Bonfire.entityUUID eq campfire.uuid }.firstOrNull()
 
@@ -116,7 +114,7 @@ object BlockListener : Listener {
     @EventHandler
     fun BlockCookEvent.cook() {
         val campfire = block.state as? Campfire ?: return
-        bonfirePlugin.launch {
+        bonfire.plugin.launch {
             delay(1.ticks)
             campfire.updateFire()
         }

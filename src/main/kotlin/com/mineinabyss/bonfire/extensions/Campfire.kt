@@ -2,18 +2,17 @@ package com.mineinabyss.bonfire.extensions
 
 import com.github.shynixn.mccoroutine.bukkit.asyncDispatcher
 import com.github.shynixn.mccoroutine.bukkit.launch
-import com.mineinabyss.bonfire.BonfireContext
-import com.mineinabyss.bonfire.bonfirePlugin
+import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.data.Bonfire
 import com.mineinabyss.bonfire.data.MessageQueue
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.ecs.components.BonfireData
 import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
 import com.mineinabyss.bonfire.logging.BonfireLogger
-import com.mineinabyss.geary.papermc.access.toGeary
-import com.mineinabyss.geary.papermc.store.decode
-import com.mineinabyss.geary.papermc.store.encode
-import com.mineinabyss.geary.papermc.store.has
+import com.mineinabyss.geary.papermc.datastore.decode
+import com.mineinabyss.geary.papermc.datastore.encode
+import com.mineinabyss.geary.papermc.datastore.has
+import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.idofront.entities.toPlayer
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
@@ -60,7 +59,7 @@ fun Campfire.createBonfire(newBonfireUUID: UUID, playerUUID: UUID) {
     val bonfireData = BonfireData(newBonfireUUID)
     save(bonfireData)
 
-    transaction(BonfireContext.db) {
+    transaction(bonfire.db) {
         Bonfire.insert {
             it[entityUUID] = newBonfireUUID
             it[location] = this@createBonfire.location
@@ -77,7 +76,7 @@ fun Campfire.updateDisplay() {
 
     val model = getModel() ?: error("Couldn't get model")
 
-    transaction(BonfireContext.db) {
+    transaction(bonfire.db) {
         val playerCount = Players.select { Players.bonfireUUID eq this@updateDisplay.uuid }.count()
 
         //broadcast("Updating model for bonfire at x:${model.location.x} y:${model.location.y} z:${model.location.z} for $playerCount number of players.")
@@ -105,7 +104,7 @@ fun Campfire.updateDisplay() {
 
 fun Campfire.createModel(): ArmorStand? {
     @Suppress("RemoveExplicitTypeArguments")
-    return transaction<ArmorStand?>(BonfireContext.db) {
+    return transaction<ArmorStand?>(bonfire.db) {
         val bonfireRow = Bonfire.select { Bonfire.entityUUID eq this@createModel.uuid }.firstOrNull() ?: return@transaction null
 
         // Spawn armor stand
@@ -143,7 +142,7 @@ fun Campfire.createModel(): ArmorStand? {
 }
 
 fun Campfire.markStateChanged() {
-    transaction(BonfireContext.db) {
+    transaction(bonfire.db) {
         if (Players.select { Players.bonfireUUID eq this@markStateChanged.uuid }.empty()) {
             Bonfire.update({ Bonfire.entityUUID eq this@markStateChanged.uuid }) {
                 it[stateChangedTimestamp] = LocalDateTime.now()
@@ -166,9 +165,9 @@ fun Campfire.updateFire() {
     val bonfireData = this.block.blockData as CampfireBlockData
     val soulCampfire = (Material.SOUL_CAMPFIRE.createBlockData() as CampfireBlockData).apply { this.facing = bonfireData.facing }
 
-    bonfirePlugin.launch(bonfirePlugin.asyncDispatcher) {
+    bonfire.plugin.launch(bonfire.plugin.asyncDispatcher) {
         delay(2.ticks)
-        transaction(BonfireContext.db) {
+        transaction(bonfire.db) {
             Players.select { Players.bonfireUUID eq this@updateFire.uuid }
                 .forEach {
                     val player = it[Players.playerUUID].toPlayer() ?: return@forEach
@@ -182,7 +181,7 @@ fun Campfire.destroy(destroyBlock: Boolean) {
     val model = Bukkit.getEntity(this.uuid) as? ArmorStand
     var blockLocation = model?.location
 
-    transaction(BonfireContext.db) {
+    transaction(bonfire.db) {
         if (model == null) {
             blockLocation = Bonfire
                 .select { Bonfire.entityUUID eq this@destroy.uuid }
@@ -206,7 +205,7 @@ fun Campfire.destroy(destroyBlock: Boolean) {
                 }
             }
         Bonfire.deleteWhere { entityUUID eq this@destroy.uuid }
-        Players.deleteWhere { Players.bonfireUUID eq this@destroy.uuid }
+        Players.deleteWhere { bonfireUUID eq this@destroy.uuid }
     }
 
     if (destroyBlock && blockLocation != null) {

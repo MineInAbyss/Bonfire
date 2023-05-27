@@ -1,6 +1,6 @@
 package com.mineinabyss.bonfire.data
 
-import com.mineinabyss.bonfire.config.bonfireConfig
+import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.extensions.location
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
@@ -17,7 +17,7 @@ object Bonfire : IdTable<UUID>() {
     val location = location("location")
     val stateChangedTimestamp = datetime("stateChangedTimestamp").clientDefault { LocalDateTime.now() }
     val timeUntilDestroy = duration("timeUntilDestroy")
-        .default(bonfireConfig.bonfireExpirationTime.toJavaDuration())
+        .default(bonfire.config.bonfireExpirationTime.toJavaDuration())
     override val id: Column<EntityID<UUID>>
         get() = entityUUID.entityId()
 }

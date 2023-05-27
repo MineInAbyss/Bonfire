@@ -1,18 +1,19 @@
-val idofrontVersion: String by project
-
+@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
-    kotlin("jvm")
-    kotlin("plugin.serialization")
-    id("com.mineinabyss.conventions.kotlin")
-    id("com.mineinabyss.conventions.papermc")
-    id("com.mineinabyss.conventions.publication")
-    id("com.mineinabyss.conventions.copyjar")
+    alias(libs.plugins.mia.kotlin.jvm)
+    alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.mia.papermc)
+    alias(libs.plugins.mia.copyjar)
+    alias(libs.plugins.mia.publication)
+    alias(libs.plugins.mia.autoversion)
 }
 
 repositories {
     mavenCentral()
     maven("https://repo.mineinabyss.com/releases")
-    maven("https://repo.dmulloy2.net/repository/public") // Protocol Lib
+    maven("https://repo.mineinabyss.com/snapshots")
+    maven("https://repo.dmulloy2.net/repository/public") // ProtocolLib
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     maven("https://jitpack.io")
 }
 
@@ -29,8 +30,7 @@ dependencies {
     compileOnly(libs.minecraft.mccoroutine)
 
     // Geary platform
-    compileOnly(bfLibs.geary.papermc.core)
-    compileOnly(bfLibs.looty)
+    compileOnly(bfLibs.geary.papermc)
 
     // Other plugins
     compileOnly(bfLibs.deeperworld)

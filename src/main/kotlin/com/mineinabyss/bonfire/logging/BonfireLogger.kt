@@ -1,6 +1,6 @@
 package com.mineinabyss.bonfire.logging
 
-import com.mineinabyss.bonfire.bonfirePlugin
+import com.mineinabyss.bonfire.bonfire
 import org.bukkit.Location
 import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter
 import kotlin.io.path.Path
 
 object BonfireLogger {
-    private val logFile: Path = Path(bonfirePlugin.dataFolder.path, "log.log")
+    private val logFile: Path = Path(bonfire.plugin.dataFolder.path, "log.log")
 
     fun logBonfireBreak(location: Location, source: Player) {
         internalLog("The player ${source.name} broke a bonfire at $location", BonfireLogEvent.BREAK)

@@ -1,13 +1,11 @@
 package com.mineinabyss.bonfire.config
 
-import com.mineinabyss.bonfire.bonfirePlugin
 import com.mineinabyss.bonfire.ecs.components.SoundEffect
 import com.mineinabyss.idofront.serialization.DurationSerializer
 import com.mineinabyss.idofront.serialization.SerializableItemStack
 import kotlinx.serialization.Serializable
 import kotlin.time.Duration
 
-val bonfireConfig get() = bonfirePlugin.config.data
 @Serializable
 data class BonfireConfig(
     var bonfireItem: SerializableItemStack,

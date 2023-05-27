@@ -9,14 +9,12 @@ import com.mineinabyss.bonfire.listeners.BlockListener
 import com.mineinabyss.bonfire.listeners.DWListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.deeperworld.deeperWorld
-import com.mineinabyss.geary.addon.autoscan
-import com.mineinabyss.geary.papermc.dsl.gearyAddon
-import com.mineinabyss.idofront.config.IdofrontConfig
+import com.mineinabyss.geary.autoscan.autoscan
+import com.mineinabyss.geary.modules.geary
 import com.mineinabyss.idofront.config.config
+import com.mineinabyss.idofront.di.DI
 import com.mineinabyss.idofront.platforms.Platforms
-import com.mineinabyss.idofront.plugin.Services
 import com.mineinabyss.idofront.plugin.listeners
-import com.mineinabyss.idofront.plugin.service
 import org.bukkit.plugin.java.JavaPlugin
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -24,28 +22,15 @@ import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.transactions.transaction
 
-val bonfirePlugin: BonfirePlugin by lazy { JavaPlugin.getPlugin(BonfirePlugin::class.java) }
-
-interface BonfireContext {
-    companion object : BonfireContext by Services.get()
-
-    val db: Database
-}
-
 class BonfirePlugin : JavaPlugin() {
-    lateinit var config: IdofrontConfig<BonfireConfig>
     override fun onLoad() {
         Platforms.load(this, "mineinabyss")
     }
 
     override fun onEnable() {
-        config = config("config") { fromPluginPath(loadDefault = true)}
-        service<BonfireContext>(object : BonfireContext {
-            override val db = Database.connect("jdbc:sqlite:" + dataFolder.path + "/data.db", "org.sqlite.JDBC")
-        })
+        registerBonfireContext()
 
-
-        transaction(BonfireContext.db) {
+        transaction(bonfire.db) {
             addLogger(StdOutSqlLogger)
 
             SchemaUtils.createMissingTablesAndColumns(Bonfire, Players, MessageQueue)
@@ -53,12 +38,10 @@ class BonfirePlugin : JavaPlugin() {
 
         server.pluginManager.registerSuspendingEvents(PlayerListener, this)
 
-        listeners(
-            BlockListener
-        )
+        listeners(BlockListener)
 
-        gearyAddon {
-            autoscan("com.mineinabyss") {
+        geary {
+            autoscan(classLoader, "com.mineinabyss.bonfire") {
                 all()
             }
         }
@@ -67,6 +50,15 @@ class BonfirePlugin : JavaPlugin() {
 
         if (deeperWorld.isEnabled)
             listeners(DWListener)
+    }
+
+    fun registerBonfireContext() {
+        DI.remove<BonfireContext>()
+        DI.add<BonfireContext>(object : BonfireContext {
+            override val plugin = this@BonfirePlugin
+            override val config: BonfireConfig by config("config") { fromPluginPath(loadDefault = true) }
+            override val db = Database.connect("jdbc:sqlite:" + dataFolder.path + "/data.db", "org.sqlite.JDBC")
+        })
     }
 
     override fun onDisable() {

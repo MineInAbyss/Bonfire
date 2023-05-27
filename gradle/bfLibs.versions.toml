@@ -1,12 +1,7 @@
 [versions]
-geary = "0.21.2"
-mobzy = "0.20.1"
-looty = "0.9.1"
-deeperworld = "0.7.0"
-protocolburrito = "0.6.3"
+gearyPaper = "0.24-SNAPSHOT"
+deeperworld = "0.7.6"
 
 [libraries]
-protocolburrito = { module = "com.mineinabyss:protocolburrito", version.ref = "protocolburrito" }
-geary-papermc-core = { module = "com.mineinabyss:geary-papermc-core", version.ref = "geary" }
-looty = { module = "com.mineinabyss:looty", version.ref = "looty" }
+geary-papermc = { module = "com.mineinabyss:geary-papermc", version.ref = "gearyPaper" }
 deeperworld = { module = "com.mineinabyss:deeperworld", version.ref = "deeperworld" }
