@@ -26,7 +26,7 @@ import org.bukkit.block.Campfire
 import org.bukkit.command.Command
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
-import org.bukkit.entity.ArmorStand
+import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import org.jetbrains.exposed.sql.leftJoin
 import org.jetbrains.exposed.sql.select
@@ -231,7 +231,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                 }
             }
             "debug"(desc = "Debug commands") {
-                "updateAllModels"(desc = "Clear any armorstands associated with bonfires and update model of all bonfires.") {
+                "updateAllModels"(desc = "Clear any item-displays associated with bonfires and update model of all bonfires.") {
                     transaction(bonfire.db) {
                         val bonfireLocations = Bonfire.slice(Bonfire.location).selectAll()
                             .groupBy(keySelector = { it[Bonfire.location].chunk },
@@ -253,19 +253,17 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                         }
                     }
                 }
-                "clearCooldowns"(desc="Remove the cooldowns on players if they dont automatically") {
+                "clearCooldowns"(desc = "Remove the cooldowns on players if they dont automatically") {
                     action {
                         if (arguments.isEmpty()) {
                             Bukkit.getOnlinePlayers().forEach { it.toGeary().remove<BonfireCooldown>() }
                             sender.success("Removed bonfire cooldowns from all players.")
-                        }
-                        else {
+                        } else {
                             val player = Bukkit.getPlayer(arguments.first())
                             if (player != null) {
                                 player.toGeary().remove<BonfireCooldown>()
                                 sender.success("Removed cooldowns from player ${player.name}")
-                            }
-                            else sender.error("No player found with that name.")
+                            } else sender.error("No player found with that name.")
                         }
                     }
                 }
@@ -293,6 +291,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                         else -> emptyList()
                     }
                 }
+
                 3 -> {
                     when (args[1]) {
                         "players" -> listOf(player.location.blockX.toString())
@@ -304,6 +303,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                         else -> emptyList()
                     }
                 }
+
                 4 -> {
                     when (args[1]) {
                         "players" -> listOf(player.location.blockY.toString())
@@ -312,6 +312,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                         else -> emptyList()
                     }
                 }
+
                 5 -> {
                     when (args[1]) {
                         "players" -> listOf(player.location.blockZ.toString())
@@ -320,6 +321,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                         else -> emptyList()
                     }
                 }
+
                 6 -> {
                     when (args[1]) {
                         "players" -> listOf(player.location.blockZ.toString())
@@ -328,6 +330,7 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
                         else -> emptyList()
                     }
                 }
+
                 else -> emptyList()
             }
         } else emptyList()
@@ -336,11 +339,8 @@ object BonfireCommandExecutor : IdofrontCommandExecutor(), TabCompleter {
     private fun updateChunkBonfires(chunk: Chunk, bfLocations: List<Location>) {
         chunk.load()
 
-        val bonfireArmorstands = chunk.entities
-            .filterIsInstance<ArmorStand>()
-            .filter { it.isMarker && it.location in bfLocations }
-
-        bonfireArmorstands.forEach(ArmorStand::remove)
+        chunk.entities.filterIsInstance<ItemDisplay>()
+            .filter { it.location in bfLocations }.forEach(ItemDisplay::remove)
 
         bfLocations.forEach {
             (it.block.state as? Campfire)?.updateBonfire()

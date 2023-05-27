@@ -16,20 +16,19 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.idofront.entities.toPlayer
 import com.mineinabyss.idofront.items.editItemMeta
 import com.mineinabyss.idofront.messaging.error
+import com.mineinabyss.idofront.spawning.spawn
 import com.mineinabyss.idofront.time.ticks
 import kotlinx.coroutines.delay
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.block.Campfire
-import org.bukkit.entity.ArmorStand
-import org.bukkit.entity.EntityType
+import org.bukkit.entity.ItemDisplay
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.neq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
 import java.util.*
-import kotlin.math.floor
 import org.bukkit.block.data.type.Campfire as CampfireBlockData
 
 
@@ -43,12 +42,12 @@ fun Campfire.save(data: BonfireData) {
 
 var Campfire.uuid: UUID
     get() = bonfireData()?.uuid ?: error()
-    set(value) = bonfireData()?.updateUUID(value) ?: error()
+    set(value) = if (isBonfire) this.persistentDataContainer.encode(value) else error()
 
-fun Campfire.getModel(): ArmorStand? {
+fun Campfire.getModel(): ItemDisplay? {
     if (!block.location.isWorldLoaded && !block.location.isChunkLoaded) return null
     return block.chunk.entities
-        .filterIsInstance<ArmorStand>()
+        .filterIsInstance<ItemDisplay>()
         .find { it.uniqueId == uuid } ?: return createModel()
 }
 
@@ -79,9 +78,7 @@ fun Campfire.updateDisplay() {
     transaction(bonfire.db) {
         val playerCount = Players.select { Players.bonfireUUID eq this@updateDisplay.uuid }.count()
 
-        //broadcast("Updating model for bonfire at x:${model.location.x} y:${model.location.y} z:${model.location.z} for $playerCount number of players.")
-
-        model.equipment.helmet = model.equipment.helmet?.editItemMeta { setCustomModelData(1 + playerCount.toInt()) }
+        model.itemStack = model.itemStack?.editItemMeta { setCustomModelData(1 + playerCount.toInt()) }
         blockData = (blockData as CampfireBlockData).apply { isLit = playerCount > 0 }
         update()
 
@@ -102,42 +99,39 @@ fun Campfire.updateDisplay() {
     }
 }
 
-fun Campfire.createModel(): ArmorStand? {
+fun Campfire.createModel(): ItemDisplay? {
     @Suppress("RemoveExplicitTypeArguments")
-    return transaction<ArmorStand?>(bonfire.db) {
+    return transaction<ItemDisplay?>(bonfire.db) {
         val bonfireRow = Bonfire.select { Bonfire.entityUUID eq this@createModel.uuid }.firstOrNull() ?: return@transaction null
 
-        // Spawn armor stand
-        val armorStand = (bonfireRow[Bonfire.location].world.spawnEntity(
-            bonfireRow[Bonfire.location].toCenterLocation().apply { this.y = floor(y) }, EntityType.ARMOR_STAND
-        ) as ArmorStand).setDefaults()
+        // Spawn Item Display
+        val itemDisplay = bonfireRow[Bonfire.location].toCenterLocation().spawn<ItemDisplay> { this.setDefaults() } ?: return@transaction null
 
         val playerCount = Players.select { Players.bonfireUUID eq this@createModel.uuid }.count()
 
-        armorStand.equipment.helmet =
-            armorStand.equipment.helmet?.editItemMeta { setCustomModelData(playerCount.toInt()) }
+        itemDisplay.itemStack = itemDisplay.itemStack?.editItemMeta { setCustomModelData(playerCount.toInt()) }
 
         blockData = (blockData as CampfireBlockData).apply { isLit = playerCount > 0 }
         update()
 
         Bonfire.update({ Bonfire.entityUUID eq this@createModel.uuid }) {
-            it[entityUUID] = armorStand.uniqueId
+            it[entityUUID] = itemDisplay.uniqueId
         }
 
         Players.update({ Players.bonfireUUID eq this@createModel.uuid }) {
-            it[bonfireUUID] = armorStand.uniqueId
+            it[bonfireUUID] = itemDisplay.uniqueId
         }
 
-        this@createModel.uuid = armorStand.uniqueId
+        this@createModel.uuid = itemDisplay.uniqueId
 
         Players.select { Players.bonfireUUID eq this@createModel.uuid }.forEach {
             val p = Bukkit.getPlayer(it[Players.playerUUID]) ?: return@forEach
             p.toGeary().setPersisting(BonfireEffectArea(this@createModel.uuid))
         }
 
-        save(BonfireData(armorStand.uniqueId))
+        save(BonfireData(itemDisplay.uniqueId))
 
-        return@transaction armorStand
+        return@transaction itemDisplay
     }
 }
 
@@ -178,7 +172,7 @@ fun Campfire.updateFire() {
 }
 
 fun Campfire.destroy(destroyBlock: Boolean) {
-    val model = Bukkit.getEntity(this.uuid) as? ArmorStand
+    val model = Bukkit.getEntity(this.uuid) as? ItemDisplay
     var blockLocation = model?.location
 
     transaction(bonfire.db) {

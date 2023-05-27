@@ -8,7 +8,6 @@ import com.mineinabyss.geary.systems.RepeatingSystem
 import com.mineinabyss.geary.systems.accessors.TargetScope
 import com.mineinabyss.idofront.time.ticks
 import org.bukkit.Particle
-import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Player
 
 @AutoScan
@@ -19,7 +18,7 @@ class BonfireEffectSystem : RepeatingSystem(1.ticks) {
     override fun TargetScope.tick() {
         // Check if still near a bonfire
         player.location.getNearbyLivingEntities(bonfire.config.effectRadius).firstOrNull {
-            it is ArmorStand && it.isBonfireModel() && it.uniqueId == effect.uuid
+            it.isBonfireModel() && it.uniqueId == effect.uuid
         }?.let {
             player.location.world.spawnParticle(
                 listOf(Particle.SOUL, Particle.SOUL_FIRE_FLAME).random(),

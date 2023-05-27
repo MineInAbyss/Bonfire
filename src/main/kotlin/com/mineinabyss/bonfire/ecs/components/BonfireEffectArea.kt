@@ -10,6 +10,4 @@ import java.util.*
 
 @Serializable
 @SerialName("bonfire:effect_area")
-class BonfireEffectArea(
-    val uuid: UUID
-)
+data class BonfireEffectArea(val uuid: UUID)

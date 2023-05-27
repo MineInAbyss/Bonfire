@@ -9,14 +9,14 @@ import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
 import com.mineinabyss.idofront.messaging.error
+import com.mineinabyss.idofront.spawning.spawn
 import com.mineinabyss.idofront.time.ticks
 import kotlinx.coroutines.delay
 import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.Campfire
-import org.bukkit.entity.ArmorStand
-import org.bukkit.entity.EntityType
+import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.ThrownPotion
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -28,7 +28,6 @@ import org.bukkit.event.world.EntitiesLoadEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
-import kotlin.math.floor
 import org.bukkit.block.data.type.Campfire as CampfireBlockData
 
 object BlockListener : Listener {
@@ -48,19 +47,16 @@ object BlockListener : Listener {
         val campfireData = blockPlaced.blockData as CampfireBlockData
         respawnCampfire.blockData = campfireData.apply { isLit = false }
 
-        // Spawn armor stand
-        val armorStand = (blockPlaced.location.world.spawnEntity(
-            blockPlaced.location.toCenterLocation().apply { this.y = floor(y) }, EntityType.ARMOR_STAND
-        ) as ArmorStand).setDefaults()
+        // Spawn Item Display
+        val itemDisplay = blockPlaced.location.toCenterLocation().spawn<ItemDisplay> { this.setDefaults() } ?: return
 
-        respawnCampfire.createBonfire(armorStand.uniqueId, player.uniqueId)
+        respawnCampfire.createBonfire(itemDisplay.uniqueId, player.uniqueId)
 
         BonfireLogger.logBonfirePlace(blockPlaced.location, player)
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun BlockBreakEvent.breakBlock() {
-
         val campfire = (block.state as? Campfire) ?: return
         campfire.isBonfire || return
 
@@ -83,7 +79,7 @@ object BlockListener : Listener {
         val location = entities.firstOrNull()?.location ?: return
         if (!location.isWorldLoaded || !location.isChunkLoaded) return
         if (chunk.isLoaded && chunk.isEntitiesLoaded) {
-            entities.filterIsInstance<ArmorStand>().filter { it.isBonfireModel() }.forEach {
+            entities.filter { it.isBonfireModel() }.forEach {
                 val campfire = it.location.block.state as? Campfire ?: return it.remove()
                 if (campfire.uuid != it.uniqueId) it.remove()
                 else campfire.updateBonfire()

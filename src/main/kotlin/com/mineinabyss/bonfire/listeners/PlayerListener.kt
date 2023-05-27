@@ -25,14 +25,11 @@ import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.Campfire
 import org.bukkit.block.data.type.Bed
-import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Boat
-import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
-import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryCreativeEvent
 import org.bukkit.event.player.*
@@ -48,16 +45,6 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 
 object PlayerListener : Listener {
-
-    @EventHandler
-    fun EntityDeathEvent.death() {
-        if (entityType == EntityType.ARMOR_STAND && entity.killer != null) {
-            val campfireModel = entity as ArmorStand
-            if (campfireModel.isBonfireModel()) {
-                isCancelled = true
-            }
-        }
-    }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun PlayerInteractEvent.rightClickCampfire() {
@@ -174,11 +161,6 @@ object PlayerListener : Listener {
             respawnLocation = player.server.worlds.first().spawnLocation
             BonfireLogger.logRespawnAtWorldSpawn(player)
         }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    fun PlayerArmorStandManipulateEvent.event() {
-        if (rightClicked.isBonfireModel()) isCancelled = true
     }
 
     @EventHandler(ignoreCancelled = true)
