@@ -7,6 +7,4 @@ import java.util.*
 
 @Serializable
 @SerialName("bonfire:cooldown")
-class BonfireCooldown(
-    val bonfire: @Serializable(with = UUIDSerializer::class) UUID,
-)
+class BonfireCooldown(val bonfire: @Serializable(with = UUIDSerializer::class) UUID)

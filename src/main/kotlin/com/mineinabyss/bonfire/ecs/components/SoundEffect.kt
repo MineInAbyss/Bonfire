@@ -11,7 +11,5 @@ data class SoundEffect(
     val volume: Float,
     val pitch: Float,
 ){
-    fun playSound(player: Player){
-        player.playSound(player.location, sound, volume, pitch)
-    }
+    fun playSound(player: Player) = player.playSound(player.location, sound, volume, pitch)
 }

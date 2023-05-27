@@ -8,15 +8,15 @@ import kotlin.time.Duration
 
 @Serializable
 data class BonfireConfig(
-    var bonfireItem: SerializableItemStack,
-    var modelItem: SerializableItemStack,
-    var maxPlayerCount: Int,
-    var bonfireExpirationTime: @Serializable(with = DurationSerializer::class) Duration,
-    var bonfireInteractCooldown: @Serializable(with = DurationSerializer::class) Duration,
-    var respawnSetSound: SoundEffect,
-    var respawnUnsetSound: SoundEffect,
-    var minFallDist: Int,
-    var effectRadius: Double,
-    var effectStrength: Float,
-    var effectRegenRate: Int
+    val bonfireItem: SerializableItemStack,
+    val modelItem: SerializableItemStack,
+    val maxPlayerCount: Int,
+    val bonfireExpirationTime: @Serializable(with = DurationSerializer::class) Duration,
+    val bonfireInteractCooldown: @Serializable(with = DurationSerializer::class) Duration,
+    val respawnSetSound: SoundEffect,
+    val respawnUnsetSound: SoundEffect,
+    val minFallDist: Int,
+    val effectRadius: Double,
+    val effectStrength: Float,
+    val effectRegenRate: Int
 )
