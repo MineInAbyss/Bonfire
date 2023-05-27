@@ -1,6 +1,5 @@
 package com.mineinabyss.bonfire.listeners
 
-import com.destroystokyo.paper.event.entity.EntityAddToWorldEvent
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.bonfire.Permissions
 import com.mineinabyss.bonfire.bonfire
@@ -9,6 +8,8 @@ import com.mineinabyss.bonfire.data.Bonfire.ownerUUID
 import com.mineinabyss.bonfire.data.Players
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.bonfire.logging.BonfireLogger
+import com.mineinabyss.geary.papermc.datastore.decodePrefabs
+import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.time.ticks
 import kotlinx.coroutines.delay
@@ -34,13 +35,14 @@ import org.bukkit.block.data.type.Campfire as CampfireBlockData
 
 object BlockListener : Listener {
 
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun BlockPlaceEvent.place() {
         if (blockPlaced.hasBonfireBelow()) {
             isCancelled = true
             return
         }
 
+        itemInHand.itemMeta?.persistentDataContainer?.decodePrefabs()?.firstOrNull().broadcastVal() ?: return
         //itemInHand.isSimilar(bonfireConfig.bonfireItem.toItemStack()) || return
 
         blockPlaced.getRelative(BlockFace.UP).run {
@@ -66,11 +68,10 @@ object BlockListener : Listener {
         BonfireLogger.logBonfirePlace(blockPlaced.location, player)
     }
 
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun BlockBreakEvent.breakBlock() {
-        block.type == Material.CAMPFIRE || return
 
-        val campfire = (block.state as Campfire)
+        val campfire = (block.state as? Campfire) ?: return
         campfire.isBonfire || return
 
         transaction(bonfire.db) {
@@ -88,22 +89,11 @@ object BlockListener : Listener {
     }
 
     @EventHandler
-    fun EntityAddToWorldEvent.load() {
-        val armorStand = entity as? ArmorStand ?: return
-        if (!armorStand.isBonfireModel()) return
-
-        val campfire = entity.location.block.state as? Campfire ?: return entity.remove()
-        if (campfire.uuid != armorStand.uniqueId) entity.remove()
-
-        campfire.updateBonfire()
-    }
-
-    @EventHandler
     fun EntitiesLoadEvent.load() {
         val location = entities.firstOrNull()?.location ?: return
         if (!location.isWorldLoaded || !location.isChunkLoaded) return
         if (chunk.isLoaded && chunk.isEntitiesLoaded) {
-            entities.filterIsInstance<ArmorStand>().filter { it.isMarker && it.isBonfireModel() }.forEach {
+            entities.filterIsInstance<ArmorStand>().filter { it.isBonfireModel() }.forEach {
                 val campfire = it.location.block.state as? Campfire ?: return it.remove()
                 if (campfire.uuid != it.uniqueId) it.remove()
                 else campfire.updateBonfire()
@@ -111,7 +101,7 @@ object BlockListener : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     fun BlockCookEvent.cook() {
         val campfire = block.state as? Campfire ?: return
         bonfire.plugin.launch {
@@ -120,7 +110,7 @@ object BlockListener : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     fun BlockPistonExtendEvent.pistonExtend() {
         if (block.getRelative(direction).hasBonfireBelow())
             isCancelled = true
@@ -131,7 +121,7 @@ object BlockListener : Listener {
 
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     fun BlockPistonRetractEvent.pistonRetract() {
         if (block.getRelative(direction).hasBonfireBelow())
             isCancelled = true
@@ -142,18 +132,16 @@ object BlockListener : Listener {
     }
 
     fun Block.hasBonfireBelow(): Boolean {
-        val blockBelow = getRelative(BlockFace.DOWN)
-        val blockBelowBelowBlock = blockBelow.getRelative(BlockFace.DOWN)
-
-        return ((blockBelow.state is Campfire && (blockBelow.state as Campfire).isBonfire) || (blockBelowBelowBlock.state is Campfire && (blockBelowBelowBlock.state as Campfire).isBonfire))
+        return (getRelative(BlockFace.DOWN).state as? Campfire)?.isBonfire == true ||
+                (getRelative(BlockFace.DOWN,2).state as? Campfire)?.isBonfire == true
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     fun EntityChangeBlockEvent.douseBonfire() {
         if (entity is ThrownPotion && (this.block.state as Campfire).isBonfire) isCancelled = true
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     fun PlayerInteractEvent.onWaterlogging() {
         if (action != Action.RIGHT_CLICK_BLOCK || hand != EquipmentSlot.HAND) return
         if (item?.type != Material.WATER_BUCKET) return

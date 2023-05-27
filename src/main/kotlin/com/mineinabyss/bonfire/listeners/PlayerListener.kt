@@ -59,9 +59,8 @@ object PlayerListener : Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun PlayerInteractEvent.rightClickCampfire() {
-        val gearyPlayer = player.toGeary()
         val clicked = clickedBlock ?: return // If no block was clicked, return
 
         if (hand != EquipmentSlot.HAND || !rightClicked) return  //the event is called twice, on for each hand. We want to ignore the offhand call
@@ -81,10 +80,13 @@ object PlayerListener : Listener {
         }
 
         if (player.fallDistance > bonfire.config.minFallDist) return
-        if (gearyPlayer.has<BonfireCooldown>()) {
-            if (gearyPlayer.get<BonfireCooldown>()?.bonfire == campfire.uuid) return
-            else gearyPlayer.remove<BonfireCooldown>() // Remove so setting it below corrects the uuid
+        player.toGeary().let {
+            if (it.has<BonfireCooldown>()) {
+                if (it.get<BonfireCooldown>()?.bonfire == campfire.uuid) return
+                else it.remove<BonfireCooldown>() // Remove so setting it below corrects the uuid
+            }
         }
+
 
         bonfire.plugin.launch(bonfire.plugin.asyncDispatcher) {
             val playersInBonfire = transaction(bonfire.db) {
@@ -101,10 +103,10 @@ object PlayerListener : Listener {
                         return@withContext player.error("This bonfire is full!")
                     } else {
                         player.setRespawnLocation(campfire.uuid)
-                        gearyPlayer.setPersisting(BonfireCooldown(campfire.uuid))
+                        player.toGeary().setPersisting(BonfireCooldown(campfire.uuid))
                         bonfire.plugin.launch {
                             delay(bonfire.config.bonfireInteractCooldown)
-                            gearyPlayer.remove<BonfireCooldown>()
+                            player.toGeary().remove<BonfireCooldown>()
                         }
                     }
                 }
@@ -116,7 +118,7 @@ object PlayerListener : Listener {
         // We don't want to have any regular behavior happen.
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     fun EntityInsideBlockEvent.standingOnBonfire() {
         if ((block.state as? Campfire)?.isBonfire == true) isCancelled = true
     }
@@ -174,12 +176,12 @@ object PlayerListener : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     fun PlayerArmorStandManipulateEvent.event() {
         if (rightClicked.isBonfireModel()) isCancelled = true
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     fun PlayerBedEnterEvent.enter() {
         isCancelled = true
     }
