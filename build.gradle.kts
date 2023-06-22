@@ -13,7 +13,6 @@ repositories {
     maven("https://repo.mineinabyss.com/releases")
     maven("https://repo.mineinabyss.com/snapshots")
     maven("https://repo.dmulloy2.net/repository/public") // ProtocolLib
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     maven("https://jitpack.io")
 }
 
