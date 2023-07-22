@@ -14,6 +14,7 @@ repositories {
     maven("https://repo.mineinabyss.com/snapshots")
     maven("https://repo.dmulloy2.net/repository/public") // ProtocolLib
     maven("https://jitpack.io")
+    maven("https://repo.codemc.io/repository/maven-public/") // OfflineManager
 }
 
 dependencies {
@@ -33,7 +34,9 @@ dependencies {
 
     // Other plugins
     compileOnly(bfLibs.deeperworld)
+    compileOnly(bfLibs.blocky)
 
     // Shaded
     implementation(libs.bundles.idofront.core)
+    implementation(bfLibs.offlineManager)
 }

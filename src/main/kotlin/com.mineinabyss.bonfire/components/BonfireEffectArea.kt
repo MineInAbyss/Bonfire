@@ -1,6 +1,6 @@
 @file:UseSerializers(UUIDSerializer::class)
 
-package com.mineinabyss.bonfire.ecs.components
+package com.mineinabyss.bonfire.components
 
 import com.mineinabyss.idofront.serialization.UUIDSerializer
 import kotlinx.serialization.SerialName

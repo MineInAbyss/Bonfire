@@ -1,10 +1,10 @@
 name: Bonfire
 version: ${plugin_version}
 main: com.mineinabyss.bonfire.BonfirePlugin
-api-version: 1.17
-authors: [ Scyu_, Norazan, Ru_Kira ]
-depend: [ Geary ]
-softdepend: [ Looty, DeeperWorld ]
+api-version: "1.20"
+authors: [ boy0000, Scyu_, Norazan, Ru_Kira ]
+depend: [ Geary, Blocky ]
+softdepend: [ DeeperWorld ]
 
 commands:
   bonfire:

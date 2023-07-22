@@ -1,24 +1,27 @@
-package com.mineinabyss.bonfire.ecs.systems
+package com.mineinabyss.bonfire.systems
 
+import com.mineinabyss.blocky.blocky
 import com.mineinabyss.bonfire.bonfire
-import com.mineinabyss.bonfire.ecs.components.BonfireEffectArea
-import com.mineinabyss.bonfire.extensions.isBonfireModel
+import com.mineinabyss.bonfire.components.BonfireEffectArea
+import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.geary.autoscan.AutoScan
 import com.mineinabyss.geary.systems.RepeatingSystem
 import com.mineinabyss.geary.systems.accessors.TargetScope
+import com.mineinabyss.idofront.textcomponents.miniMsg
 import com.mineinabyss.idofront.time.ticks
 import org.bukkit.Particle
+import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 
 @AutoScan
-class BonfireEffectSystem : RepeatingSystem(1.ticks) {
+class BonfireEffectSystem : RepeatingSystem(10.ticks) {
     private val TargetScope.player by get<Player>()
     private val TargetScope.effect by get<BonfireEffectArea>()
 
     override fun TargetScope.tick() {
         // Check if still near a bonfire
-        player.location.getNearbyLivingEntities(bonfire.config.effectRadius).firstOrNull {
-            it.isBonfireModel() && it.uniqueId == effect.uuid
+        player.location.getNearbyEntitiesByType(ItemDisplay::class.java, bonfire.config.effectRadius).firstOrNull {
+            it.isBonfire && it.uniqueId == effect.uuid
         }?.let {
             player.location.world.spawnParticle(
                 listOf(Particle.SOUL, Particle.SOUL_FIRE_FLAME).random(),
