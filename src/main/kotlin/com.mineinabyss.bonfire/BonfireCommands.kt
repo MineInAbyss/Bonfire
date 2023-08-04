@@ -1,22 +1,18 @@
 package com.mineinabyss.bonfire
 
-import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireCooldown
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.bonfire.extensions.addToOfflineMessager
-import com.mineinabyss.bonfire.extensions.removeFromOfflineMessager
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.idofront.commands.arguments.offlinePlayerArg
 import com.mineinabyss.idofront.commands.arguments.playerArg
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
-import com.mineinabyss.idofront.commands.extensions.actions.playerAction
-import com.mineinabyss.idofront.entities.toOfflinePlayer
-import com.mineinabyss.idofront.messaging.broadcast
-import com.mineinabyss.idofront.messaging.error
+import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.logError
+import com.mineinabyss.idofront.messaging.logVal
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.plugin.actions
-import net.quazar.offlinemanager.api.nbt.TagValue
+import kotlinx.serialization.serializer
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 import org.bukkit.command.Command
@@ -40,7 +36,9 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                         player.player?.let {
                             it.toGeary().remove<BonfireRespawn>()
                             sender.success("Removed respawn point for ${player.name}")
-                        } ?: player.uniqueId.addToOfflineMessager()
+                        } ?: run {
+                            player.uniqueId.addToOfflineMessager()
+                        }
                     }
                 }
             }
@@ -69,6 +67,13 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
         if (command.name != "bonfire") return emptyList()
         return when (args.size) {
             1 -> listOf("reload")
+            2 -> {
+                when (args[0]) {
+                    "respawn" -> listOf("remove")
+                    "clearCooldowns", "players" -> Bukkit.getOnlinePlayers().map { it.name }
+                    else -> emptyList()
+                }
+            }
             else -> emptyList()
         }
     }

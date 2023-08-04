@@ -11,6 +11,8 @@ import com.mineinabyss.bonfire.components.BonfireEffectArea
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.bonfire.extensions.BonfirePermissions
 import com.mineinabyss.bonfire.extensions.addToOfflineMessager
+import com.mineinabyss.bonfire.extensions.removeOldBonfire
+import com.mineinabyss.bonfire.extensions.toggleBonfireState
 import com.mineinabyss.geary.helpers.with
 import com.mineinabyss.geary.papermc.datastore.decode
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
@@ -51,8 +53,11 @@ class BonfireListener : Listener {
                     else {
                         gearyEntity.setPersisting(bonfire.copy(bonfirePlayers = bonfire.bonfirePlayers + player.uniqueId))
                         com.mineinabyss.bonfire.bonfire.config.respawnSetSound.run {
-                            baseEntity.world.playSound(entity.location, sound, volume, pitch)
+                            baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                         }
+                        // Load old bonfire and remove player from it if it exists
+                        player.removeOldBonfire()
+
                         player.toGeary().apply {
                             setPersisting(BonfireRespawn(baseEntity.uniqueId, baseEntity.location))
                             setPersisting(BonfireEffectArea(baseEntity.uniqueId))
@@ -60,6 +65,7 @@ class BonfireListener : Listener {
                         player.success("Respawn point set")
                     }
                 }
+
                 in bonfire.bonfirePlayers -> {
                     gearyEntity.setPersisting(bonfire.copy(bonfirePlayers = bonfire.bonfirePlayers - player.uniqueId))
                     player.toGeary().apply {
@@ -67,17 +73,13 @@ class BonfireListener : Listener {
                         remove<BonfireEffectArea>()
                     }
                     com.mineinabyss.bonfire.bonfire.config.respawnUnsetSound.run {
-                        baseEntity.world.playSound(entity.location, sound, volume, pitch)
+                        baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                     }
                     player.error("Respawn point has been removed")
                 }
             }
 
-            // Change the displayed model based on status
-            when (bonfire.bonfirePlayers) {
-                emptyList<UUID>() -> baseEntity.itemStack = gearyItems.createItem(bonfire.states.unlit)
-                else -> baseEntity.itemStack = gearyItems.createItem(bonfire.states.lit)
-            }
+            bonfire.toggleBonfireState(baseEntity)
 
             player.toGeary().set(BonfireCooldown(baseEntity.uniqueId))
             com.mineinabyss.bonfire.bonfire.plugin.launch {
@@ -94,9 +96,11 @@ class BonfireListener : Listener {
                 bonfire.bonfirePlayers.isEmpty() -> return
                 player.uniqueId == bonfire.bonfireOwner || player.hasPermission(BonfirePermissions.REMOVE_BONFIRE_PERMISSION) -> {
                     bonfire.bonfirePlayers.map { it.toOfflinePlayer() }.forEach { p ->
-                        p.player?.error("Your respawn point was unset because the bonfire was broken by the owner") ?: p.uniqueId.addToOfflineMessager()
+                        p.player?.error("Your respawn point was unset because the bonfire was broken by the owner")
+                            ?: p.uniqueId.addToOfflineMessager()
                     }
                 }
+
                 else -> {
                     player.error("You cannot break this bonfire, unkindled one")
                     isCancelled = true

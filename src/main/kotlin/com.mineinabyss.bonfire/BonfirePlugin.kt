@@ -1,5 +1,6 @@
 package com.mineinabyss.bonfire
 
+import com.comphenix.protocol.ProtocolLibrary
 import com.mineinabyss.bonfire.listeners.BonfireListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.geary.autoscan.autoscan
@@ -12,6 +13,8 @@ import net.quazar.offlinemanager.api.OfflineManagerAPI
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
+val offlineManager by lazy { Bukkit.getPluginManager().getPlugin("OfflineManager") as OfflineManagerAPI }
+val protocolManager = ProtocolLibrary.getProtocolManager()!!
 class BonfirePlugin : JavaPlugin() {
     override fun onLoad() {
         Platforms.load(this, "mineinabyss")

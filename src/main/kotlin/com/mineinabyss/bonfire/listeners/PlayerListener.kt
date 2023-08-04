@@ -1,6 +1,5 @@
 package com.mineinabyss.bonfire.listeners
 
-import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
@@ -8,15 +7,13 @@ import com.mineinabyss.bonfire.components.BonfireCooldown
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.bonfire.extensions.OFFLINE_MESSAGE_FILE
 import com.mineinabyss.bonfire.extensions.isBonfire
-import com.mineinabyss.bonfire.extensions.isBonfireLoaded
 import com.mineinabyss.bonfire.extensions.removeFromOfflineMessager
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
-import com.mineinabyss.idofront.entities.toPlayer
-import com.mineinabyss.idofront.messaging.*
+import com.mineinabyss.idofront.messaging.error
+import com.mineinabyss.idofront.messaging.info
+import com.mineinabyss.idofront.messaging.logError
 import kotlinx.coroutines.delay
-import org.bukkit.Bukkit
-import org.bukkit.WorldCreator
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.data.type.Bed
@@ -25,11 +22,7 @@ import org.bukkit.event.Event
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
-import org.bukkit.event.player.PlayerBedEnterEvent
-import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.event.player.PlayerQuitEvent
-import org.bukkit.event.player.PlayerRespawnEvent
+import org.bukkit.event.player.*
 import kotlin.time.Duration.Companion.seconds
 
 class PlayerListener : Listener {

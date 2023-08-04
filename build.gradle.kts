@@ -35,8 +35,10 @@ dependencies {
     // Other plugins
     compileOnly(bfLibs.deeperworld)
     compileOnly(bfLibs.blocky)
+    compileOnly(libs.minecraft.plugin.protocollib)
+    compileOnly(bfLibs.protocolburrito)
+    compileOnly(bfLibs.offlineManager)
 
     // Shaded
     implementation(libs.bundles.idofront.core)
-    implementation(bfLibs.offlineManager)
 }
