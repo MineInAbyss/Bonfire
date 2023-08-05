@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.mia.papermc)
     alias(libs.plugins.mia.copyjar)
+    alias(libs.plugins.mia.nms)
     alias(libs.plugins.mia.publication)
     alias(libs.plugins.mia.autoversion)
 }
@@ -41,4 +42,5 @@ dependencies {
 
     // Shaded
     implementation(libs.bundles.idofront.core)
+    implementation(libs.idofront.nms)
 }

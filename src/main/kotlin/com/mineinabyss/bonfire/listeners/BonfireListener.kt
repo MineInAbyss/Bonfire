@@ -1,5 +1,9 @@
 package com.mineinabyss.bonfire.listeners
 
+import com.comphenix.protocol.PacketType
+import com.comphenix.protocol.events.PacketContainer
+import com.comphenix.protocol.wrappers.EnumWrappers.ItemSlot
+import com.comphenix.protocol.wrappers.Pair
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureBreakEvent
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureInteractEvent
@@ -13,22 +17,29 @@ import com.mineinabyss.bonfire.extensions.BonfirePermissions
 import com.mineinabyss.bonfire.extensions.addToOfflineMessager
 import com.mineinabyss.bonfire.extensions.removeOldBonfire
 import com.mineinabyss.bonfire.extensions.toggleBonfireState
+import com.mineinabyss.bonfire.protocolManager
 import com.mineinabyss.geary.helpers.with
-import com.mineinabyss.geary.papermc.datastore.decode
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
 import com.mineinabyss.idofront.entities.toOfflinePlayer
-import com.mineinabyss.idofront.entities.toPlayer
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
+import com.mineinabyss.idofront.nms.aliases.toNMS
+import com.mineinabyss.protocolburrito.dsl.sendTo
+import com.mineinabyss.protocolburrito.packets.ClientboundSetEntityDataPacketWrap
 import kotlinx.coroutines.delay
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
+import net.minecraft.network.syncher.EntityDataSerializers
+import net.minecraft.network.syncher.SynchedEntityData
 import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.inventory.EquipmentSlot
-import java.util.*
+import org.bukkit.inventory.ItemStack
 import kotlin.math.abs
 
 class BonfireListener : Listener {
@@ -79,7 +90,7 @@ class BonfireListener : Listener {
                 }
             }
 
-            bonfire.toggleBonfireState(baseEntity)
+            baseEntity.toggleBonfireState()
 
             player.toGeary().set(BonfireCooldown(baseEntity.uniqueId))
             com.mineinabyss.bonfire.bonfire.plugin.launch {

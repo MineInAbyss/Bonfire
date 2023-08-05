@@ -43,6 +43,8 @@ class PlayerListener : Listener {
         val loc = bonfireRespawn.bonfireLocation
         if (!loc.isChunkLoaded && !loc.chunk.load()) return
 
+        //player.teleportAsync(loc.toCenterLocation())
+
         val bonfireEntity = loc.world.getEntity(bonfireRespawn.bonfireUuid) ?: return
         val bonfire = bonfireEntity.toGeary().get<Bonfire>() ?: return
 

@@ -1,6 +1,7 @@
 package com.mineinabyss.bonfire.extensions
 
 import com.comphenix.protocol.PacketType
+import com.comphenix.protocol.events.PacketContainer
 import com.comphenix.protocol.wrappers.EnumWrappers.ItemSlot
 import com.comphenix.protocol.wrappers.Pair
 import com.mineinabyss.bonfire.bonfire
@@ -11,8 +12,16 @@ import com.mineinabyss.geary.papermc.datastore.has
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
+import com.mineinabyss.idofront.messaging.broadcast
+import com.mineinabyss.idofront.messaging.broadcastVal
+import com.mineinabyss.idofront.nms.aliases.toNMS
+import com.mineinabyss.protocolburrito.dsl.sendTo
+import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
+import net.minecraft.network.syncher.EntityDataSerializers
+import net.minecraft.network.syncher.SynchedEntityData
 import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
@@ -47,24 +56,25 @@ fun Player.removeOldBonfire() {
 /**
  * Toggles the bonfire state for all players.
  */
-fun Bonfire.toggleBonfireState(baseEntity: ItemDisplay) {
+fun ItemDisplay.toggleBonfireState() {
+    val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
     Bukkit.getOnlinePlayers().forEach { player ->
-        val packet = protocolManager.createPacket(PacketType.Play.Server.ENTITY_EQUIPMENT)
-        packet.integers.write(0, baseEntity.entityId)
-        packet.slotStackPairLists.write(
-            0,
-            listOf(Pair(ItemSlot.MAINHAND, (
-                    when {
-                        this.bonfirePlayers.isEmpty() -> gearyItems.createItem(this.states.unlit)
-                        player.uniqueId in this.bonfirePlayers -> gearyItems.createItem(this.states.set)
-                        else -> gearyItems.createItem(this.states.lit)
-                    } ?: ItemStack(Material.AIR))
-                )
-            )
-        )
-
         runCatching {
-            protocolManager.sendServerPacket(player, packet)
+            val stateItem = gearyItems.createItem(
+                when {
+                    bonfire.bonfirePlayers.isEmpty() -> bonfire.states.unlit
+                    player.uniqueId !in bonfire.bonfirePlayers -> bonfire.states.lit
+                    else -> bonfire.states.set
+                }
+            ) ?: return@forEach
+
+            val metadataPacket = ClientboundSetEntityDataPacket(
+                entityId, listOf(SynchedEntityData.DataValue(22, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
+            )
+
+            PacketContainer.fromPacket(metadataPacket).sendTo(player)
+        }.onFailure {
+            it.printStackTrace()
         }
     }
 }
