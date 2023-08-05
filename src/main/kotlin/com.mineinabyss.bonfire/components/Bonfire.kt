@@ -16,7 +16,7 @@ data class Bonfire(
     val bonfireOwner: @Serializable(UUIDSerializer::class) UUID? = null,
     val bonfirePlayers: List<@Serializable(UUIDSerializer::class) UUID> = emptyList(),
     val maxPlayerCount: Int = bonfire.config.maxPlayerCount,
-    //val bonfireExpirationTime: @Serializable(with = DurationSerializer::class) Duration = bonfire.config.bonfireExpirationTime,
+    val bonfireExpirationTime: @Serializable(with = DurationSerializer::class) Duration = bonfire.config.bonfireExpirationTime,
     val states: BonfireState,
 ) {
     @Serializable

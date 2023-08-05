@@ -38,6 +38,7 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                             sender.success("Removed respawn point for ${player.name}")
                         } ?: run {
                             player.uniqueId.addToOfflineMessager()
+                            offlineManager.getPlayerData(player.uniqueId).getTagValue("BukkitValues").value.broadcastVal()
                         }
                     }
                 }
