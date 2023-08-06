@@ -49,11 +49,19 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
             }
             "respawn" {
                 val offlinePlayer: OfflinePlayer by offlinePlayerArg()
-
+                "get" {
+                    action {
+                        val respawn = when {
+                            offlinePlayer.isOnline -> offlinePlayer.player?.toGearyOrNull()?.get<BonfireRespawn>()
+                            else -> offlinePlayer.getOfflinePDC()?.decode<BonfireRespawn>()
+                        }?.bonfireLocation ?: return@action sender.error("Could not find BonfireRespawn for the given OfflinePlayer")
+                        sender.info("Bonfire-Respawn for ${offlinePlayer.name} is at ${respawn.x}, ${respawn.y}, ${respawn.z} in ${respawn.world.name}")
+                    }
+                }
                 "set" {
-                    val x: Int by intArg { default = (sender as? Player)?.location?.blockX }
-                    val y: Int by intArg { default = (sender as? Player)?.location?.blockY }
-                    val z: Int by intArg { default = (sender as? Player)?.location?.blockZ }
+                    val x: Int by intArg { default = (sender as? Player)?.location?.toCenterLocation()?.blockX }
+                    val y: Int by intArg { default = (sender as? Player)?.location?.toCenterLocation()?.blockY }
+                    val z: Int by intArg { default = (sender as? Player)?.location?.toCenterLocation()?.blockZ }
                     val worldName: String by stringArg { default = (sender as? Player)?.world?.name ?: "world" }
                     action {
                         val pdc = offlinePlayer.getOfflinePDC() ?: return@action sender.error("Could not find PDC for the given OfflinePlayer")
@@ -105,10 +113,12 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
             }
             "players" {
                 val offlinePlayer: OfflinePlayer by offlinePlayerArg()
-                "get" {
-                    action {
+                val x: Int by intArg { default = (sender as? Player)?.location?.toCenterLocation()?.blockX }
+                val y: Int by intArg { default = (sender as? Player)?.location?.toCenterLocation()?.blockY }
+                val z: Int by intArg { default = (sender as? Player)?.location?.toCenterLocation()?.blockZ }
+                val worldName: String by stringArg { default = (sender as? Player)?.world?.name ?: "world" }
+                action {
 
-                    }
                 }
             }
             "clearCooldowns"(desc = "Remove the cooldowns on players if they dont automatically") {
