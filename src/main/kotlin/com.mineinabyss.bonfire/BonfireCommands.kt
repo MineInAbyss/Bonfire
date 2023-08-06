@@ -127,17 +127,19 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                     }
                 }
             }
-            "clearCooldowns"(desc = "Remove the cooldowns on players if they dont automatically") {
-                val player: Player? by playerArg { default = null }
-                action {
-                    player?.let {
-                        it.toGeary().remove<BonfireCooldown>()
-                        sender.success("Removed cooldowns from player ${it.name}")
-                    } ?: run {
-                        Bukkit.getOnlinePlayers().forEach {
+            "cooldown"(desc = "Remove the cooldowns on players if they dont automatically") {
+                "clear" {
+                    val player: Player? by playerArg { default = null }
+                    action {
+                        player?.let {
                             it.toGeary().remove<BonfireCooldown>()
+                            sender.success("Removed cooldowns from player ${it.name}")
+                        } ?: run {
+                            Bukkit.getOnlinePlayers().forEach {
+                                it.toGeary().remove<BonfireCooldown>()
+                            }
+                            sender.success("Removed cooldowns from all players")
                         }
-                        sender.success("Removed cooldowns from all players")
                     }
                 }
             }
