@@ -87,7 +87,8 @@ class PlayerListener : Listener {
         }
     }
 
-    @EventHandler fun PlayerJoinEvent.onPlayerJoin() {
+    @EventHandler
+    fun PlayerJoinEvent.onPlayerJoin() {
         player.toGearyOrNull()?.remove<BonfireCooldown>()
         val bonfire = player.toGeary().get<BonfireRespawn>() ?: return
         val bonfireEntity = bonfire.bonfireLocation.world.getEntity(bonfire.bonfireUuid) as? ItemDisplay ?: return
@@ -96,7 +97,8 @@ class PlayerListener : Listener {
             bonfireEntity.updateBonfireState(player)
         }
     }
-    @EventHandler fun PlayerQuitEvent.onPlayerQuit() {
+    @EventHandler
+    fun PlayerQuitEvent.onPlayerQuit() {
         player.toGearyOrNull()?.remove<BonfireCooldown>()
     }
 }
