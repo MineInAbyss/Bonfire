@@ -13,11 +13,8 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
-import com.mineinabyss.idofront.messaging.logError
-import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.time.ticks
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.yield
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.data.type.Bed
@@ -99,5 +96,7 @@ class PlayerListener : Listener {
             bonfireEntity.updateBonfireState(player)
         }
     }
-    @EventHandler fun PlayerQuitEvent.onPlayerQuit() = player.toGearyOrNull()?.remove<BonfireCooldown>()
+    @EventHandler fun PlayerQuitEvent.onPlayerQuit() {
+        player.toGearyOrNull()?.remove<BonfireCooldown>()
+    }
 }
