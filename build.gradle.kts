@@ -16,6 +16,7 @@ repositories {
     maven("https://repo.dmulloy2.net/repository/public") // ProtocolLib
     maven("https://jitpack.io")
     maven("https://repo.codemc.io/repository/maven-public/") // OfflineManager
+    mavenLocal()
 }
 
 dependencies {

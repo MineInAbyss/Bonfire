@@ -1,26 +1,18 @@
 package com.mineinabyss.bonfire.extensions
 
-import com.comphenix.protocol.PacketType
 import com.comphenix.protocol.events.PacketContainer
-import com.comphenix.protocol.wrappers.EnumWrappers.ItemSlot
-import com.comphenix.protocol.wrappers.Pair
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRespawn
-import com.mineinabyss.bonfire.protocolManager
 import com.mineinabyss.geary.papermc.datastore.has
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
-import com.mineinabyss.idofront.messaging.broadcast
-import com.mineinabyss.idofront.messaging.broadcastVal
-import com.mineinabyss.idofront.nms.aliases.toNMS
 import com.mineinabyss.protocolburrito.dsl.sendTo
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
 import org.bukkit.Bukkit
-import org.bukkit.Material
 import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
@@ -54,11 +46,12 @@ fun Player.removeOldBonfire() {
 }
 
 /**
- * Toggles the bonfire state for all players.
+ * Updates the bonfire state for all players.
  */
-fun ItemDisplay.toggleBonfireState() {
+fun ItemDisplay.updateBonfireState(player: Player? = null) {
     val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
-    Bukkit.getOnlinePlayers().forEach { player ->
+
+    fun createPacket(player: Player) {
         runCatching {
             val stateItem = gearyItems.createItem(
                 when {
@@ -66,7 +59,7 @@ fun ItemDisplay.toggleBonfireState() {
                     player.uniqueId !in bonfire.bonfirePlayers -> bonfire.states.lit
                     else -> bonfire.states.set
                 }
-            ) ?: return@forEach
+            ) ?: return
 
             val metadataPacket = ClientboundSetEntityDataPacket(
                 entityId, listOf(SynchedEntityData.DataValue(22, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
@@ -77,6 +70,8 @@ fun ItemDisplay.toggleBonfireState() {
             it.printStackTrace()
         }
     }
+
+    player?.let { createPacket(it) } ?: Bukkit.getOnlinePlayers().forEach(::createPacket)
 }
 
 val OFFLINE_MESSAGE_FILE =
