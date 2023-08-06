@@ -9,12 +9,9 @@ import com.mineinabyss.idofront.config.config
 import com.mineinabyss.idofront.di.DI
 import com.mineinabyss.idofront.platforms.Platforms
 import com.mineinabyss.idofront.plugin.listeners
-import net.quazar.offlinemanager.api.OfflineManagerAPI
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 
-val offlineManager by lazy { Bukkit.getPluginManager().getPlugin("OfflineManager") as OfflineManagerAPI }
-val protocolManager = ProtocolLibrary.getProtocolManager()!!
 class BonfirePlugin : JavaPlugin() {
     override fun onLoad() {
         Platforms.load(this, "mineinabyss")

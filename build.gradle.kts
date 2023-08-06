@@ -15,7 +15,7 @@ repositories {
     maven("https://repo.mineinabyss.com/snapshots")
     maven("https://repo.dmulloy2.net/repository/public") // ProtocolLib
     maven("https://jitpack.io")
-    maven("https://repo.codemc.io/repository/maven-public/") // OfflineManager
+    maven("https://repo.jeff-media.com/public") // PersistentDataSerializer
     mavenLocal()
 }
 
@@ -29,6 +29,7 @@ dependencies {
 
     compileOnly(libs.kotlinx.serialization.json)
     compileOnly(libs.kotlinx.serialization.kaml)
+    compileOnly(libs.kotlinx.serialization.cbor)
     compileOnly(libs.minecraft.mccoroutine)
 
     // Geary platform
@@ -39,7 +40,6 @@ dependencies {
     compileOnly(bfLibs.blocky)
     compileOnly(libs.minecraft.plugin.protocollib)
     compileOnly(bfLibs.protocolburrito)
-    compileOnly(bfLibs.offlineManager)
 
     // Shaded
     implementation(libs.bundles.idofront.core)
