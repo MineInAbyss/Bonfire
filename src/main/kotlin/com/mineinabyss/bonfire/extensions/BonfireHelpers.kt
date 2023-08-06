@@ -8,6 +8,7 @@ import com.mineinabyss.geary.papermc.datastore.has
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
+import com.mineinabyss.idofront.entities.toPlayer
 import com.mineinabyss.idofront.messaging.logError
 import com.mineinabyss.idofront.nms.nbt.WrappedPDC
 import com.mineinabyss.protocolburrito.dsl.sendTo
@@ -63,27 +64,34 @@ fun Player.removeOldBonfire() {
 fun ItemDisplay.updateBonfireState(player: Player? = null) {
     val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
 
-    fun createPacket(player: Player) {
-        runCatching {
-            val stateItem = gearyItems.createItem(
-                when {
-                    bonfire.bonfirePlayers.isEmpty() -> bonfire.states.unlit
-                    player.uniqueId !in bonfire.bonfirePlayers -> bonfire.states.lit
-                    else -> bonfire.states.set
+
+    when {// Set the base-furniture item to the correct state
+        bonfire.bonfirePlayers.isEmpty() ->
+            gearyItems.createItem(bonfire.states.unlit)?.let { itemStack = it }
+        else -> {
+            gearyItems.createItem(bonfire.states.lit)?.let { itemStack = it }
+
+            // Set state via packets to 'set' for all online players currently at the bonfire
+            runCatching {
+                val stateItem = gearyItems.createItem(bonfire.states.set) ?: return
+                val metadataPacket = ClientboundSetEntityDataPacket(entityId,
+                    listOf(SynchedEntityData.DataValue(22, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
+                )
+
+                bonfire.bonfirePlayers.mapNotNull { it.toPlayer() }.forEach {
+                    PacketContainer.fromPacket(metadataPacket).sendTo(it)
                 }
-            ) ?: return
-
-            val metadataPacket = ClientboundSetEntityDataPacket(
-                entityId, listOf(SynchedEntityData.DataValue(22, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
-            )
-
-            PacketContainer.fromPacket(metadataPacket).sendTo(player)
-        }.onFailure {
-            it.printStackTrace()
+            }.onFailure {
+                it.printStackTrace()
+            }
         }
     }
+    this.itemStack = gearyItems.createItem(when {
+        bonfire.bonfirePlayers.isEmpty() -> bonfire.states.unlit
+        else -> bonfire.states.lit
+    }) ?: return
 
-    player?.let { createPacket(it) } ?: Bukkit.getOnlinePlayers().forEach(::createPacket)
+
 }
 
 val OFFLINE_MESSAGE_FILE =
