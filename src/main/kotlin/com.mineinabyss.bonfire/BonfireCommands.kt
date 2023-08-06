@@ -118,7 +118,13 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                 val z: Int by intArg { default = (sender as? Player)?.location?.toCenterLocation()?.blockZ }
                 val worldName: String by stringArg { default = (sender as? Player)?.world?.name ?: "world" }
                 action {
-
+                    val bonfireLocation = Location(Bukkit.getWorld(worldName) ?: return@action sender.error("Could not find world $worldName"), x.toDouble(), y.toDouble(), z.toDouble()).toCenterLocation()
+                    if (!bonfireLocation.isChunkLoaded) bonfireLocation.world.getChunkAtAsync(bonfireLocation).thenAccept {
+                        val bonfireEntity = bonfireLocation.world.getNearbyEntitiesByType(ItemDisplay::class.java, bonfireLocation, 0.5).firstOrNull()
+                        bonfireEntity?.toGeary()?.get<Bonfire>()?.let { bonfire ->
+                            sender.info("Players with their respawn set at this bonfire: ${bonfire.bonfirePlayers.joinToString(", ") { Bukkit.getOfflinePlayer(it).name ?: "Unknown" }}")
+                        }
+                    }
                 }
             }
             "clearCooldowns"(desc = "Remove the cooldowns on players if they dont automatically") {
