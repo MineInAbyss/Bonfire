@@ -1,18 +1,13 @@
 package com.mineinabyss.bonfire.listeners
 
 import com.github.shynixn.mccoroutine.bukkit.launch
+import com.mineinabyss.blocky.api.BlockyFurnitures
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureBreakEvent
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureInteractEvent
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurniturePlaceEvent
 import com.mineinabyss.bonfire.bonfire
-import com.mineinabyss.bonfire.components.Bonfire
-import com.mineinabyss.bonfire.components.BonfireCooldown
-import com.mineinabyss.bonfire.components.BonfireEffectArea
-import com.mineinabyss.bonfire.components.BonfireRespawn
-import com.mineinabyss.bonfire.extensions.BonfirePermissions
-import com.mineinabyss.bonfire.extensions.addToOfflineMessager
-import com.mineinabyss.bonfire.extensions.removeOldBonfire
-import com.mineinabyss.bonfire.extensions.updateBonfireState
+import com.mineinabyss.bonfire.components.*
+import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.geary.helpers.with
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
@@ -24,15 +19,49 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.inventory.EquipmentSlot
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.seconds
 
 class BonfireListener : Listener {
+
+    private fun currentTime() = LocalDateTime.now().toInstant(ZoneOffset.UTC).epochSecond
 
     @EventHandler
     fun BlockyFurniturePlaceEvent.onBonfirePlace() {
         baseEntity.toGearyOrNull()?.with { bonfire: Bonfire ->
             baseEntity.toGearyOrNull()?.setPersisting(bonfire.copy(bonfireOwner = player.uniqueId))
+            baseEntity.toGearyOrNull()?.setPersisting(BonfireExpirationTime(0.seconds, currentTime()))
             baseEntity.updateBonfireState()
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    fun BlockyFurnitureInteractEvent.handleBonfireExpiration() {
+        val gearyEntity = baseEntity.toGearyOrNull() ?: return
+        val currentTime = currentTime()
+
+        gearyEntity.with { bonfire: Bonfire, expiration: BonfireExpirationTime ->
+            when {
+                !player.isSneaking -> return
+                // Bonfire is lit, player is only registered player, player is unsetting
+                // Since it is being unlit, set lastUnlitTimeStamp to currentTime
+                bonfire.bonfirePlayers.isNotEmpty() && bonfire.bonfirePlayers.all { it == player.uniqueId } -> {
+                    gearyEntity.setPersisting(expiration.copy(totalUnlitTime = expiration.totalUnlitTime, lastUnlitTimeStamp = currentTime))
+                }
+                //  Bonfire was empty and player is attempting to set spawn
+                // Check if Bonfires new totalUnlittime is greater than expiration time
+                else -> {
+                    val totalUnlitTime = expiration.totalUnlitTime + (currentTime - expiration.lastUnlitTimeStamp).seconds
+                    gearyEntity.setPersisting(expiration.copy(totalUnlitTime = totalUnlitTime, lastUnlitTimeStamp = currentTime))
+                    if (totalUnlitTime >= bonfire.bonfireExpirationTime) {
+                        player.error("The bonfire has expired and turned to ash")
+                        BlockyFurnitures.removeFurniture(baseEntity)
+                        isCancelled = true
+                    } else Unit
+                }
+            }
         }
     }
 

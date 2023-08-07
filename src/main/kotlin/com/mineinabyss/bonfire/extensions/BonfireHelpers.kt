@@ -142,3 +142,8 @@ fun OfflinePlayer.saveOfflinePDC(pdc: WrappedPDC): Boolean {
     }
     return true
 }
+
+fun ItemDisplay.calculateBonfireExpirationTime() {
+    val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
+
+}
