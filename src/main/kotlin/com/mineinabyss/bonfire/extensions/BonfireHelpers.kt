@@ -1,6 +1,9 @@
 package com.mineinabyss.bonfire.extensions
 
 import com.comphenix.protocol.events.PacketContainer
+import com.github.shynixn.mccoroutine.bukkit.launch
+import com.github.shynixn.mccoroutine.bukkit.ticks
+import com.mineinabyss.blocky.api.BlockyFurnitures.isModelEngineFurniture
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRespawn
@@ -9,9 +12,11 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
 import com.mineinabyss.idofront.entities.toPlayer
+import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.logError
 import com.mineinabyss.idofront.nms.nbt.WrappedPDC
 import com.mineinabyss.protocolburrito.dsl.sendTo
+import kotlinx.coroutines.delay
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.NbtIo
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
@@ -21,14 +26,11 @@ import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 import org.bukkit.craftbukkit.v1_20_R1.CraftServer
 import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack
-import org.bukkit.craftbukkit.v1_20_R1.persistence.CraftPersistentDataAdapterContext
 import org.bukkit.craftbukkit.v1_20_R1.persistence.CraftPersistentDataContainer
-import org.bukkit.craftbukkit.v1_20_R1.persistence.CraftPersistentDataTypeRegistry
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
-import org.bukkit.persistence.PersistentDataContainer
 import java.io.File
 import java.nio.file.Files
 import java.util.*
@@ -61,7 +63,7 @@ fun Player.removeOldBonfire() {
 /**
  * Updates the bonfire state for all players.
  */
-fun ItemDisplay.updateBonfireState(player: Player? = null) {
+fun ItemDisplay.updateBonfireState() {
     val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
 
 
@@ -78,20 +80,18 @@ fun ItemDisplay.updateBonfireState(player: Player? = null) {
                     listOf(SynchedEntityData.DataValue(22, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
                 )
 
-                bonfire.bonfirePlayers.mapNotNull { it.toPlayer() }.forEach {
-                    PacketContainer.fromPacket(metadataPacket).sendTo(it)
+
+                com.mineinabyss.bonfire.bonfire.plugin.launch {
+                    delay(3.ticks)
+                   bonfire.bonfirePlayers.mapNotNull { it.toPlayer() }.forEach {
+                        PacketContainer.fromPacket(metadataPacket).sendTo(it)
+                   }
                 }
             }.onFailure {
                 it.printStackTrace()
             }
         }
     }
-    this.itemStack = gearyItems.createItem(when {
-        bonfire.bonfirePlayers.isEmpty() -> bonfire.states.unlit
-        else -> bonfire.states.lit
-    }) ?: return
-
-
 }
 
 val OFFLINE_MESSAGE_FILE =

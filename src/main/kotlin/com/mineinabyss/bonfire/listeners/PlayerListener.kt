@@ -68,7 +68,7 @@ class PlayerListener : Listener {
             }
             com.mineinabyss.bonfire.bonfire.plugin.launch {
                 delay(3.ticks)
-                bonfireEntity.updateBonfireState(player)
+                bonfireEntity.updateBonfireState()
             }
         }
 
@@ -94,7 +94,7 @@ class PlayerListener : Listener {
         val bonfireEntity = bonfire.bonfireLocation.world.getEntity(bonfire.bonfireUuid) as? ItemDisplay ?: return
         com.mineinabyss.bonfire.bonfire.plugin.launch {
             delay(3.ticks)
-            bonfireEntity.updateBonfireState(player)
+            bonfireEntity.updateBonfireState()
         }
     }
     @EventHandler
