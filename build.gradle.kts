@@ -21,12 +21,6 @@ repositories {
 
 dependencies {
     // MineInAbyss platform
-    compileOnly(libs.sqlite.jdbc) { isTransitive = false }
-    compileOnly(libs.exposed.core) { isTransitive = false }
-    compileOnly(libs.exposed.dao) { isTransitive = false }
-    compileOnly(libs.exposed.jdbc) { isTransitive = false }
-    compileOnly(libs.exposed.javatime) { isTransitive = false }
-
     compileOnly(libs.kotlinx.serialization.json)
     compileOnly(libs.kotlinx.serialization.kaml)
     compileOnly(libs.kotlinx.serialization.cbor)
