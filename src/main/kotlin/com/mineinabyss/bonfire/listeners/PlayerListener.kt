@@ -4,10 +4,10 @@ import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireCooldown
+import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
-import com.mineinabyss.bonfire.extensions.OFFLINE_MESSAGE_FILE
+import com.mineinabyss.bonfire.extensions.BonfireMessages
 import com.mineinabyss.bonfire.extensions.isBonfire
-import com.mineinabyss.bonfire.extensions.removeFromOfflineMessager
 import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
@@ -58,11 +58,11 @@ class PlayerListener : Listener {
                     val height = loc.distance(getHighestAirBlock(loc.block).location)
                     loc.getNearbyEntities(0.5, height + 0.5, 0.5).filterIsInstance<Boat>().forEach(Boat::remove)
 
-                    player.info("Respawning at bonfire...")
+                    player.info(BonfireMessages.BONFIRE_RESPAWNING)
                     respawnLocation = loc.toCenterLocation()
                 }
                 else -> {
-                    player.error("Bonfire was not found...")
+                    player.error(BonfireMessages.BONFIRE_NOT_FOUND)
                     player.toGeary().remove<BonfireRespawn>()
                 }
             }
@@ -76,14 +76,17 @@ class PlayerListener : Listener {
         else respawnAtBonfire()
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun PlayerJoinEvent.onJoinRemovedBonfire() {
-        if (player.uniqueId.toString() !in OFFLINE_MESSAGE_FILE.readLines()) return
+        val gearyPlayer = player.toGearyOrNull() ?: return
+        if (!gearyPlayer.has<BonfireRemoved>()) return
+
         bonfire.plugin.launch {
-            delay(2.seconds)
-            player.error("Your respawn point was unset because the bonfire was broken by the owner")
-            player.uniqueId.removeFromOfflineMessager()
-            player.toGeary().remove<BonfireRespawn>()
+            delay(1.seconds)
+            player.error(BonfireMessages.BONFIRE_REMOVED)
+            gearyPlayer.remove<BonfireRespawn>()
+            gearyPlayer.remove<BonfireCooldown>()
+            gearyPlayer.remove<BonfireRemoved>()
         }
     }
 

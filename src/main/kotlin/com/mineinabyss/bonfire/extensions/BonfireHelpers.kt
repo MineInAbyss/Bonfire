@@ -3,8 +3,6 @@ package com.mineinabyss.bonfire.extensions
 import com.comphenix.protocol.events.PacketContainer
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.ticks
-import com.mineinabyss.blocky.api.BlockyFurnitures.isModelEngineFurniture
-import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.geary.papermc.datastore.has
@@ -12,7 +10,6 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
 import com.mineinabyss.idofront.entities.toPlayer
-import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.logError
 import com.mineinabyss.idofront.nms.nbt.WrappedPDC
 import com.mineinabyss.protocolburrito.dsl.sendTo
@@ -93,13 +90,6 @@ fun ItemDisplay.updateBonfireState() {
         }
     }
 }
-
-val OFFLINE_MESSAGE_FILE =
-    bonfire.plugin.dataFolder.resolve("offlineMessenger.txt").let { if (!it.exists()) it.createNewFile(); it }
-
-fun UUID.addToOfflineMessager() = OFFLINE_MESSAGE_FILE.appendText("$this\n")
-fun UUID.removeFromOfflineMessager() =
-    OFFLINE_MESSAGE_FILE.writeText(OFFLINE_MESSAGE_FILE.readLines().filter { it != this.toString() }.joinToString("\n"))
 
 /**
  * Gets the PlayerData from file for this UUID.

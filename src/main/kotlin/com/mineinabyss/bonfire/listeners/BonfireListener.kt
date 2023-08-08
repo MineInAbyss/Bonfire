@@ -9,6 +9,7 @@ import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.*
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.geary.helpers.with
+import com.mineinabyss.geary.papermc.datastore.encode
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.idofront.entities.toOfflinePlayer
@@ -56,7 +57,7 @@ class BonfireListener : Listener {
                     val totalUnlitTime = expiration.totalUnlitTime + (currentTime - expiration.lastUnlitTimeStamp).seconds
                     gearyEntity.setPersisting(expiration.copy(totalUnlitTime = totalUnlitTime, lastUnlitTimeStamp = currentTime))
                     if (totalUnlitTime >= bonfire.bonfireExpirationTime) {
-                        player.error("The bonfire has expired and turned to ash")
+                        player.error(BonfireMessages.BONFIRE_EXPIRED)
                         BlockyFurnitures.removeFurniture(baseEntity)
                         isCancelled = true
                     } else Unit
@@ -74,7 +75,7 @@ class BonfireListener : Listener {
         gearyEntity.with { bonfire: Bonfire ->
             when (player.uniqueId) {
                 !in bonfire.bonfirePlayers -> {
-                    if (bonfire.bonfirePlayers.size >= bonfire.maxPlayerCount) player.error("This bonfire is full")
+                    if (bonfire.bonfirePlayers.size >= bonfire.maxPlayerCount) player.error(BonfireMessages.BONFIRE_FULL)
                     else {
                         gearyEntity.setPersisting(bonfire.copy(bonfirePlayers = bonfire.bonfirePlayers + player.uniqueId))
                         com.mineinabyss.bonfire.bonfire.config.respawnSetSound.run {
@@ -100,7 +101,7 @@ class BonfireListener : Listener {
                     com.mineinabyss.bonfire.bonfire.config.respawnUnsetSound.run {
                         baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                     }
-                    player.error("Respawn point has been removed")
+                    player.error(BonfireMessages.BONFIRE_BREAK)
                 }
             }
 
@@ -121,13 +122,19 @@ class BonfireListener : Listener {
                 bonfire.bonfirePlayers.isEmpty() -> return
                 player.uniqueId == bonfire.bonfireOwner || player.hasPermission(BonfirePermissions.REMOVE_BONFIRE_PERMISSION) -> {
                     bonfire.bonfirePlayers.map { it.toOfflinePlayer() }.forEach { p ->
-                        p.player?.error("Your respawn point was unset because the bonfire was broken by the owner")
-                            ?: p.uniqueId.addToOfflineMessager()
+                        when {
+                            p.isOnline -> p.player?.error(BonfireMessages.BONFIRE_REMOVED)
+                            else -> {
+                                val pdc = p.getOfflinePDC() ?: return@forEach
+                                pdc.encode(BonfireRemoved())
+                                p.saveOfflinePDC(pdc)
+                            }
+                        }
                     }
                 }
 
                 else -> {
-                    player.error("You cannot break this bonfire, unkindled one")
+                    player.error(BonfireMessages.BONFIRE_BREAK_DENIED)
                     isCancelled = true
                 }
             }
