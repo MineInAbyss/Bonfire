@@ -1,7 +1,7 @@
 [versions]
 gearyPaper = "0.24-SNAPSHOT"
 deeperworld = "0.7.6"
-blocky = "0.6.3"
+blocky = "0.6.6"
 protocolburrito = "0.7.0"
 
 [libraries]
