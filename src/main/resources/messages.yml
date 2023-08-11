@@ -1,0 +1,7 @@
+BONFIRE_REMOVED: "<red>Your respawn point was unset because the bonfire was broken by the owner"
+BONFIRE_BREAK_DENIED: "<red>You cannot break this bonfire, unkindled one"
+BONFIRE_BREAK: "<red>Respawn point has been removed"
+BONFIRE_FULL: "<red>This bonfire is full"
+BONFIRE_EXPIRED: "<red>The bonfire has expired and turned to ash"
+BONFIRE_NOT_FOUND: "<red>Bonfire was not found..."
+BONFIRE_RESPAWNING: "<yellow>Respawning at bonfire..."

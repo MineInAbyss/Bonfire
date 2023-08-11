@@ -43,12 +43,12 @@ class BonfireListener : Listener {
         val gearyEntity = baseEntity.toGearyOrNull() ?: return
         val currentTime = currentTime()
 
-        gearyEntity.with { bonfire: Bonfire, expiration: BonfireExpirationTime ->
+        gearyEntity.with { bonfireData: Bonfire, expiration: BonfireExpirationTime ->
             when {
                 !player.isSneaking -> return
                 // Bonfire is lit, player is only registered player, player is unsetting
                 // Since it is being unlit, set lastUnlitTimeStamp to currentTime
-                bonfire.bonfirePlayers.isNotEmpty() && bonfire.bonfirePlayers.all { it == player.uniqueId } -> {
+                bonfireData.bonfirePlayers.isNotEmpty() && bonfireData.bonfirePlayers.all { it == player.uniqueId } -> {
                     gearyEntity.setPersisting(expiration.copy(totalUnlitTime = expiration.totalUnlitTime, lastUnlitTimeStamp = currentTime))
                 }
                 //  Bonfire was empty and player is attempting to set spawn
@@ -56,8 +56,8 @@ class BonfireListener : Listener {
                 else -> {
                     val totalUnlitTime = expiration.totalUnlitTime + (currentTime - expiration.lastUnlitTimeStamp).seconds
                     gearyEntity.setPersisting(expiration.copy(totalUnlitTime = totalUnlitTime, lastUnlitTimeStamp = currentTime))
-                    if (totalUnlitTime >= bonfire.bonfireExpirationTime) {
-                        player.error(BonfireMessages.BONFIRE_EXPIRED)
+                    if (totalUnlitTime >= bonfireData.bonfireExpirationTime) {
+                        player.error(bonfire.messages.BONFIRE_EXPIRED)
                         BlockyFurnitures.removeFurniture(baseEntity)
                         isCancelled = true
                     } else Unit
@@ -72,12 +72,12 @@ class BonfireListener : Listener {
         if (hand != EquipmentSlot.HAND || abs(0 - player.velocity.y) < 0.001) return
 
         val gearyEntity = baseEntity.toGearyOrNull() ?: return
-        gearyEntity.with { bonfire: Bonfire ->
+        gearyEntity.with { bonfireData: Bonfire ->
             when (player.uniqueId) {
-                !in bonfire.bonfirePlayers -> {
-                    if (bonfire.bonfirePlayers.size >= bonfire.maxPlayerCount) player.error(BonfireMessages.BONFIRE_FULL)
+                !in bonfireData.bonfirePlayers -> {
+                    if (bonfireData.bonfirePlayers.size >= bonfireData.maxPlayerCount) player.error(bonfire.messages.BONFIRE_FULL)
                     else {
-                        gearyEntity.setPersisting(bonfire.copy(bonfirePlayers = bonfire.bonfirePlayers + player.uniqueId))
+                        gearyEntity.setPersisting(bonfireData.copy(bonfirePlayers = bonfireData.bonfirePlayers + player.uniqueId))
                         com.mineinabyss.bonfire.bonfire.config.respawnSetSound.run {
                             baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                         }
@@ -92,8 +92,8 @@ class BonfireListener : Listener {
                     }
                 }
 
-                in bonfire.bonfirePlayers -> {
-                    gearyEntity.setPersisting(bonfire.copy(bonfirePlayers = bonfire.bonfirePlayers - player.uniqueId))
+                in bonfireData.bonfirePlayers -> {
+                    gearyEntity.setPersisting(bonfireData.copy(bonfirePlayers = bonfireData.bonfirePlayers - player.uniqueId))
                     player.toGeary().apply {
                         remove<BonfireRespawn>()
                         remove<BonfireEffectArea>()
@@ -101,7 +101,7 @@ class BonfireListener : Listener {
                     com.mineinabyss.bonfire.bonfire.config.respawnUnsetSound.run {
                         baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                     }
-                    player.error(BonfireMessages.BONFIRE_BREAK)
+                    player.error(bonfire.messages.BONFIRE_BREAK)
                 }
             }
 
@@ -117,13 +117,13 @@ class BonfireListener : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun BlockyFurnitureBreakEvent.onBreakBonfire() {
-        baseEntity.toGearyOrNull()?.with { bonfire: Bonfire ->
+        baseEntity.toGearyOrNull()?.with { bonfireData: Bonfire ->
             when {
-                bonfire.bonfirePlayers.isEmpty() -> return
-                player.uniqueId == bonfire.bonfireOwner || player.hasPermission(BonfirePermissions.REMOVE_BONFIRE_PERMISSION) -> {
-                    bonfire.bonfirePlayers.map { it.toOfflinePlayer() }.forEach { p ->
+                bonfireData.bonfirePlayers.isEmpty() -> return
+                player.uniqueId == bonfireData.bonfireOwner || player.hasPermission(BonfirePermissions.REMOVE_BONFIRE_PERMISSION) -> {
+                    bonfireData.bonfirePlayers.map { it.toOfflinePlayer() }.forEach { p ->
                         when {
-                            p.isOnline -> p.player?.error(BonfireMessages.BONFIRE_REMOVED)
+                            p.isOnline -> p.player?.error(com.mineinabyss.bonfire.bonfire.messages.BONFIRE_REMOVED)
                             else -> {
                                 val pdc = p.getOfflinePDC() ?: return@forEach
                                 pdc.encode(BonfireRemoved())
@@ -134,7 +134,7 @@ class BonfireListener : Listener {
                 }
 
                 else -> {
-                    player.error(BonfireMessages.BONFIRE_BREAK_DENIED)
+                    player.error(bonfire.messages.BONFIRE_BREAK_DENIED)
                     isCancelled = true
                 }
             }

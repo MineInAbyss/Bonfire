@@ -6,7 +6,6 @@ import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireCooldown
 import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
-import com.mineinabyss.bonfire.extensions.BonfireMessages
 import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
@@ -46,10 +45,10 @@ class PlayerListener : Listener {
 
         fun respawnAtBonfire() {
             val bonfireEntity = loc.world.getEntity(bonfireRespawn.bonfireUuid) as? ItemDisplay ?: return
-            val bonfire = bonfireEntity.toGeary().get<Bonfire>() ?: return
+            val bonfireData = bonfireEntity.toGeary().get<Bonfire>() ?: return
 
             when {
-                bonfireEntity.isBonfire && player.uniqueId in bonfire.bonfirePlayers -> {
+                bonfireEntity.isBonfire && player.uniqueId in bonfireData.bonfirePlayers -> {
                     fun getHighestAirBlock(block: Block): Block {
                         return if (block.getRelative(BlockFace.UP).type.isAir || block == block.location.toHighestLocation().block) block
                         else getHighestAirBlock(block.getRelative(BlockFace.UP))
@@ -58,15 +57,15 @@ class PlayerListener : Listener {
                     val height = loc.distance(getHighestAirBlock(loc.block).location)
                     loc.getNearbyEntities(0.5, height + 0.5, 0.5).filterIsInstance<Boat>().forEach(Boat::remove)
 
-                    player.info(BonfireMessages.BONFIRE_RESPAWNING)
+                    player.info(bonfire.messages.BONFIRE_RESPAWNING)
                     respawnLocation = loc.toCenterLocation()
                 }
                 else -> {
-                    player.error(BonfireMessages.BONFIRE_NOT_FOUND)
+                    player.error(bonfire.messages.BONFIRE_NOT_FOUND)
                     player.toGeary().remove<BonfireRespawn>()
                 }
             }
-            com.mineinabyss.bonfire.bonfire.plugin.launch {
+            bonfire.plugin.launch {
                 delay(3.ticks)
                 bonfireEntity.updateBonfireState()
             }
@@ -83,7 +82,7 @@ class PlayerListener : Listener {
 
         bonfire.plugin.launch {
             delay(1.seconds)
-            player.error(BonfireMessages.BONFIRE_REMOVED)
+            player.error(bonfire.messages.BONFIRE_REMOVED)
             gearyPlayer.remove<BonfireRespawn>()
             gearyPlayer.remove<BonfireCooldown>()
             gearyPlayer.remove<BonfireRemoved>()
