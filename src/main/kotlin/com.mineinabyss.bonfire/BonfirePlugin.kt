@@ -2,6 +2,7 @@ package com.mineinabyss.bonfire
 
 import com.mineinabyss.bonfire.extensions.BonfireMessages
 import com.mineinabyss.bonfire.listeners.BonfireListener
+import com.mineinabyss.bonfire.listeners.DebugListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.geary.autoscan.autoscan
 import com.mineinabyss.geary.modules.geary
@@ -21,7 +22,7 @@ class BonfirePlugin : JavaPlugin() {
 
         BonfireCommands()
 
-        listeners(PlayerListener(), BonfireListener())
+        listeners(PlayerListener(), BonfireListener(), DebugListener())
 
         geary {
             autoscan(classLoader, "com.mineinabyss.bonfire") {

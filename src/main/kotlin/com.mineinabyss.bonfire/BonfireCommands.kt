@@ -2,6 +2,7 @@ package com.mineinabyss.bonfire
 
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireCooldown
+import com.mineinabyss.bonfire.components.BonfireDebug
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.bonfire.extensions.getOfflinePDC
 import com.mineinabyss.bonfire.extensions.saveOfflinePDC
@@ -16,7 +17,10 @@ import com.mineinabyss.idofront.commands.arguments.offlinePlayerArg
 import com.mineinabyss.idofront.commands.arguments.playerArg
 import com.mineinabyss.idofront.commands.arguments.stringArg
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
-import com.mineinabyss.idofront.messaging.*
+import com.mineinabyss.idofront.commands.extensions.actions.playerAction
+import com.mineinabyss.idofront.messaging.error
+import com.mineinabyss.idofront.messaging.info
+import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.plugin.actions
 import org.bukkit.Bukkit
 import org.bukkit.Location
@@ -31,6 +35,20 @@ import org.bukkit.entity.Player
 class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
     override val commands = commands(bonfire.plugin) {
         command("bonfire") {
+            "debug" {
+                playerAction {
+                    when {
+                        player.toGeary().has<BonfireDebug>() -> {
+                            player.toGeary().remove<BonfireDebug>()
+                            sender.error("Bonfire debug mode disabled")
+                        }
+                        else -> {
+                            player.toGeary().setPersisting(BonfireDebug())
+                            sender.success("Bonfire debug mode enabled")
+                        }
+                    }
+                }
+            }
             "reload" {
                 actions {
                     bonfire.plugin.registerBonfireContext()
@@ -172,7 +190,7 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
     ): List<String> {
         if (command.name != "bonfire") return emptyList()
         return when (args.size) {
-            1 -> listOf("reload", "respawn", "players", "cooldown").filter { it.startsWith(args[0]) }
+            1 -> listOf("reload", "respawn", "players", "cooldown", "debug").filter { it.startsWith(args[0]) }
             2 -> when (args[0]) {
                 "respawn" -> listOf("get", "set", "remove").filter { it.startsWith(args[1]) }
                 "players" -> listOf((sender as? Player)?.location?.blockX.toString())
