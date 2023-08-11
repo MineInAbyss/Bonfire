@@ -1,5 +1,6 @@
 package com.mineinabyss.bonfire.listeners
 
+import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.blocky.api.BlockyFurnitures
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureBreakEvent
@@ -10,12 +11,14 @@ import com.mineinabyss.bonfire.components.*
 import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.geary.helpers.with
 import com.mineinabyss.geary.papermc.datastore.encode
+import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.idofront.entities.toOfflinePlayer
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import kotlinx.coroutines.delay
+import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -78,7 +81,7 @@ class BonfireListener : Listener {
                     if (bonfireData.bonfirePlayers.size >= bonfireData.maxPlayerCount) player.error(bonfire.messages.BONFIRE_FULL)
                     else {
                         gearyEntity.setPersisting(bonfireData.copy(bonfirePlayers = bonfireData.bonfirePlayers + player.uniqueId))
-                        com.mineinabyss.bonfire.bonfire.config.respawnSetSound.run {
+                        bonfire.config.respawnSetSound.run {
                             baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                         }
                         // Load old bonfire and remove player from it if it exists
@@ -98,7 +101,7 @@ class BonfireListener : Listener {
                         remove<BonfireRespawn>()
                         remove<BonfireEffectArea>()
                     }
-                    com.mineinabyss.bonfire.bonfire.config.respawnUnsetSound.run {
+                    bonfire.config.respawnUnsetSound.run {
                         baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                     }
                     player.error(bonfire.messages.BONFIRE_BREAK)
@@ -120,19 +123,7 @@ class BonfireListener : Listener {
         baseEntity.toGearyOrNull()?.with { bonfireData: Bonfire ->
             when {
                 bonfireData.bonfirePlayers.isEmpty() -> return
-                player.uniqueId == bonfireData.bonfireOwner || player.hasPermission(BonfirePermissions.REMOVE_BONFIRE_PERMISSION) -> {
-                    bonfireData.bonfirePlayers.map { it.toOfflinePlayer() }.forEach { p ->
-                        when {
-                            p.isOnline -> p.player?.error(com.mineinabyss.bonfire.bonfire.messages.BONFIRE_REMOVED)
-                            else -> {
-                                val pdc = p.getOfflinePDC() ?: return@forEach
-                                pdc.encode(BonfireRemoved())
-                                p.saveOfflinePDC(pdc)
-                            }
-                        }
-                    }
-                }
-
+                player.uniqueId == bonfireData.bonfireOwner || player.hasPermission(BonfirePermissions.REMOVE_BONFIRE_PERMISSION) -> return
                 else -> {
                     player.error(bonfire.messages.BONFIRE_BREAK_DENIED)
                     isCancelled = true
@@ -146,10 +137,39 @@ class BonfireListener : Listener {
         if (hand != EquipmentSlot.HAND || abs(0 - player.velocity.y) < 0.001) return
         if (player.fallDistance > bonfire.config.minFallDist) return
 
-        baseEntity.toGearyOrNull()?.with { bonfire: Bonfire ->
-            val cooldown = player.toGeary().get<BonfireCooldown>() ?: return
+        player.toGeary().with { cooldown: BonfireCooldown ->
             if (cooldown.bonfire == baseEntity.uniqueId) isCancelled = true
             else player.toGeary().remove<BonfireCooldown>()
         }
+    }
+
+    /**
+     * When a bonfire is marked for removal, either via commands or being broken in any way
+     * The below listener will handle completely removing it and all assosiacted playerdata
+     * Since /kill commands wouldn't trigger BlockyFurnitureBreakEvent then the main logic should be done here
+     */
+    @EventHandler
+    fun EntityRemoveFromWorldEvent.onRemoveBonfire() {
+        if (!entity.isDead) return
+        val bonfireData = (entity as? ItemDisplay)?.toGearyOrNull()?.get<Bonfire>() ?: return
+
+        bonfireData.bonfirePlayers.map { it.toOfflinePlayer() }.forEach { p ->
+            when {
+                p.isOnline -> {
+                    p.player!!.toGeary().remove<BonfireRespawn>()
+                    p.player!!.toGeary().remove<BonfireCooldown>()
+                    p.player?.error(bonfire.messages.BONFIRE_REMOVED)
+                }
+                else -> {
+                    val pdc = p.getOfflinePDC() ?: return@forEach
+                    pdc.encode(BonfireRemoved())
+                    pdc.remove<BonfireRespawn>()
+                    pdc.remove<BonfireCooldown>()
+                    p.saveOfflinePDC(pdc)
+                }
+            }
+        }
+
+        BlockyFurnitures.removeFurniture(entity as ItemDisplay)
     }
 }

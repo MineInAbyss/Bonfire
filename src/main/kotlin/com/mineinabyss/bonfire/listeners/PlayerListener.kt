@@ -83,8 +83,6 @@ class PlayerListener : Listener {
         bonfire.plugin.launch {
             delay(1.seconds)
             player.error(bonfire.messages.BONFIRE_REMOVED)
-            gearyPlayer.remove<BonfireRespawn>()
-            gearyPlayer.remove<BonfireCooldown>()
             gearyPlayer.remove<BonfireRemoved>()
         }
     }
