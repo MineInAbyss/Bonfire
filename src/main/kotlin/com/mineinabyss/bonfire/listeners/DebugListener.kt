@@ -18,7 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import net.kyori.adventure.text.minimessage.tag.Tag
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import net.minecraft.network.chat.Component
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
@@ -83,7 +83,7 @@ class DebugListener : Listener {
             TagResolver.resolver("size", Tag.inserting(baseEntity.toGeary().get<Bonfire>()!!.let { "${it.bonfirePlayers.size}/${it.maxPlayerCount}" }.miniMsg())),
             TagResolver.resolver("players", Tag.inserting(baseEntity.toGeary().get<Bonfire>()!!.bonfirePlayers.joinToString { it.toOfflinePlayer().name.toString() }.miniMsg())),
         )
-        val text = LegacyComponentSerializer.legacySection().serialize(DEBUG_TEXT.trimIndent().miniMsg(tagResolver))
+        val text = Component.Serializer.fromJson(GsonComponentSerializer.gson().serialize(DEBUG_TEXT.trimIndent().miniMsg(tagResolver))) ?: Component.empty()
 
         // Set flags using bitwise operations
         var bitmask = 0
@@ -94,7 +94,7 @@ class DebugListener : Listener {
             ClientboundSetEntityDataPacket(
                 entityId, listOf(
                     SynchedEntityData.DataValue(14, EntityDataSerializers.BYTE, 1), // Billboard
-                    SynchedEntityData.DataValue(22, EntityDataSerializers.COMPONENT, Component.literal(text)),
+                    SynchedEntityData.DataValue(22, EntityDataSerializers.COMPONENT, text),
                     SynchedEntityData.DataValue(24, EntityDataSerializers.INT, Color.fromARGB(0,0,0,0).asARGB()), // Transparent background
                     SynchedEntityData.DataValue(26, EntityDataSerializers.BYTE, bitmask.toByte())
                 )
