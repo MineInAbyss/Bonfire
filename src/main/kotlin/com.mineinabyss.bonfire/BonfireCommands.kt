@@ -63,7 +63,7 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                             offlinePlayer.isOnline -> offlinePlayer.player?.toGearyOrNull()?.get<BonfireRespawn>()
                             else -> offlinePlayer.getOfflinePDC()?.decode<BonfireRespawn>()
                         }?.bonfireLocation
-                            ?: return@action sender.error("Could not find BonfireRespawn for the given OfflinePlayer")
+                            ?: return@action sender.error("Could not find BonfireRespawn for the given Player")
                         sender.info("Bonfire-Respawn for ${offlinePlayer.name} is at ${respawn.x}, ${respawn.y}, ${respawn.z} in ${respawn.world.name}")
                     }
                 }
@@ -108,7 +108,11 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                 "remove" {
                     action {
                         val respawn = when {
-                            offlinePlayer.isOnline -> offlinePlayer.player?.toGearyOrNull()?.get<BonfireRespawn>()
+                            offlinePlayer.isOnline -> {
+                                val respawn = offlinePlayer.player?.toGearyOrNull()?.get<BonfireRespawn>()
+                                offlinePlayer.player?.toGeary()?.remove<BonfireRespawn>()
+                                respawn
+                            }
                             else -> {
                                 val pdc = offlinePlayer.getOfflinePDC()
                                     ?: return@action sender.error("Could not find PDC for the given OfflinePlayer")
@@ -119,8 +123,6 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                                 respawn
                             }
                         } ?: return@action sender.error("Player has no respawn point set")
-
-                        if (offlinePlayer.isOnline) offlinePlayer.player?.toGearyOrNull()?.remove<BonfireRespawn>()
 
                         // Remove component of bonfire if it exists still
                         respawn.bonfireLocation.world.getChunkAtAsync(respawn.bonfireLocation).thenAccept {

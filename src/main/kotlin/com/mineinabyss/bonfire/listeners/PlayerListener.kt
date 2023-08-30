@@ -43,9 +43,9 @@ class PlayerListener : Listener {
         val bonfireRespawn = player.toGeary().get<BonfireRespawn>() ?: return
         val loc = bonfireRespawn.bonfireLocation
 
-        fun respawnAtBonfire() {
-            val bonfireEntity = loc.world.getEntity(bonfireRespawn.bonfireUuid) as? ItemDisplay ?: return
-            val bonfireData = bonfireEntity.toGeary().get<Bonfire>() ?: return
+        loc.world.getChunkAtAsyncUrgently(loc).thenAccept { chunk ->
+            val bonfireEntity = chunk.entities.filterIsInstance<ItemDisplay>().find { it.isBonfire && it.uniqueId == bonfireRespawn.bonfireUuid } ?: return@thenAccept
+            val bonfireData = bonfireEntity.toGeary().get<Bonfire>() ?: return@thenAccept
 
             when {
                 bonfireEntity.isBonfire && player.uniqueId in bonfireData.bonfirePlayers -> {
@@ -58,7 +58,7 @@ class PlayerListener : Listener {
                     loc.getNearbyEntities(0.5, height + 0.5, 0.5).filterIsInstance<Boat>().forEach(Boat::remove)
 
                     player.info(bonfire.messages.BONFIRE_RESPAWNING)
-                    respawnLocation = loc.toCenterLocation()
+                    player.teleportAsync(loc.toCenterLocation())
                 }
                 else -> {
                     player.error(bonfire.messages.BONFIRE_NOT_FOUND)
@@ -70,9 +70,6 @@ class PlayerListener : Listener {
                 bonfireEntity.updateBonfireState()
             }
         }
-
-        if (!loc.isChunkLoaded) player.teleportAsync(loc.toCenterLocation()).thenRun(::respawnAtBonfire)
-        else respawnAtBonfire()
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

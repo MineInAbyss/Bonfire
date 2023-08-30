@@ -87,20 +87,16 @@ class BonfireListener : Listener {
                         // Load old bonfire and remove player from it if it exists
                         player.removeOldBonfire()
 
-                        player.toGeary().apply {
-                            setPersisting(BonfireRespawn(baseEntity.uniqueId, baseEntity.location))
-                            setPersisting(BonfireEffectArea(baseEntity.uniqueId))
-                        }
+                        player.toGeary().setPersisting(BonfireRespawn(baseEntity.uniqueId, baseEntity.location))
+                        player.toGeary().setPersisting(BonfireEffectArea(baseEntity.uniqueId))
                         player.success("Respawn point set")
                     }
                 }
 
                 in bonfireData.bonfirePlayers -> {
                     gearyEntity.setPersisting(bonfireData.copy(bonfirePlayers = bonfireData.bonfirePlayers - player.uniqueId))
-                    player.toGeary().apply {
-                        remove<BonfireRespawn>()
-                        remove<BonfireEffectArea>()
-                    }
+                    player.toGeary().remove<BonfireRespawn>()
+                    player.toGeary().remove<BonfireEffectArea>()
                     bonfire.config.respawnUnsetSound.run {
                         baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                     }
@@ -111,8 +107,8 @@ class BonfireListener : Listener {
             baseEntity.updateBonfireState()
 
             player.toGeary().set(BonfireCooldown(baseEntity.uniqueId))
-            com.mineinabyss.bonfire.bonfire.plugin.launch {
-                delay(com.mineinabyss.bonfire.bonfire.config.bonfireInteractCooldown)
+            bonfire.plugin.launch {
+                delay(bonfire.config.bonfireInteractCooldown)
                 if (player.isOnline) player.toGeary().remove<BonfireCooldown>()
             }
         }
