@@ -150,19 +150,17 @@ class BonfireListener : Listener {
         val bonfireData = (entity as? ItemDisplay)?.toGearyOrNull()?.get<Bonfire>() ?: return
 
         bonfireData.bonfirePlayers.map { it.toOfflinePlayer() }.forEach { p ->
-            when {
-                p.isOnline -> {
-                    p.player!!.toGeary().remove<BonfireRespawn>()
-                    p.player!!.toGeary().remove<BonfireCooldown>()
-                    p.player?.error(bonfire.messages.BONFIRE_REMOVED)
-                }
-                else -> {
-                    val pdc = p.getOfflinePDC() ?: return@forEach
-                    pdc.encode(BonfireRemoved())
-                    pdc.remove<BonfireRespawn>()
-                    pdc.remove<BonfireCooldown>()
-                    p.saveOfflinePDC(pdc)
-                }
+            val onlinePlayer = p.player
+            if (onlinePlayer != null) {
+                onlinePlayer.toGeary().remove<BonfireEffectArea>()
+                onlinePlayer.toGeary().remove<BonfireRespawn>()
+                onlinePlayer.toGeary().remove<BonfireCooldown>()
+            } else {
+                val pdc = p.getOfflinePDC() ?: return@forEach
+                pdc.encode(BonfireRemoved())
+                pdc.remove<BonfireRespawn>()
+                pdc.remove<BonfireCooldown>()
+                p.saveOfflinePDC(pdc)
             }
         }
 
