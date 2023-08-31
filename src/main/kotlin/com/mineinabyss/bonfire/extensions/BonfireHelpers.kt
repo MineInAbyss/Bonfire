@@ -5,7 +5,6 @@ import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.ticks
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRespawn
-import com.mineinabyss.geary.papermc.datastore.has
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
@@ -27,14 +26,9 @@ import org.bukkit.craftbukkit.v1_20_R1.persistence.CraftPersistentDataContainer
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
-import org.bukkit.inventory.ItemStack
 import java.io.File
 import java.nio.file.Files
 import java.util.*
-
-
-val ItemStack.isBonfire: Boolean
-    get() = itemMeta?.persistentDataContainer?.has<Bonfire>() == true
 
 val Entity.isBonfire: Boolean
     get() = this is ItemDisplay && this.toGearyOrNull()?.has<Bonfire>() == true
