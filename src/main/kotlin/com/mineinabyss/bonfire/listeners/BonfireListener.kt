@@ -6,9 +6,9 @@ import com.mineinabyss.blocky.api.BlockyFurnitures
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureBreakEvent
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureInteractEvent
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurniturePlaceEvent
-import com.mineinabyss.bonfire.*
+import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.*
-import com.mineinabyss.bonfire.extensions.BonfirePermissions
+import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.geary.helpers.with
 import com.mineinabyss.geary.papermc.datastore.encode
 import com.mineinabyss.geary.papermc.datastore.remove

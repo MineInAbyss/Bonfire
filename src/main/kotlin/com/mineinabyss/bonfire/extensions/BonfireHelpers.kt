@@ -1,4 +1,4 @@
-package com.mineinabyss.bonfire
+package com.mineinabyss.bonfire.extensions
 
 import com.comphenix.protocol.events.PacketContainer
 import com.github.shynixn.mccoroutine.bukkit.launch
@@ -46,13 +46,11 @@ val Entity.isBonfire: Boolean
  * Intended to be used for syncing the bonfire if a player swaps to another bonfire
  */
 fun Player.removeOldBonfire() {
-    toGeary().get<BonfireRespawn>()?.let {
-        if (it.bonfireLocation.isChunkLoaded || it.bonfireLocation.chunk.load()) {
-            Bukkit.getEntity(it.bonfireUuid)?.toGearyOrNull()?.let { geary ->
-                geary.get<Bonfire>()?.let { bonfire ->
-                    geary.setPersisting(bonfire.copy(bonfirePlayers = bonfire.bonfirePlayers - uniqueId))
-                }
-            }
+    val bonfireRespawn = toGeary().get<BonfireRespawn>() ?: return
+    bonfireRespawn.bonfireLocation.world.getChunkAtAsync(bonfireRespawn.bonfireLocation).thenAccept { chunk ->
+        chunk.entities.find { it.isBonfire && it.uniqueId == bonfireRespawn.bonfireUuid }?.toGearyOrNull()?.let { geary ->
+            val bonfire = geary.get<Bonfire>() ?: return@let
+            geary.setPersisting(bonfire.copy(bonfirePlayers = bonfire.bonfirePlayers - uniqueId))
         }
     }
 }
