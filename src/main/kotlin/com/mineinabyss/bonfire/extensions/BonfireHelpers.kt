@@ -22,7 +22,6 @@ import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 import org.bukkit.craftbukkit.v1_20_R1.CraftServer
 import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack
-import org.bukkit.craftbukkit.v1_20_R1.persistence.CraftPersistentDataContainer
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
@@ -93,7 +92,7 @@ internal fun UUID.getOfflinePlayerData(): CompoundTag? = (Bukkit.getServer() as 
  * Care should be taken to ensure that the player is not online when this is called.
  */
 fun OfflinePlayer.getOfflinePDC() : WrappedPDC? {
-    if (isOnline) return WrappedPDC((player!!.persistentDataContainer as CraftPersistentDataContainer).toTagCompound())
+    if (isOnline) return null
     val baseTag = uniqueId.getOfflinePlayerData()?.getCompound("BukkitValues") ?: return null
     return WrappedPDC(baseTag)
 }
@@ -124,6 +123,19 @@ fun OfflinePlayer.saveOfflinePDC(pdc: WrappedPDC): Boolean {
     }
     return true
 }
+
+/**
+ * Edits the OfflinePlayer's WrappedPDC.
+ * Care should be taken to ensure that the player is not online when this is called.
+ * @return true if successful, false otherwise and null if the player is online.
+ */
+inline fun OfflinePlayer.editOfflinePDC(apply: WrappedPDC.() -> Unit): Boolean? {
+    val pdc = getOfflinePDC() ?: return null
+    apply(pdc)
+    return saveOfflinePDC(pdc)
+}
+
+
 
 fun ItemDisplay.calculateBonfireExpirationTime() {
     val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return

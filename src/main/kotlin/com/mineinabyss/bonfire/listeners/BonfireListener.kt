@@ -8,7 +8,10 @@ import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureInteractEvent
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurniturePlaceEvent
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.*
-import com.mineinabyss.bonfire.extensions.*
+import com.mineinabyss.bonfire.extensions.BonfirePermissions
+import com.mineinabyss.bonfire.extensions.editOfflinePDC
+import com.mineinabyss.bonfire.extensions.removeOldBonfire
+import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.helpers.with
 import com.mineinabyss.geary.papermc.datastore.encode
 import com.mineinabyss.geary.papermc.datastore.remove
@@ -156,11 +159,11 @@ class BonfireListener : Listener {
                 onlinePlayer.toGeary().remove<BonfireRespawn>()
                 onlinePlayer.toGeary().remove<BonfireCooldown>()
             } else {
-                val pdc = p.getOfflinePDC() ?: return@forEach
-                pdc.encode(BonfireRemoved())
-                pdc.remove<BonfireRespawn>()
-                pdc.remove<BonfireCooldown>()
-                p.saveOfflinePDC(pdc)
+                p.editOfflinePDC {
+                    encode(BonfireRemoved())
+                    remove<BonfireRespawn>()
+                    remove<BonfireCooldown>()
+                }
             }
         }
 

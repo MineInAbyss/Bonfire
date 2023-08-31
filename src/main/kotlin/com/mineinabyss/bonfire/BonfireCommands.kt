@@ -4,6 +4,7 @@ import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireCooldown
 import com.mineinabyss.bonfire.components.BonfireDebug
 import com.mineinabyss.bonfire.components.BonfireRespawn
+import com.mineinabyss.bonfire.extensions.editOfflinePDC
 import com.mineinabyss.bonfire.extensions.getOfflinePDC
 import com.mineinabyss.bonfire.extensions.saveOfflinePDC
 import com.mineinabyss.bonfire.extensions.updateBonfireState
@@ -73,8 +74,8 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                     val z: Int by intArg { default = (sender as? Player)?.location?.toCenterLocation()?.blockZ }
                     val worldName: String by stringArg { default = (sender as? Player)?.world?.name ?: "world" }
                     action {
-                        val pdc = offlinePlayer.getOfflinePDC()
-                            ?: return@action sender.error("Could not find PDC for the given OfflinePlayer")
+                        // Ensures the player has a datafile, aka joined the server before, so we can save the bonfire location
+                        offlinePlayer.getOfflinePDC() ?: return@action sender.error("Could not find PDC for the given OfflinePlayer")
                         val world =
                             Bukkit.getWorld(worldName) ?: return@action sender.error("Could not find world $worldName")
                         val tempBonfireLoc =
@@ -93,10 +94,11 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                                     )
 
                                     else -> {
+                                        offlinePlayer.editOfflinePDC {
+                                            encode(BonfireRespawn(bonfireEntity.uniqueId, bonfireEntity.location))
+                                        }
                                         bonfireEntity.toGeary()
                                             .setPersisting(bonfire.copy(bonfirePlayers = bonfire.bonfirePlayers + offlinePlayer.uniqueId))
-                                        pdc.encode(BonfireRespawn(bonfireEntity.uniqueId, bonfireEntity.location))
-                                        offlinePlayer.saveOfflinePDC(pdc)
                                         bonfireEntity.updateBonfireState()
                                         sender.success("Set respawn point for ${offlinePlayer.name} to $x $y $z in $worldName")
                                     }
@@ -114,10 +116,8 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                                 respawn
                             }
                             else -> {
-                                val pdc = offlinePlayer.getOfflinePDC()
-                                    ?: return@action sender.error("Could not find PDC for the given OfflinePlayer")
-                                val respawn = pdc.decode<BonfireRespawn>()
-                                    ?: return@action sender.error("Could not find PDC for the given OfflinePlayer")
+                                val pdc = offlinePlayer.getOfflinePDC() ?: return@action sender.error("Could not find PDC for the given OfflinePlayer")
+                                val respawn = pdc.decode<BonfireRespawn>() ?: return@action sender.error("OfflinePlayer has no bonfire set")
                                 pdc.remove<BonfireRespawn>()
                                 offlinePlayer.saveOfflinePDC(pdc)
                                 respawn
