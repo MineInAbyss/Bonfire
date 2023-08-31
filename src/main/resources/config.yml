@@ -15,3 +15,5 @@ minFallDist: 3
 effectRadius: 3.0 #distance from bonfire
 effectStrength: 10f #saturation amount
 effectRegenRate: 7 #default mc 10
+
+allowSettingBedRespawns: false

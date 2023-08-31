@@ -16,7 +16,8 @@ data class BonfireConfig(
     val minFallDist: Int = 3,
     val effectRadius: Double = 3.0,
     val effectStrength: Float = 10f,
-    val effectRegenRate: Int = 7
+    val effectRegenRate: Int = 7,
+    val allowSettingBedRespawns: Boolean = false,
 ) {
     @Serializable
     data class BonfireSound(

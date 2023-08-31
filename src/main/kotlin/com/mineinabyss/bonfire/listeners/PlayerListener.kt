@@ -30,9 +30,9 @@ import kotlin.time.Duration.Companion.seconds
 
 class PlayerListener : Listener {
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun PlayerBedEnterEvent.enter() {
-        isCancelled = true
+        if (!bonfire.config.allowSettingBedRespawns) isCancelled = true
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
