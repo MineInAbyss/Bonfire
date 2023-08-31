@@ -1,5 +1,6 @@
 package com.mineinabyss.bonfire.listeners
 
+import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
@@ -14,6 +15,7 @@ import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.time.ticks
 import kotlinx.coroutines.delay
+import org.bukkit.Bukkit
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.data.type.Bed
@@ -65,11 +67,14 @@ class PlayerListener : Listener {
                     player.toGeary().remove<BonfireRespawn>()
                 }
             }
-            bonfire.plugin.launch {
-                delay(3.ticks)
-                bonfireEntity.updateBonfireState()
-            }
         }
+    }
+
+    @EventHandler
+    fun PlayerPostRespawnEvent.onBonfireRespawned() {
+        val bonfireRespawn = player.toGeary().get<BonfireRespawn>() ?: return
+        val bonfireEntity = Bukkit.getEntity(bonfireRespawn.bonfireUuid) as? ItemDisplay ?: return
+        bonfireEntity.updateBonfireState()
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
