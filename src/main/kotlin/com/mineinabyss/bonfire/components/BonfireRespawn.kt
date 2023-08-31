@@ -5,7 +5,7 @@ import com.mineinabyss.idofront.serialization.UUIDSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.bukkit.Location
-import java.util.UUID
+import java.util.*
 
 @Serializable
 @SerialName("bonfire:bonfire_respawn")

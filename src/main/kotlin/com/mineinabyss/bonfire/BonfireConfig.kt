@@ -3,7 +3,6 @@ package com.mineinabyss.bonfire
 import com.mineinabyss.idofront.serialization.DurationSerializer
 import kotlinx.serialization.Serializable
 import org.bukkit.SoundCategory
-import java.io.Serial
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

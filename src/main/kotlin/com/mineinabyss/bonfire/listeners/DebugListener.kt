@@ -8,7 +8,7 @@ import com.mineinabyss.blocky.helpers.GenericHelpers.toBlockCenterLocation
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireDebug
-import com.mineinabyss.bonfire.extensions.isBonfire
+import com.mineinabyss.bonfire.isBonfire
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.idofront.entities.toOfflinePlayer
 import com.mineinabyss.idofront.textcomponents.miniMsg

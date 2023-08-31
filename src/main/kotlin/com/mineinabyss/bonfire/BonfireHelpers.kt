@@ -1,4 +1,4 @@
-package com.mineinabyss.bonfire.extensions
+package com.mineinabyss.bonfire
 
 import com.comphenix.protocol.events.PacketContainer
 import com.github.shynixn.mccoroutine.bukkit.launch

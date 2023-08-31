@@ -1,13 +1,11 @@
 package com.mineinabyss.bonfire.systems
 
-import com.mineinabyss.blocky.blocky
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.BonfireEffectArea
-import com.mineinabyss.bonfire.extensions.isBonfire
+import com.mineinabyss.bonfire.isBonfire
 import com.mineinabyss.geary.autoscan.AutoScan
 import com.mineinabyss.geary.systems.RepeatingSystem
 import com.mineinabyss.geary.systems.accessors.TargetScope
-import com.mineinabyss.idofront.textcomponents.miniMsg
 import com.mineinabyss.idofront.time.ticks
 import org.bukkit.Particle
 import org.bukkit.entity.ItemDisplay
