@@ -9,25 +9,15 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
 import com.mineinabyss.idofront.entities.toPlayer
-import com.mineinabyss.idofront.messaging.logError
-import com.mineinabyss.idofront.nms.nbt.WrappedPDC
 import com.mineinabyss.protocolburrito.dsl.sendTo
 import kotlinx.coroutines.delay
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.NbtIo
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
-import org.bukkit.Bukkit
-import org.bukkit.OfflinePlayer
-import org.bukkit.craftbukkit.v1_20_R1.CraftServer
 import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
-import java.io.File
-import java.nio.file.Files
-import java.util.*
 
 val Entity.isBonfire: Boolean
     get() = this is ItemDisplay && this.toGearyOrNull()?.has<Bonfire>() == true
@@ -80,64 +70,4 @@ fun ItemDisplay.updateBonfireState() {
             }
         }
     }
-}
-
-/**
- * Gets the PlayerData from file for this UUID.
- */
-internal fun UUID.getOfflinePlayerData(): CompoundTag? = (Bukkit.getServer() as CraftServer).handle.playerIo.getPlayerData(this.toString())
-
-/**
- * Gets a copy of the WrappedPDC for this OfflinePlayer.
- * Care should be taken to ensure that the player is not online when this is called.
- */
-fun OfflinePlayer.getOfflinePDC() : WrappedPDC? {
-    if (isOnline) return null
-    val baseTag = uniqueId.getOfflinePlayerData()?.getCompound("BukkitValues") ?: return null
-    return WrappedPDC(baseTag)
-}
-
-/**
- * Saves the given WrappedPDC to the OfflinePlayer's PlayerData file.
- * Care should be taken to ensure that the player is not online when this is called.
- * @return true if successful, false otherwise.
- */
-fun OfflinePlayer.saveOfflinePDC(pdc: WrappedPDC): Boolean {
-    if (isOnline) return false
-    val worldNBTStorage = (Bukkit.getServer() as CraftServer).server.playerDataStorage
-    val tempFile = File(worldNBTStorage.playerDir, "$uniqueId.dat.tmp")
-    val playerFile = File(worldNBTStorage.playerDir, "$uniqueId.dat")
-
-    val mainPDc = uniqueId.getOfflinePlayerData() ?: return false
-    mainPDc.put("BukkitValues", pdc.compoundTag) ?: return false
-    runCatching {
-        Files.newOutputStream(tempFile.toPath()).use { outStream ->
-            NbtIo.writeCompressed(mainPDc, outStream)
-            if (playerFile.exists() && !playerFile.delete()) logError("Failed to delete player file $uniqueId")
-            if (!tempFile.renameTo(playerFile)) logError("Failed to rename player file $uniqueId")
-        }
-    }.onFailure {
-        logError("Failed to save player file $uniqueId")
-        it.printStackTrace()
-        return false
-    }
-    return true
-}
-
-/**
- * Edits the OfflinePlayer's WrappedPDC.
- * Care should be taken to ensure that the player is not online when this is called.
- * @return true if successful, false otherwise and null if the player is online.
- */
-inline fun OfflinePlayer.editOfflinePDC(apply: WrappedPDC.() -> Unit): Boolean? {
-    val pdc = getOfflinePDC() ?: return null
-    apply(pdc)
-    return saveOfflinePDC(pdc)
-}
-
-
-
-fun ItemDisplay.calculateBonfireExpirationTime() {
-    val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
-
 }

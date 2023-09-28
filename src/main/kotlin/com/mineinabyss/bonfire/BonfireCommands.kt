@@ -4,9 +4,6 @@ import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireCooldown
 import com.mineinabyss.bonfire.components.BonfireDebug
 import com.mineinabyss.bonfire.components.BonfireRespawn
-import com.mineinabyss.bonfire.extensions.editOfflinePDC
-import com.mineinabyss.bonfire.extensions.getOfflinePDC
-import com.mineinabyss.bonfire.extensions.saveOfflinePDC
 import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.papermc.datastore.decode
 import com.mineinabyss.geary.papermc.datastore.encode
@@ -22,6 +19,9 @@ import com.mineinabyss.idofront.commands.extensions.actions.playerAction
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
+import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
+import com.mineinabyss.idofront.nms.nbt.getOfflinePDC
+import com.mineinabyss.idofront.nms.nbt.saveOfflinePDC
 import com.mineinabyss.idofront.plugin.actions
 import org.bukkit.Bukkit
 import org.bukkit.Location
