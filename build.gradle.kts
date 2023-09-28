@@ -14,8 +14,6 @@ repositories {
     maven("https://repo.mineinabyss.com/releases")
     maven("https://repo.mineinabyss.com/snapshots")
     maven("https://repo.dmulloy2.net/repository/public") // ProtocolLib
-    maven("https://jitpack.io")
-    maven("https://repo.jeff-media.com/public") // PersistentDataSerializer
 }
 
 dependencies {
@@ -29,7 +27,6 @@ dependencies {
     compileOnly(bfLibs.geary.papermc)
 
     // Other plugins
-    compileOnly(bfLibs.deeperworld)
     compileOnly(bfLibs.blocky)
     compileOnly(libs.minecraft.plugin.protocollib)
     compileOnly(bfLibs.protocolburrito)
