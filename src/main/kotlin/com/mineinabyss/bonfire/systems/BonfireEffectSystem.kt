@@ -5,7 +5,7 @@ import com.mineinabyss.bonfire.components.BonfireEffectArea
 import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.geary.autoscan.AutoScan
 import com.mineinabyss.geary.systems.RepeatingSystem
-import com.mineinabyss.geary.systems.accessors.TargetScope
+import com.mineinabyss.geary.systems.accessors.Pointer
 import com.mineinabyss.idofront.time.ticks
 import org.bukkit.Particle
 import org.bukkit.entity.ItemDisplay
@@ -13,10 +13,10 @@ import org.bukkit.entity.Player
 
 @AutoScan
 class BonfireEffectSystem : RepeatingSystem(10.ticks) {
-    private val TargetScope.player by get<Player>()
-    private val TargetScope.effect by get<BonfireEffectArea>()
+    private val Pointer.player by get<Player>()
+    private val Pointer.effect by get<BonfireEffectArea>()
 
-    override fun TargetScope.tick() {
+    override fun Pointer.tick() {
         // Check if still near a bonfire
         player.location.getNearbyEntitiesByType(ItemDisplay::class.java, bonfire.config.effectRadius).firstOrNull {
             it.isBonfire && it.uniqueId == effect.uuid
