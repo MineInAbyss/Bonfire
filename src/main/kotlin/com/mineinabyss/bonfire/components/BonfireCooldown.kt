@@ -1,4 +1,4 @@
-package com.mineinabyss.bonfire.ecs.components
+package com.mineinabyss.bonfire.components
 
 import com.mineinabyss.idofront.serialization.UUIDSerializer
 import kotlinx.serialization.SerialName
@@ -7,6 +7,4 @@ import java.util.*
 
 @Serializable
 @SerialName("bonfire:cooldown")
-class BonfireCooldown(
-    val bonfire: @Serializable(with = UUIDSerializer::class) UUID,
-)
+data class BonfireCooldown(val bonfire: @Serializable(with = UUIDSerializer::class) UUID)
