@@ -61,7 +61,7 @@ fun ItemDisplay.updateBonfireState() {
 
                 com.mineinabyss.bonfire.bonfire.plugin.launch {
                     delay(3.ticks)
-                   bonfire.bonfirePlayers.mapNotNull { it.toPlayer() }.forEach {
+                   bonfire.bonfirePlayers.mapNotNull { it.toPlayer() }.filter { it.world == world && it.location.distanceSquared(location) < 8 }.forEach {
                         PacketContainer.fromPacket(metadataPacket).sendTo(it)
                    }
                 }
