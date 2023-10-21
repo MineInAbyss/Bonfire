@@ -35,8 +35,8 @@ class BonfirePlugin : JavaPlugin() {
         DI.remove<BonfireContext>()
         DI.add<BonfireContext>(object : BonfireContext {
             override val plugin = this@BonfirePlugin
-            override val config: BonfireConfig by config("config") { fromPluginPath(loadDefault = true) }
-            override val messages: BonfireMessages by config("messages") { fromPluginPath(loadDefault = true) }
+            override val config: BonfireConfig by config("config", dataFolder.toPath(), BonfireConfig())
+            override val messages: BonfireMessages by config("messages", dataFolder.toPath(), BonfireMessages())
         })
     }
 
