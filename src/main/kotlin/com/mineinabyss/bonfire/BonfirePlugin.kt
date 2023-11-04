@@ -8,27 +8,24 @@ import com.mineinabyss.geary.autoscan.autoscan
 import com.mineinabyss.geary.modules.geary
 import com.mineinabyss.idofront.config.config
 import com.mineinabyss.idofront.di.DI
-import com.mineinabyss.idofront.platforms.Platforms
 import com.mineinabyss.idofront.plugin.listeners
 import org.bukkit.plugin.java.JavaPlugin
 
 class BonfirePlugin : JavaPlugin() {
     override fun onLoad() {
-        Platforms.load(this, "mineinabyss")
-    }
-
-    override fun onEnable() {
         registerBonfireContext()
-
-        BonfireCommands()
-
-        listeners(PlayerListener(), BonfireListener(), DebugListener())
-
         geary {
             autoscan(classLoader, "com.mineinabyss.bonfire") {
                 all()
             }
         }
+    }
+
+    override fun onEnable() {
+        BonfireCommands()
+
+        listeners(PlayerListener(), BonfireListener(), DebugListener())
+
     }
 
     fun registerBonfireContext() {

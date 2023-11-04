@@ -1,14 +1,8 @@
 name: Bonfire
-version: ${plugin_version}
+version: "${plugin_version}"
 main: com.mineinabyss.bonfire.BonfirePlugin
 api-version: "1.20"
 authors: [ boy0000, Scyu_, Norazan, Ru_Kira ]
-depend: [ Geary, Blocky ]
-softdepend: [ DeeperWorld ]
-
-commands:
-  bonfire:
-    aliases: [ bf ]
 
 permissions:
   bonfire.*:
@@ -18,3 +12,18 @@ permissions:
   bonfire.remove:
     description: Allow staff to remove bonfires.
     default: op
+
+dependencies:
+  server:
+    Geary:
+      required: true
+      load: BEFORE
+      join-classpath: true
+    Blocky:
+      required: true
+      load: BEFORE
+      join-classpath: true
+    DeeperWorld:
+      required: false
+      load: BEFORE
+      join-classpath: true
