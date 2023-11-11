@@ -18,6 +18,8 @@ repositories {
 
 dependencies {
     // MineInAbyss platform
+    compileOnly(libs.bundles.idofront.core)
+    compileOnly(libs.idofront.nms)
     compileOnly(libs.kotlinx.serialization.json)
     compileOnly(libs.kotlinx.serialization.kaml)
     compileOnly(libs.kotlinx.serialization.cbor)
@@ -30,8 +32,4 @@ dependencies {
     compileOnly(bfLibs.blocky)
     compileOnly(libs.minecraft.plugin.protocollib)
     compileOnly(bfLibs.protocolburrito)
-
-    // Shaded
-    implementation(libs.bundles.idofront.core)
-    implementation(libs.idofront.nms)
 }

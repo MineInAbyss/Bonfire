@@ -93,10 +93,10 @@ class DebugListener : Listener {
         PacketContainer.fromPacket(
             ClientboundSetEntityDataPacket(
                 entityId, listOf(
-                    SynchedEntityData.DataValue(14, EntityDataSerializers.BYTE, 1), // Billboard
-                    SynchedEntityData.DataValue(22, EntityDataSerializers.COMPONENT, text),
-                    SynchedEntityData.DataValue(24, EntityDataSerializers.INT, Color.fromARGB(0,0,0,0).asARGB()), // Transparent background
-                    SynchedEntityData.DataValue(26, EntityDataSerializers.BYTE, bitmask.toByte())
+                    SynchedEntityData.DataValue(15, EntityDataSerializers.BYTE, 1), // Billboard
+                    SynchedEntityData.DataValue(23, EntityDataSerializers.COMPONENT, text),
+                    SynchedEntityData.DataValue(25, EntityDataSerializers.INT, Color.fromARGB(0,0,0,0).asARGB()), // Transparent background
+                    SynchedEntityData.DataValue(27, EntityDataSerializers.BYTE, bitmask.toByte())
                 )
             )
         ).sendTo(this@sendDebugText)
