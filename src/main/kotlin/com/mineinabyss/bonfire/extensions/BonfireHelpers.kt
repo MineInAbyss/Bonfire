@@ -3,6 +3,8 @@ package com.mineinabyss.bonfire.extensions
 import com.comphenix.protocol.events.PacketContainer
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.ticks
+import com.mineinabyss.blocky.api.BlockyFurnitures
+import com.mineinabyss.blocky.components.core.BlockyFurniture
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
@@ -16,6 +18,7 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
 import org.bukkit.craftbukkit.v1_20_R2.inventory.CraftItemStack
+import org.bukkit.entity.Display
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
@@ -48,9 +51,12 @@ fun ItemDisplay.updateBonfireState() {
 
 
     when {// Set the base-furniture item to the correct state
-        bonfire.bonfirePlayers.isEmpty() ->
+        bonfire.bonfirePlayers.isEmpty() -> {
+            this.brightness = toGearyOrNull()?.get<BlockyFurniture>()?.properties?.brightness
             gearyItems.createItem(bonfire.states.unlit)?.let { itemStack = it }
+        }
         else -> {
+            this.brightness = Display.Brightness(15, 15)
             gearyItems.createItem(bonfire.states.lit)?.let { itemStack = it }
 
             // Set state via packets to 'set' for all online players currently at the bonfire
