@@ -8,15 +8,14 @@ import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureInteractEvent
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurniturePlaceEvent
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.*
-import com.mineinabyss.bonfire.extensions.BonfirePermissions
-import com.mineinabyss.bonfire.extensions.removeOldBonfire
-import com.mineinabyss.bonfire.extensions.updateBonfireState
+import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.geary.helpers.with
 import com.mineinabyss.geary.papermc.datastore.encode
 import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.idofront.entities.toOfflinePlayer
+import com.mineinabyss.idofront.messaging.broadcast
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
@@ -120,13 +119,9 @@ class BonfireListener : Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun BlockyFurnitureBreakEvent.onBreakBonfire() {
         baseEntity.toGearyOrNull()?.with { bonfireData: Bonfire ->
-            when {
-                bonfireData.bonfirePlayers.isEmpty() -> return
-                player.uniqueId == bonfireData.bonfireOwner || player.hasPermission(BonfirePermissions.REMOVE_BONFIRE_PERMISSION) -> return
-                else -> {
-                    player.error(bonfire.messages.BONFIRE_BREAK_DENIED)
-                    isCancelled = true
-                }
+            if (!player.canBreakBonfire(bonfireData)) {
+                player.error(bonfire.messages.BONFIRE_BREAK_DENIED)
+                isCancelled = true
             }
         }
     }
