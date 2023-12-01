@@ -9,6 +9,7 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
 import com.mineinabyss.idofront.entities.toPlayer
+import com.mineinabyss.idofront.messaging.broadcast
 import com.mineinabyss.protocolburrito.dsl.sendTo
 import kotlinx.coroutines.delay
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
@@ -18,6 +19,7 @@ import org.bukkit.craftbukkit.v1_20_R2.inventory.CraftItemStack
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
+import kotlin.time.Duration.Companion.seconds
 
 val Entity.isBonfire: Boolean
     get() = this is ItemDisplay && this.toGearyOrNull()?.has<Bonfire>() == true
@@ -52,21 +54,13 @@ fun ItemDisplay.updateBonfireState() {
             gearyItems.createItem(bonfire.states.lit)?.let { itemStack = it }
 
             // Set state via packets to 'set' for all online players currently at the bonfire
-            runCatching {
-                val stateItem = gearyItems.createItem(bonfire.states.set) ?: return
-                val metadataPacket = ClientboundSetEntityDataPacket(entityId,
-                    listOf(SynchedEntityData.DataValue(22, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
-                )
+            val stateItem = gearyItems.createItem(bonfire.states.set) ?: return
+            val metadataPacket = ClientboundSetEntityDataPacket(entityId,
+                listOf(SynchedEntityData.DataValue(24, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
+            )
 
-
-                com.mineinabyss.bonfire.bonfire.plugin.launch {
-                    delay(3.ticks)
-                   bonfire.bonfirePlayers.mapNotNull { it.toPlayer() }.filter { it.world == world && it.location.distanceSquared(location) < 8 }.forEach {
-                        PacketContainer.fromPacket(metadataPacket).sendTo(it)
-                   }
-                }
-            }.onFailure {
-                it.printStackTrace()
+            bonfire.bonfirePlayers.mapNotNull { it.toPlayer() }.filter { it.world == world && it.location.distanceSquared(location) < 8 }.forEach {
+                PacketContainer.fromPacket(metadataPacket).sendTo(it)
             }
         }
     }
