@@ -24,6 +24,7 @@ import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.inventory.EquipmentSlot
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -33,6 +34,11 @@ import kotlin.time.Duration.Companion.seconds
 class BonfireListener : Listener {
 
     private fun currentTime() = LocalDateTime.now().toInstant(ZoneOffset.UTC).epochSecond
+
+    @EventHandler
+    fun BlockBreakEvent.onBreakBlock() {
+
+    }
 
     @EventHandler
     fun BlockyFurniturePlaceEvent.onBonfirePlace() {
