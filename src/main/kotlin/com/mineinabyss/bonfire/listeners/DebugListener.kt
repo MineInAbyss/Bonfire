@@ -4,6 +4,7 @@ import com.comphenix.protocol.events.PacketContainer
 import com.github.shynixn.mccoroutine.bukkit.asyncDispatcher
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
+import com.mineinabyss.blocky.helpers.FurnitureUUID
 import com.mineinabyss.blocky.helpers.GenericHelpers.toBlockCenterLocation
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
@@ -51,8 +52,8 @@ class DebugListener : Listener {
     private val debugIdMap = mutableMapOf<UUID, MutableList<Int>>()
     private fun Player.sendDebugTextDisplay(baseEntity: ItemDisplay) {
         val entityIds = debugIdMap.computeIfAbsent(uniqueId) { mutableListOf() }
-        entityIds.add(Entity.nextEntityId())
-        val loc = baseEntity.location.toBlockCenterLocation().add(0.0, 1.7, 0.0)
+        entityIds += Entity.nextEntityId()
+        val loc = baseEntity.location.clone().toBlockCenterLocation().add(bonfire.config.debugTextOffset)
         entityIds.forEach { entityId ->
             val textDisplayPacket = ClientboundAddEntityPacket(
                 entityId, UUID.randomUUID(),

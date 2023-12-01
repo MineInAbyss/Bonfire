@@ -1,8 +1,10 @@
 package com.mineinabyss.bonfire
 
 import com.mineinabyss.idofront.serialization.DurationSerializer
+import com.mineinabyss.idofront.serialization.VectorSerializer
 import kotlinx.serialization.Serializable
 import org.bukkit.SoundCategory
+import org.bukkit.util.Vector
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
@@ -19,6 +21,7 @@ data class BonfireConfig(
     val effectStrength: Float = 10f,
     val effectRegenRate: Int = 7,
     val allowSettingBedRespawns: Boolean = false,
+    val debugTextOffset: @Serializable(VectorSerializer::class) Vector = Vector(0.0, 1.7, 0.0),
 ) {
     @Serializable
     data class BonfireSound(
