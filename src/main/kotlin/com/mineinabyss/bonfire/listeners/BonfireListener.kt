@@ -16,10 +16,12 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.idofront.entities.toOfflinePlayer
 import com.mineinabyss.idofront.messaging.broadcast
+import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
 import kotlinx.coroutines.delay
+import org.bukkit.block.BlockFace
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -36,8 +38,10 @@ class BonfireListener : Listener {
     private fun currentTime() = LocalDateTime.now().toInstant(ZoneOffset.UTC).epochSecond
 
     @EventHandler
-    fun BlockBreakEvent.onBreakBlock() {
-
+    fun BlockBreakEvent.onBreakBlock() { // Cancel block-break if it is below a bonfire
+        val boundingBox = block.boundingBox.shift(0.0, 1.0, 0.0)
+        if (block.world.getNearbyEntities(boundingBox).none { it.isBonfire }) return
+        isCancelled = true
     }
 
     @EventHandler
