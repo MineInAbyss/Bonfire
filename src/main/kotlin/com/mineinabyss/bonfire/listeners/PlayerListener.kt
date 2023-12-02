@@ -2,6 +2,7 @@ package com.mineinabyss.bonfire.listeners
 
 import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent
 import com.github.shynixn.mccoroutine.bukkit.launch
+import com.mineinabyss.blocky.helpers.GenericHelpers.toEntity
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireCooldown
@@ -73,8 +74,7 @@ class PlayerListener : Listener {
     @EventHandler
     fun PlayerPostRespawnEvent.onBonfireRespawned() {
         val bonfireRespawn = player.toGeary().get<BonfireRespawn>() ?: return
-        val bonfireEntity = Bukkit.getEntity(bonfireRespawn.bonfireUuid) as? ItemDisplay ?: return
-        bonfireEntity.updateBonfireState()
+        (bonfireRespawn.bonfireUuid.toEntity() as? ItemDisplay)?.updateBonfireState()
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
