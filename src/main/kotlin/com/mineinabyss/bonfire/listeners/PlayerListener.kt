@@ -10,8 +10,10 @@ import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.bonfire.extensions.updateBonfireState
+import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
+import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.time.ticks
@@ -79,13 +81,11 @@ class PlayerListener : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun PlayerJoinEvent.onJoinRemovedBonfire() {
-        val gearyPlayer = player.toGearyOrNull() ?: return
-        if (!gearyPlayer.has<BonfireRemoved>()) return
+        if (player.toGearyOrNull()?.has<BonfireRemoved>() != true) return
 
         bonfire.plugin.launch {
             delay(1.seconds)
             player.error(bonfire.messages.BONFIRE_REMOVED)
-            gearyPlayer.remove<BonfireRemoved>()
         }
     }
 
@@ -93,7 +93,7 @@ class PlayerListener : Listener {
     fun PlayerJoinEvent.onPlayerJoin() {
         player.toGearyOrNull()?.remove<BonfireCooldown>()
         val bonfire = player.toGeary().get<BonfireRespawn>() ?: return
-        val bonfireEntity = bonfire.bonfireLocation.world.getEntity(bonfire.bonfireUuid) as? ItemDisplay ?: return
+        val bonfireEntity = bonfire.bonfireUuid.toEntity() as? ItemDisplay ?: return
         com.mineinabyss.bonfire.bonfire.plugin.launch {
             delay(3.ticks)
             bonfireEntity.updateBonfireState()
@@ -102,5 +102,6 @@ class PlayerListener : Listener {
     @EventHandler
     fun PlayerQuitEvent.onPlayerQuit() {
         player.toGearyOrNull()?.remove<BonfireCooldown>()
+        player.persistentDataContainer.remove<BonfireRemoved>()
     }
 }

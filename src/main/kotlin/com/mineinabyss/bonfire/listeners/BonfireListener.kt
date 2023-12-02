@@ -47,8 +47,8 @@ class BonfireListener : Listener {
     @EventHandler
     fun BlockyFurniturePlaceEvent.onBonfirePlace() {
         baseEntity.toGearyOrNull()?.with { bonfire: Bonfire ->
-            baseEntity.toGearyOrNull()?.setPersisting(bonfire.copy(bonfireOwner = player.uniqueId))
-            baseEntity.toGearyOrNull()?.setPersisting(BonfireExpirationTime(0.seconds, currentTime()))
+            baseEntity.toGeary().setPersisting(bonfire.copy(bonfireOwner = player.uniqueId, bonfirePlayers = mutableListOf()))
+            baseEntity.toGeary().setPersisting(BonfireExpirationTime(0.seconds, currentTime()))
             baseEntity.updateBonfireState()
         }
     }

@@ -7,6 +7,7 @@ import com.github.shynixn.mccoroutine.bukkit.ticks
 import com.mineinabyss.blocky.components.core.BlockyFurniture
 import com.mineinabyss.blocky.helpers.FurniturePacketHelpers.ITEM_DISPLAY_ITEMSTACK_ID
 import com.mineinabyss.bonfire.components.Bonfire
+import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
@@ -39,6 +40,7 @@ fun Player.canBreakBonfire(bonfireData: Bonfire): Boolean {
  * Intended to be used for syncing the bonfire if a player swaps to another bonfire
  */
 fun Player.removeOldBonfire() {
+    toGeary().remove<BonfireRemoved>()
     val bonfireRespawn = toGeary().get<BonfireRespawn>() ?: return
     bonfireRespawn.bonfireLocation.world.getChunkAtAsync(bonfireRespawn.bonfireLocation).thenAccept { chunk ->
         chunk.entities.find { it.isBonfire && it.uniqueId == bonfireRespawn.bonfireUuid }?.toGearyOrNull()?.let { geary ->
