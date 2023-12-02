@@ -88,17 +88,15 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
 
                             bonfireEntity?.toGearyOrNull()?.get<Bonfire>()?.let { bonfire ->
                                 when {
-                                    offlinePlayer.uniqueId in bonfire.bonfirePlayers -> return@thenAccept sender.error("Player is already registered to this bonfire")
-                                    bonfire.bonfirePlayers.size >= bonfire.maxPlayerCount -> return@thenAccept sender.error(
-                                        "Bonfire is full"
-                                    )
-
+                                    offlinePlayer.uniqueId in bonfire.bonfirePlayers ->
+                                        sender.error("Player is already registered to this bonfire")
+                                    bonfire.bonfirePlayers.size >= bonfire.maxPlayerCount ->
+                                        sender.error("Bonfire is full")
                                     else -> {
                                         offlinePlayer.editOfflinePDC {
                                             encode(BonfireRespawn(bonfireEntity.uniqueId, bonfireEntity.location))
                                         }
-                                        bonfireEntity.toGeary()
-                                            .setPersisting(bonfire.copy(bonfirePlayers = bonfire.bonfirePlayers + offlinePlayer.uniqueId))
+                                        bonfire.bonfirePlayers += offlinePlayer.uniqueId
                                         bonfireEntity.updateBonfireState()
                                         sender.success("Set respawn point for ${offlinePlayer.name} to $x $y $z in $worldName")
                                     }
@@ -128,8 +126,7 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                         respawn.bonfireLocation.world.getChunkAtAsync(respawn.bonfireLocation).thenAccept {
                             val bonfireEntity = Bukkit.getEntity(respawn.bonfireUuid) as? ItemDisplay
                             bonfireEntity?.toGeary()?.get<Bonfire>()?.let { bonfire ->
-                                bonfireEntity.toGeary()
-                                    .setPersisting(bonfire.copy(bonfirePlayers = bonfire.bonfirePlayers - offlinePlayer.uniqueId))
+                                bonfire.bonfirePlayers -= offlinePlayer.uniqueId
                                 if (bonfire.bonfirePlayers.isEmpty()) bonfireEntity.updateBonfireState()
                             }
                         }

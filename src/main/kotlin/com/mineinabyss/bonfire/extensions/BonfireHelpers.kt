@@ -4,17 +4,14 @@ import com.comphenix.protocol.events.PacketContainer
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import com.github.shynixn.mccoroutine.bukkit.ticks
-import com.mineinabyss.blocky.api.BlockyFurnitures
 import com.mineinabyss.blocky.components.core.BlockyFurniture
 import com.mineinabyss.blocky.helpers.FurniturePacketHelpers.ITEM_DISPLAY_ITEMSTACK_ID
-import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
 import com.mineinabyss.idofront.entities.toPlayer
-import com.mineinabyss.idofront.messaging.broadcast
 import com.mineinabyss.protocolburrito.dsl.sendTo
 import kotlinx.coroutines.delay
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
@@ -27,8 +24,6 @@ import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import kotlin.math.pow
-import kotlin.math.sqrt
-import kotlin.time.Duration.Companion.seconds
 
 val Entity.isBonfire: Boolean
     get() = this is ItemDisplay && this.toGearyOrNull()?.has<Bonfire>() == true
@@ -47,8 +42,7 @@ fun Player.removeOldBonfire() {
     val bonfireRespawn = toGeary().get<BonfireRespawn>() ?: return
     bonfireRespawn.bonfireLocation.world.getChunkAtAsync(bonfireRespawn.bonfireLocation).thenAccept { chunk ->
         chunk.entities.find { it.isBonfire && it.uniqueId == bonfireRespawn.bonfireUuid }?.toGearyOrNull()?.let { geary ->
-            val bonfire = geary.get<Bonfire>() ?: return@let
-            geary.setPersisting(bonfire.copy(bonfirePlayers = bonfire.bonfirePlayers - uniqueId))
+            geary.get<Bonfire>()?.let { it.bonfirePlayers -= uniqueId }
         }
     }
 }

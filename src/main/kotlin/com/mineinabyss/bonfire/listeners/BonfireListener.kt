@@ -8,20 +8,20 @@ import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureInteractEvent
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurniturePlaceEvent
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.*
-import com.mineinabyss.bonfire.extensions.*
+import com.mineinabyss.bonfire.extensions.canBreakBonfire
+import com.mineinabyss.bonfire.extensions.isBonfire
+import com.mineinabyss.bonfire.extensions.removeOldBonfire
+import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.helpers.with
 import com.mineinabyss.geary.papermc.datastore.encode
 import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.idofront.entities.toOfflinePlayer
-import com.mineinabyss.idofront.messaging.broadcast
-import com.mineinabyss.idofront.messaging.broadcastVal
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
 import kotlinx.coroutines.delay
-import org.bukkit.block.BlockFace
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -86,14 +86,13 @@ class BonfireListener : Listener {
         if (!player.isSneaking || player.toGeary().has<BonfireCooldown>()) return
         if (hand != EquipmentSlot.HAND || abs(0 - player.velocity.y) < 0.001) return
 
-        val gearyEntity = baseEntity.toGearyOrNull() ?: return
-        gearyEntity.with { bonfireData: Bonfire ->
+        baseEntity.toGearyOrNull()?.with { bonfireData: Bonfire ->
             when (player.uniqueId) {
                 !in bonfireData.bonfirePlayers -> {
                     if (bonfireData.bonfirePlayers.size >= bonfireData.maxPlayerCount) player.error(bonfire.messages.BONFIRE_FULL)
                     else {
-                        gearyEntity.setPersisting(bonfireData.copy(bonfirePlayers = bonfireData.bonfirePlayers + player.uniqueId))
-                        bonfire.config.respawnSetSound.run {
+                        bonfireData.bonfirePlayers += player.uniqueId
+                        with(bonfire.config.respawnSetSound) {
                             baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                         }
                         // Load old bonfire and remove player from it if it exists
@@ -106,10 +105,10 @@ class BonfireListener : Listener {
                 }
 
                 in bonfireData.bonfirePlayers -> {
-                    gearyEntity.setPersisting(bonfireData.copy(bonfirePlayers = bonfireData.bonfirePlayers - player.uniqueId))
+                    bonfireData.bonfirePlayers -= player.uniqueId
                     player.toGeary().remove<BonfireRespawn>()
                     player.toGeary().remove<BonfireEffectArea>()
-                    bonfire.config.respawnUnsetSound.run {
+                    with(bonfire.config.respawnUnsetSound) {
                         baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                     }
                     player.error(bonfire.messages.BONFIRE_BREAK)

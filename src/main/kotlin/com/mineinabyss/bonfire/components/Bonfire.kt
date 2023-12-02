@@ -14,7 +14,7 @@ import kotlin.time.Duration
 @SerialName("bonfire:bonfire")
 data class Bonfire(
     val bonfireOwner: @Serializable(UUIDSerializer::class) UUID? = null,
-    val bonfirePlayers: List<@Serializable(UUIDSerializer::class) UUID> = emptyList(),
+    val bonfirePlayers: MutableList<@Serializable(UUIDSerializer::class) UUID> = mutableListOf(),
     val maxPlayerCount: Int = bonfire.config.maxPlayerCount,
     val bonfireExpirationTime: @Serializable(with = DurationSerializer::class) Duration = bonfire.config.bonfireExpirationTime,
     val states: BonfireStates,
