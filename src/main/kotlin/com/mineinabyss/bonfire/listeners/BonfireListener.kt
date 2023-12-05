@@ -156,6 +156,8 @@ class BonfireListener : Listener {
         if (!entity.isDead) return
         val bonfireData = (entity as? ItemDisplay)?.toGearyOrNull()?.get<Bonfire>() ?: return
 
+        BlockyFurnitures.removeFurniture(entity as ItemDisplay)
+
         bonfireData.bonfirePlayers.map { it.toOfflinePlayer() }.forEach { p ->
             val onlinePlayer = p.player
             if (onlinePlayer != null) {
@@ -170,7 +172,5 @@ class BonfireListener : Listener {
                 }
             }
         }
-
-        BlockyFurnitures.removeFurniture(entity as ItemDisplay)
     }
 }
