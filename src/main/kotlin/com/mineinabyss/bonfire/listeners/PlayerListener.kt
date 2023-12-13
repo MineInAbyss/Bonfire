@@ -13,12 +13,11 @@ import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
-import com.mineinabyss.idofront.messaging.broadcastVal
+import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.time.ticks
 import kotlinx.coroutines.delay
-import org.bukkit.Bukkit
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.data.type.Bed
@@ -40,7 +39,7 @@ class PlayerListener : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun PlayerInteractEvent.cancelBedRespawn() {
-        if (clickedBlock?.blockData is Bed) setUseInteractedBlock(Event.Result.DENY)
+        if (clickedBlock?.blockData is Bed && rightClicked) setUseInteractedBlock(Event.Result.DENY)
     }
 
     @EventHandler
