@@ -3,6 +3,7 @@ package com.mineinabyss.bonfire
 import com.mineinabyss.bonfire.extensions.BonfireMessages
 import com.mineinabyss.bonfire.listeners.BonfireListener
 import com.mineinabyss.bonfire.listeners.DebugListener
+import com.mineinabyss.bonfire.listeners.FixUntrackedBonfiresListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.geary.autoscan.autoscan
 import com.mineinabyss.geary.modules.geary
@@ -24,7 +25,12 @@ class BonfirePlugin : JavaPlugin() {
     override fun onEnable() {
         BonfireCommands()
 
-        listeners(PlayerListener(), BonfireListener(), DebugListener())
+        listeners(
+            PlayerListener(),
+            BonfireListener(),
+            DebugListener(),
+            FixUntrackedBonfiresListener()
+        )
 
     }
 
