@@ -14,6 +14,7 @@ import com.mineinabyss.bonfire.extensions.removeOldBonfire
 import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.helpers.with
 import com.mineinabyss.geary.papermc.datastore.encode
+import com.mineinabyss.geary.papermc.datastore.encodeComponentsTo
 import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
@@ -86,7 +87,8 @@ class BonfireListener : Listener {
         if (!player.isSneaking || player.toGeary().has<BonfireCooldown>()) return
         if (hand != EquipmentSlot.HAND || abs(0 - player.velocity.y) < 0.001) return
 
-        baseEntity.toGearyOrNull()?.with { bonfireData: Bonfire ->
+        val gearyEntity = baseEntity.toGearyOrNull()
+        gearyEntity?.with { bonfireData: Bonfire ->
             when (player.uniqueId) {
                 !in bonfireData.bonfirePlayers -> {
                     if (bonfireData.bonfirePlayers.size >= bonfireData.maxPlayerCount) player.error(bonfire.messages.BONFIRE_FULL)
@@ -116,6 +118,7 @@ class BonfireListener : Listener {
             }
 
             baseEntity.updateBonfireState()
+            gearyEntity.encodeComponentsTo(baseEntity) // Ensure data is saved to PDC
 
             player.toGeary().set(BonfireCooldown(baseEntity.uniqueId))
             bonfire.plugin.launch {
