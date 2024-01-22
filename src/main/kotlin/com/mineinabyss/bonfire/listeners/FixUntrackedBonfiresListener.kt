@@ -23,7 +23,7 @@ class FixUntrackedBonfiresListener : Listener {
             val displayItemPDC = entity.itemStack?.itemMeta?.persistentDataContainer ?: return
             val itemPrefabs = displayItemPDC.decodePrefabs()
 
-            if (itemPrefabs.contains(bonfireItemKey) || itemPrefabs.contains(bonfireLitItemKey)) {
+            if (bonfireItemKey in itemPrefabs || bonfireLitItemKey in itemPrefabs) {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(bonfire.plugin, {
                     BlockyFurnitures.placeFurniture(bonfireItemKey, entity.location, entity.yaw)
                     entity.remove()
