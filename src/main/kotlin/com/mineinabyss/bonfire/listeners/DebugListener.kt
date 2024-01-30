@@ -3,8 +3,6 @@ package com.mineinabyss.bonfire.listeners
 import com.comphenix.protocol.events.PacketContainer
 import com.github.shynixn.mccoroutine.bukkit.asyncDispatcher
 import com.github.shynixn.mccoroutine.bukkit.launch
-import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
-import com.mineinabyss.blocky.helpers.FurnitureUUID
 import com.mineinabyss.blocky.helpers.GenericHelpers.toBlockCenterLocation
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
@@ -62,14 +60,12 @@ class DebugListener : Listener {
             )
 
             PacketContainer.fromPacket(textDisplayPacket).sendTo(this)
-            bonfire.plugin.launch(bonfire.plugin.asyncDispatcher) {
+            bonfire.plugin.launch {
                 do {
                     this@sendDebugTextDisplay.sendDebugText(baseEntity, entityId)
                     delay(1.seconds)
                 } while (isSneaking)
-                withContext(bonfire.plugin.minecraftDispatcher) {
-                    removeDebugTextDisplay(this@sendDebugTextDisplay)
-                }
+                removeDebugTextDisplay(this@sendDebugTextDisplay)
             }
         }
     }
@@ -79,7 +75,7 @@ class DebugListener : Listener {
         <gray>Players: <players>
     """.trimIndent()
 
-    private fun Player.sendDebugText(baseEntity: ItemDisplay, entityId: Int) {
+    private suspend fun Player.sendDebugText(baseEntity: ItemDisplay, entityId: Int) {
         val tagResolver = TagResolver.resolver(
             TagResolver.resolver("size", Tag.inserting(baseEntity.toGeary().get<Bonfire>()!!.let { "${it.bonfirePlayers.size}/${it.maxPlayerCount}" }.miniMsg())),
             TagResolver.resolver("players", Tag.inserting(baseEntity.toGeary().get<Bonfire>()!!.bonfirePlayers.joinToString { it.toOfflinePlayer().name.toString() }.miniMsg())),
@@ -91,16 +87,22 @@ class DebugListener : Listener {
         bitmask = bitmask or 0x01 // Set bit 0 (Has shadow)
         bitmask = bitmask or (0 and 0x0F shl 3) // Set alignment to CENTER (0)
 
-        PacketContainer.fromPacket(
-            ClientboundSetEntityDataPacket(
-                entityId, listOf(
-                    SynchedEntityData.DataValue(15, EntityDataSerializers.BYTE, 1), // Billboard
-                    SynchedEntityData.DataValue(23, EntityDataSerializers.COMPONENT, text),
-                    SynchedEntityData.DataValue(25, EntityDataSerializers.INT, Color.fromARGB(0,0,0,0).asARGB()), // Transparent background
-                    SynchedEntityData.DataValue(27, EntityDataSerializers.BYTE, bitmask.toByte())
+        withContext(bonfire.plugin.asyncDispatcher) {
+            PacketContainer.fromPacket(
+                ClientboundSetEntityDataPacket(
+                    entityId, listOf(
+                        SynchedEntityData.DataValue(15, EntityDataSerializers.BYTE, 1), // Billboard
+                        SynchedEntityData.DataValue(23, EntityDataSerializers.COMPONENT, text),
+                        SynchedEntityData.DataValue(
+                            25,
+                            EntityDataSerializers.INT,
+                            Color.fromARGB(0, 0, 0, 0).asARGB()
+                        ), // Transparent background
+                        SynchedEntityData.DataValue(27, EntityDataSerializers.BYTE, bitmask.toByte())
+                    )
                 )
-            )
-        ).sendTo(this@sendDebugText)
+            ).sendTo(this@sendDebugText)
+        }
     }
 
     private fun removeDebugTextDisplay(player: Player) =
