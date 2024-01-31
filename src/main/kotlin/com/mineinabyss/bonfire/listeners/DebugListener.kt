@@ -3,6 +3,7 @@ package com.mineinabyss.bonfire.listeners
 import com.comphenix.protocol.events.PacketContainer
 import com.github.shynixn.mccoroutine.bukkit.asyncDispatcher
 import com.github.shynixn.mccoroutine.bukkit.launch
+import com.mineinabyss.blocky.helpers.FurnitureUUID
 import com.mineinabyss.blocky.helpers.GenericHelpers.toBlockCenterLocation
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
@@ -47,26 +48,24 @@ class DebugListener : Listener {
         }
     }
 
-    private val debugIdMap = mutableMapOf<UUID, MutableList<Int>>()
+    private val debugIdMap = mutableMapOf<UUID, MutableMap<FurnitureUUID, Int>>()
     private fun Player.sendDebugTextDisplay(baseEntity: ItemDisplay) {
-        val entityIds = debugIdMap.computeIfAbsent(uniqueId) { mutableListOf() }
-        entityIds += Entity.nextEntityId()
+        val entityIds = debugIdMap.computeIfAbsent(uniqueId) { mutableMapOf(baseEntity.uniqueId to Entity.nextEntityId()) }
+        val entityId = entityIds.computeIfAbsent(baseEntity.uniqueId) { Entity.nextEntityId() }
         val loc = baseEntity.location.clone().toBlockCenterLocation().add(bonfire.config.debugTextOffset)
-        entityIds.forEach { entityId ->
-            val textDisplayPacket = ClientboundAddEntityPacket(
-                entityId, UUID.randomUUID(),
-                loc.x, loc.y, loc.z, loc.pitch, loc.yaw,
-                EntityType.TEXT_DISPLAY, 0, Vec3.ZERO, 0.0
-            )
+        val textDisplayPacket = ClientboundAddEntityPacket(
+            entityId, UUID.randomUUID(),
+            loc.x, loc.y, loc.z, loc.pitch, loc.yaw,
+            EntityType.TEXT_DISPLAY, 0, Vec3.ZERO, 0.0
+        )
 
-            PacketContainer.fromPacket(textDisplayPacket).sendTo(this)
-            bonfire.plugin.launch {
-                do {
-                    this@sendDebugTextDisplay.sendDebugText(baseEntity, entityId)
-                    delay(1.seconds)
-                } while (isSneaking)
-                removeDebugTextDisplay(this@sendDebugTextDisplay)
-            }
+        PacketContainer.fromPacket(textDisplayPacket).sendTo(this)
+        bonfire.plugin.launch {
+            do {
+                this@sendDebugTextDisplay.sendDebugText(baseEntity, entityId)
+                delay(1.seconds)
+            } while (isSneaking)
+            removeDebugTextDisplay(this@sendDebugTextDisplay)
         }
     }
 
@@ -106,8 +105,7 @@ class DebugListener : Listener {
     }
 
     private fun removeDebugTextDisplay(player: Player) =
-        debugIdMap.remove(player.uniqueId)?.forEach {
-            val destroyPacket = ClientboundRemoveEntitiesPacket(IntList.of(it))
-            PacketContainer.fromPacket(destroyPacket).sendTo(player)
+        debugIdMap[player.uniqueId]?.values?.let {
+            PacketContainer.fromPacket(ClientboundRemoveEntitiesPacket(IntList.of(*it.toIntArray()))).sendTo(player)
         }
 }
