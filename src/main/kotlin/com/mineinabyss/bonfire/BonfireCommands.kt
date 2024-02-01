@@ -172,7 +172,7 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
     ): List<String> {
         if (command.name != "bonfire") return emptyList()
         return when (args.size) {
-            1 -> listOf("reload", "respawn", "players", "cooldown", "debug").filter { it.startsWith(args[0]) }
+            1 -> listOf("reload", "respawn", "players", "debug").filter { it.startsWith(args[0]) }
             2 -> when (args[0]) {
                 "respawn" -> listOf("get", "set", "remove").filter { it.startsWith(args[1]) }
                 "players" -> listOf((sender as? Player)?.location?.blockX.toString())
@@ -182,7 +182,7 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
 
             3 -> when (args[0]) {
                 "players" -> listOf((sender as? Player)?.location?.blockY.toString())
-                "respawn", "cooldown" -> Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[2]) }
+                "respawn" -> Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[2]) }
                 else -> emptyList()
             }
 
