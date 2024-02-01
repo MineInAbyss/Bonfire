@@ -1,5 +1,5 @@
 [versions]
-gearyPaper = "0.29.10"
+gearyPaper = "0.29-SNAPSHOT"
 blocky = "0.9.4"
 protocolburrito = "0.9.0"
 
