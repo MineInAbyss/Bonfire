@@ -13,6 +13,7 @@ import com.mineinabyss.bonfire.extensions.removeOldBonfire
 import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.helpers.with
 import com.mineinabyss.geary.papermc.bridge.conditions.Cooldown
+import com.mineinabyss.geary.papermc.datastore.decode
 import com.mineinabyss.geary.papermc.datastore.encode
 import com.mineinabyss.geary.papermc.datastore.encodeComponentsTo
 import com.mineinabyss.geary.papermc.datastore.remove
@@ -22,6 +23,8 @@ import com.mineinabyss.idofront.entities.toOfflinePlayer
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
+import com.mineinabyss.idofront.nms.nbt.getOfflinePDC
+import org.bukkit.Bukkit
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -101,16 +104,18 @@ class BonfireListener : Listener {
 
         val gearyPlayer = player.toGeary()
         val gearyBonfire = baseEntity.toGearyOrNull() ?: return
-        if (!Cooldown.isComplete(gearyPlayer, gearyBonfire, cooldown)) {
+        if (!Cooldown.isComplete(gearyPlayer, gearyBonfire)) {
             isCancelled = true
             return
         }
-        Cooldown.start(gearyPlayer, gearyBonfire)
+        Cooldown.start(gearyPlayer, gearyBonfire, cooldown)
 
         gearyBonfire.with { bonfireData: Bonfire ->
             when (player.uniqueId) {
                 !in bonfireData.bonfirePlayers -> {
-                    if (bonfireData.bonfirePlayers.size >= bonfireData.maxPlayerCount) player.error(bonfire.messages.BONFIRE_FULL)
+                    if (bonfireData.bonfirePlayers.size >= bonfireData.maxPlayerCount &&
+                        baseEntity.ensureSavedPlayersAreValid(bonfireData) // Will double-check that the players are still valid, returns true if size # of players didn't change
+                    ) player.error(bonfire.messages.BONFIRE_FULL)
                     else {
                         // Load old bonfire and remove player from it if it exists
                         player.removeOldBonfire()
@@ -145,11 +150,26 @@ class BonfireListener : Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun BlockyFurnitureBreakEvent.onBreakBonfire() {
         baseEntity.toGearyOrNull()?.with { bonfireData: Bonfire ->
+            baseEntity.ensureSavedPlayersAreValid(bonfireData)
             if (!player.canBreakBonfire(bonfireData)) {
                 player.error(bonfire.messages.BONFIRE_BREAK_DENIED)
                 isCancelled = true
             }
         }
+    }
+
+    private fun ItemDisplay.ensureSavedPlayersAreValid(bonfireData: Bonfire): Boolean {
+        val validPlayers = bonfireData.bonfirePlayers.filter {
+            val offlinePlayer = Bukkit.getOfflinePlayer(it)
+            val respawn = when {
+                offlinePlayer.isOnline -> offlinePlayer.player?.toGearyOrNull()?.get<BonfireRespawn>()
+                else -> offlinePlayer.getOfflinePDC()?.decode<BonfireRespawn>()
+            }
+            respawn?.bonfireUuid == this.uniqueId
+        }
+        bonfireData.bonfirePlayers.clear()
+        bonfireData.bonfirePlayers.addAll(validPlayers)
+        return validPlayers.size == bonfireData.bonfirePlayers.size
     }
 
     /**
