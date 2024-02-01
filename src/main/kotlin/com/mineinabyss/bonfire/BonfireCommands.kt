@@ -1,7 +1,6 @@
 package com.mineinabyss.bonfire
 
 import com.mineinabyss.bonfire.components.Bonfire
-import com.mineinabyss.bonfire.components.BonfireCooldown
 import com.mineinabyss.bonfire.components.BonfireDebug
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.bonfire.extensions.updateBonfireState
@@ -158,22 +157,6 @@ class BonfireCommands : IdofrontCommandExecutor(), TabCompleter {
                                     ) { Bukkit.getOfflinePlayer(it).name ?: "Unknown" }
                                 }"
                             )
-                        }
-                    }
-                }
-            }
-            "cooldown"(desc = "Remove the cooldowns on players if they dont automatically") {
-                "clear" {
-                    val player: Player? by playerArg { default = null }
-                    action {
-                        player?.let {
-                            it.toGeary().remove<BonfireCooldown>()
-                            sender.success("Removed cooldowns from player ${it.name}")
-                        } ?: run {
-                            Bukkit.getOnlinePlayers().forEach {
-                                it.toGeary().remove<BonfireCooldown>()
-                            }
-                            sender.success("Removed cooldowns from all players")
                         }
                     }
                 }

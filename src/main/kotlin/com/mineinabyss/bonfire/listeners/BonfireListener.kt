@@ -1,7 +1,6 @@
 package com.mineinabyss.bonfire.listeners
 
 import com.destroystokyo.paper.event.entity.EntityRemoveFromWorldEvent
-import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.blocky.api.BlockyFurnitures
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureBreakEvent
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureInteractEvent
@@ -13,6 +12,7 @@ import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.bonfire.extensions.removeOldBonfire
 import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.helpers.with
+import com.mineinabyss.geary.papermc.bridge.conditions.Cooldown
 import com.mineinabyss.geary.papermc.datastore.encode
 import com.mineinabyss.geary.papermc.datastore.encodeComponentsTo
 import com.mineinabyss.geary.papermc.datastore.remove
@@ -22,7 +22,6 @@ import com.mineinabyss.idofront.entities.toOfflinePlayer
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
-import kotlinx.coroutines.delay
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -35,6 +34,7 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 
 class BonfireListener : Listener {
+    val cooldown = Cooldown(length = bonfire.config.bonfireInteractCooldown)
 
     private fun currentTime() = LocalDateTime.now().toInstant(ZoneOffset.UTC).epochSecond
 
@@ -48,7 +48,8 @@ class BonfireListener : Listener {
     @EventHandler
     fun BlockyFurniturePlaceEvent.onBonfirePlace() {
         baseEntity.toGearyOrNull()?.with { bonfire: Bonfire ->
-            baseEntity.toGeary().setPersisting(bonfire.copy(bonfireOwner = player.uniqueId, bonfirePlayers = mutableListOf()))
+            baseEntity.toGeary()
+                .setPersisting(bonfire.copy(bonfireOwner = player.uniqueId, bonfirePlayers = mutableListOf()))
             baseEntity.toGeary().setPersisting(BonfireExpirationTime(0.seconds, currentTime()))
             baseEntity.updateBonfireState()
         }
@@ -65,13 +66,24 @@ class BonfireListener : Listener {
                 // Bonfire is lit, player is only registered player, player is unsetting
                 // Since it is being unlit, set lastUnlitTimeStamp to currentTime
                 bonfireData.bonfirePlayers.isNotEmpty() && bonfireData.bonfirePlayers.all { it == player.uniqueId } -> {
-                    gearyEntity.setPersisting(expiration.copy(totalUnlitTime = expiration.totalUnlitTime, lastUnlitTimeStamp = currentTime))
+                    gearyEntity.setPersisting(
+                        expiration.copy(
+                            totalUnlitTime = expiration.totalUnlitTime,
+                            lastUnlitTimeStamp = currentTime
+                        )
+                    )
                 }
                 //  Bonfire was empty and player is attempting to set spawn
                 // Check if Bonfires new totalUnlittime is greater than expiration time
                 else -> {
-                    val totalUnlitTime = expiration.totalUnlitTime + (currentTime - expiration.lastUnlitTimeStamp).seconds
-                    gearyEntity.setPersisting(expiration.copy(totalUnlitTime = totalUnlitTime, lastUnlitTimeStamp = currentTime))
+                    val totalUnlitTime =
+                        expiration.totalUnlitTime + (currentTime - expiration.lastUnlitTimeStamp).seconds
+                    gearyEntity.setPersisting(
+                        expiration.copy(
+                            totalUnlitTime = totalUnlitTime,
+                            lastUnlitTimeStamp = currentTime
+                        )
+                    )
                     if (totalUnlitTime >= bonfireData.bonfireExpirationTime) {
                         player.error(bonfire.messages.BONFIRE_EXPIRED)
                         BlockyFurnitures.removeFurniture(baseEntity)
@@ -84,11 +96,18 @@ class BonfireListener : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun BlockyFurnitureInteractEvent.onBonfireInteract() {
-        if (!player.isSneaking || player.toGeary().has<BonfireCooldown>()) return
+        if (!player.isSneaking) return
         if (hand != EquipmentSlot.HAND || abs(0 - player.velocity.y) < 0.001) return
 
-        val gearyEntity = baseEntity.toGearyOrNull()
-        gearyEntity?.with { bonfireData: Bonfire ->
+        val gearyPlayer = player.toGeary()
+        val gearyBonfire = baseEntity.toGearyOrNull() ?: return
+        if (!Cooldown.isComplete(gearyPlayer, gearyBonfire, cooldown)) {
+            isCancelled = true
+            return
+        }
+        Cooldown.start(gearyPlayer, gearyBonfire)
+
+        gearyBonfire.with { bonfireData: Bonfire ->
             when (player.uniqueId) {
                 !in bonfireData.bonfirePlayers -> {
                     if (bonfireData.bonfirePlayers.size >= bonfireData.maxPlayerCount) player.error(bonfire.messages.BONFIRE_FULL)
@@ -118,13 +137,7 @@ class BonfireListener : Listener {
             }
 
             baseEntity.updateBonfireState()
-            gearyEntity.encodeComponentsTo(baseEntity) // Ensure data is saved to PDC
-
-            player.toGeary().set(BonfireCooldown(baseEntity.uniqueId))
-            bonfire.plugin.launch {
-                delay(bonfire.config.bonfireInteractCooldown)
-                if (player.isOnline) player.toGeary().remove<BonfireCooldown>()
-            }
+            gearyBonfire.encodeComponentsTo(baseEntity) // Ensure data is saved to PDC
         }
     }
 
@@ -135,17 +148,6 @@ class BonfireListener : Listener {
                 player.error(bonfire.messages.BONFIRE_BREAK_DENIED)
                 isCancelled = true
             }
-        }
-    }
-
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    fun BlockyFurnitureInteractEvent.onBonfireCooldown() {
-        if (hand != EquipmentSlot.HAND || abs(0 - player.velocity.y) < 0.001) return
-        if (player.fallDistance > bonfire.config.minFallDist) return
-
-        player.toGeary().with { cooldown: BonfireCooldown ->
-            if (cooldown.bonfire == baseEntity.uniqueId) isCancelled = true
-            else player.toGeary().remove<BonfireCooldown>()
         }
     }
 
@@ -166,12 +168,10 @@ class BonfireListener : Listener {
             if (onlinePlayer != null) {
                 onlinePlayer.toGeary().remove<BonfireEffectArea>()
                 onlinePlayer.toGeary().remove<BonfireRespawn>()
-                onlinePlayer.toGeary().remove<BonfireCooldown>()
             } else {
                 p.editOfflinePDC {
                     encode(BonfireRemoved())
                     remove<BonfireRespawn>()
-                    remove<BonfireCooldown>()
                 }
             }
         }

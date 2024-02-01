@@ -5,7 +5,6 @@ import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.blocky.helpers.GenericHelpers.toEntity
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
-import com.mineinabyss.bonfire.components.BonfireCooldown
 import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.bonfire.extensions.isBonfire
@@ -90,7 +89,6 @@ class PlayerListener : Listener {
 
     @EventHandler
     fun PlayerJoinEvent.onPlayerJoin() {
-        player.toGearyOrNull()?.remove<BonfireCooldown>()
         val bonfire = player.toGeary().get<BonfireRespawn>() ?: return
         val bonfireEntity = bonfire.bonfireUuid.toEntity() as? ItemDisplay ?: return
         com.mineinabyss.bonfire.bonfire.plugin.launch {
@@ -100,7 +98,6 @@ class PlayerListener : Listener {
     }
     @EventHandler
     fun PlayerQuitEvent.onPlayerQuit() {
-        player.toGearyOrNull()?.remove<BonfireCooldown>()
         player.persistentDataContainer.remove<BonfireRemoved>()
     }
 }
