@@ -112,12 +112,13 @@ class BonfireListener : Listener {
                 !in bonfireData.bonfirePlayers -> {
                     if (bonfireData.bonfirePlayers.size >= bonfireData.maxPlayerCount) player.error(bonfire.messages.BONFIRE_FULL)
                     else {
+                        // Load old bonfire and remove player from it if it exists
+                        player.removeOldBonfire()
+
                         bonfireData.bonfirePlayers += player.uniqueId
                         with(bonfire.config.respawnSetSound) {
                             baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                         }
-                        // Load old bonfire and remove player from it if it exists
-                        player.removeOldBonfire()
 
                         player.toGeary().setPersisting(BonfireRespawn(baseEntity.uniqueId, baseEntity.location))
                         player.toGeary().setPersisting(BonfireEffectArea(baseEntity.uniqueId))
