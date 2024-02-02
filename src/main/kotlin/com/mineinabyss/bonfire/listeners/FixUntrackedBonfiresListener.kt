@@ -1,9 +1,13 @@
 package com.mineinabyss.bonfire.listeners
 
 import com.mineinabyss.blocky.api.BlockyFurnitures
+import com.mineinabyss.blocky.components.core.BlockyFurniture
 import com.mineinabyss.bonfire.bonfire
+import com.mineinabyss.bonfire.components.Bonfire
+import com.mineinabyss.geary.modules.geary
 import com.mineinabyss.geary.papermc.datastore.decodePrefabs
 import com.mineinabyss.geary.papermc.datastore.hasComponentsEncoded
+import com.mineinabyss.geary.papermc.tracking.entities.events.GearyEntityAddToWorldEvent
 import com.mineinabyss.geary.prefabs.PrefabKey
 import org.bukkit.Bukkit
 import org.bukkit.entity.ItemDisplay
@@ -30,5 +34,15 @@ class FixUntrackedBonfiresListener : Listener {
                 }, 1)
             }
         }
+    }
+
+    @EventHandler
+    fun GearyEntityAddToWorldEvent.onOldBonfireLoad() {
+        if (entity !is ItemDisplay || gearyEntity.has<BlockyFurniture>() || !gearyEntity.has<Bonfire>()) return
+
+        Bukkit.getScheduler().scheduleSyncDelayedTask(bonfire.plugin, {
+            BlockyFurnitures.placeFurniture(bonfireItemKey, entity.location, entity.yaw)
+            entity.remove()
+        }, 1)
     }
 }
