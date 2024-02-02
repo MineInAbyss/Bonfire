@@ -13,6 +13,7 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.idofront.entities.toOfflinePlayer
 import com.mineinabyss.idofront.textcomponents.miniMsg
 import com.mineinabyss.protocolburrito.dsl.sendTo
+import io.papermc.paper.adventure.PaperAdventure
 import it.unimi.dsi.fastutil.ints.IntList
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -79,7 +80,7 @@ class DebugListener : Listener {
             TagResolver.resolver("size", Tag.inserting(baseEntity.toGeary().get<Bonfire>()!!.let { "${it.bonfirePlayers.size}/${it.maxPlayerCount}" }.miniMsg())),
             TagResolver.resolver("players", Tag.inserting(baseEntity.toGeary().get<Bonfire>()!!.bonfirePlayers.joinToString { it.toOfflinePlayer().name.toString() }.miniMsg())),
         )
-        val text = Component.Serializer.fromJson(GsonComponentSerializer.gson().serialize(DEBUG_TEXT.trimIndent().miniMsg(tagResolver))) ?: Component.empty()
+        val text = PaperAdventure.asVanilla(DEBUG_TEXT.trimIndent().miniMsg(tagResolver)) ?: Component.empty()
 
         // Set flags using bitwise operations
         var bitmask = 0
