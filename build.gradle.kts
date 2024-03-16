@@ -1,12 +1,12 @@
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
-    alias(libs.plugins.mia.kotlin.jvm)
-    alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.mia.papermc)
-    alias(libs.plugins.mia.copyjar)
-    alias(libs.plugins.mia.nms)
-    alias(libs.plugins.mia.publication)
-    alias(libs.plugins.mia.autoversion)
+    alias(idofrontLibs.plugins.mia.kotlin.jvm)
+    alias(idofrontLibs.plugins.kotlinx.serialization)
+    alias(idofrontLibs.plugins.mia.papermc)
+    alias(idofrontLibs.plugins.mia.copyjar)
+    alias(idofrontLibs.plugins.mia.nms)
+    alias(idofrontLibs.plugins.mia.publication)
+    alias(idofrontLibs.plugins.mia.autoversion)
 }
 
 repositories {
@@ -18,18 +18,18 @@ repositories {
 
 dependencies {
     // MineInAbyss platform
-    compileOnly(libs.bundles.idofront.core)
-    compileOnly(libs.idofront.nms)
-    compileOnly(libs.kotlinx.serialization.json)
-    compileOnly(libs.kotlinx.serialization.kaml)
-    compileOnly(libs.kotlinx.serialization.cbor)
-    compileOnly(libs.minecraft.mccoroutine)
+    compileOnly(idofrontLibs.bundles.idofront.core)
+    compileOnly(idofrontLibs.idofront.nms)
+    compileOnly(idofrontLibs.kotlinx.serialization.json)
+    compileOnly(idofrontLibs.kotlinx.serialization.kaml)
+    compileOnly(idofrontLibs.kotlinx.serialization.cbor)
+    compileOnly(idofrontLibs.minecraft.mccoroutine)
 
     // Geary platform
-    compileOnly(bfLibs.geary.papermc)
+    compileOnly(libs.geary.papermc)
 
     // Other plugins
-    compileOnly(bfLibs.blocky)
-    compileOnly(libs.minecraft.plugin.protocollib)
-    compileOnly(bfLibs.protocolburrito)
+    compileOnly(libs.blocky)
+    compileOnly(idofrontLibs.minecraft.plugin.protocollib)
+    compileOnly(libs.protocolburrito)
 }
