@@ -9,6 +9,8 @@ import com.mineinabyss.geary.autoscan.autoscan
 import com.mineinabyss.geary.modules.geary
 import com.mineinabyss.idofront.config.config
 import com.mineinabyss.idofront.di.DI
+import com.mineinabyss.idofront.messaging.ComponentLogger
+import com.mineinabyss.idofront.messaging.observeLogger
 import com.mineinabyss.idofront.plugin.listeners
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -40,11 +42,7 @@ class BonfirePlugin : JavaPlugin() {
             override val plugin = this@BonfirePlugin
             override val config: BonfireConfig by config("config", dataFolder.toPath(), BonfireConfig())
             override val messages: BonfireMessages by config("messages", dataFolder.toPath(), BonfireMessages())
+            override val logger: ComponentLogger by plugin.observeLogger()
         })
     }
-
-    override fun onDisable() {
-        // Plugin shutdown logic
-//        ProtocolLibrary.getProtocolManager().removePacketListener(ChatPacketAdapter);
-
-    }}
+}
