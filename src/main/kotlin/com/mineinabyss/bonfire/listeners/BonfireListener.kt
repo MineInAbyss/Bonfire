@@ -12,13 +12,13 @@ import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.bonfire.extensions.removeOldBonfire
 import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.helpers.with
-import com.mineinabyss.geary.papermc.bridge.conditions.Cooldown
 import com.mineinabyss.geary.papermc.datastore.decode
 import com.mineinabyss.geary.papermc.datastore.encode
 import com.mineinabyss.geary.papermc.datastore.encodeComponentsTo
 import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
+import com.mineinabyss.geary.serialization.setPersisting
 import com.mineinabyss.idofront.entities.toOfflinePlayer
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success

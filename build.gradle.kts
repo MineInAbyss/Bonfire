@@ -30,6 +30,4 @@ dependencies {
 
     // Other plugins
     compileOnly(libs.blocky)
-    compileOnly(idofrontLibs.minecraft.plugin.protocollib)
-    compileOnly(libs.protocolburrito)
 }

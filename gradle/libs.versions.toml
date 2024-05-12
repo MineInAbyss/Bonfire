@@ -1,9 +1,7 @@
 [versions]
-gearyPaper = "0.30.0"
-blocky = "0.9.13-dev.1"
-protocolburrito = "0.10.0-dev.0"
+gearyPaper = "0.30.1-dev.10"
+blocky = "0.9.13-dev.6"
 
 [libraries]
 geary-papermc = { module = "com.mineinabyss:geary-papermc", version.ref = "gearyPaper" }
 blocky = { module = "com.mineinabyss:blocky", version.ref = "blocky" }
-protocolburrito = { module = "com.mineinabyss:protocolburrito", version.ref = "protocolburrito" }

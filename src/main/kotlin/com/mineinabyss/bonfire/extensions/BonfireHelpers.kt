@@ -1,6 +1,5 @@
 package com.mineinabyss.bonfire.extensions
 
-import com.comphenix.protocol.events.PacketContainer
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import com.github.shynixn.mccoroutine.bukkit.ticks
@@ -13,13 +12,13 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
 import com.mineinabyss.idofront.entities.toPlayer
-import com.mineinabyss.protocolburrito.dsl.sendTo
 import kotlinx.coroutines.delay
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
 import org.bukkit.Bukkit
-import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftItemStack
+import org.bukkit.craftbukkit.entity.CraftPlayer
+import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Display
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
@@ -74,7 +73,7 @@ fun ItemDisplay.updateBonfireState() {
             com.mineinabyss.bonfire.bonfire.plugin.launch(com.mineinabyss.bonfire.bonfire.plugin.minecraftDispatcher) {
                 delay(1.ticks)
                 bonfire.bonfirePlayers.mapNotNull { it.toPlayer() }.filter { it.world == world && it.location.distanceSquared(location) < (Bukkit.getServer().simulationDistance * 16.0).pow(2) }.forEach {
-                    PacketContainer.fromPacket(metadataPacket).sendTo(it)
+                    (it as CraftPlayer).handle.connection.send(metadataPacket)
                 }
             }
         }

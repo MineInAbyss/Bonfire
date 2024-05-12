@@ -1,6 +1,5 @@
 package com.mineinabyss.bonfire.listeners
 
-import com.comphenix.protocol.events.PacketContainer
 import com.github.shynixn.mccoroutine.bukkit.asyncDispatcher
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.blocky.helpers.FurnitureUUID
@@ -11,8 +10,8 @@ import com.mineinabyss.bonfire.components.BonfireDebug
 import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.idofront.entities.toOfflinePlayer
+import com.mineinabyss.idofront.nms.aliases.toNMS
 import com.mineinabyss.idofront.textcomponents.miniMsg
-import com.mineinabyss.protocolburrito.dsl.sendTo
 import io.papermc.paper.adventure.PaperAdventure
 import it.unimi.dsi.fastutil.ints.IntList
 import kotlinx.coroutines.delay
@@ -30,6 +29,7 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.phys.Vec3
 import org.bukkit.Color
+import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -60,7 +60,7 @@ class DebugListener : Listener {
             EntityType.TEXT_DISPLAY, 0, Vec3.ZERO, 0.0
         )
 
-        PacketContainer.fromPacket(textDisplayPacket).sendTo(this)
+        (this as CraftPlayer).handle.connection.send(textDisplayPacket)
         bonfire.plugin.launch {
             do {
                 this@sendDebugTextDisplay.sendDebugText(baseEntity, entityId)
@@ -88,7 +88,7 @@ class DebugListener : Listener {
         bitmask = bitmask or (0 and 0x0F shl 3) // Set alignment to CENTER (0)
 
         withContext(bonfire.plugin.asyncDispatcher) {
-            PacketContainer.fromPacket(
+            (this@sendDebugText as CraftPlayer).handle.connection.send(
                 ClientboundSetEntityDataPacket(
                     entityId, listOf(
                         SynchedEntityData.DataValue(15, EntityDataSerializers.BYTE, 1), // Billboard
@@ -101,12 +101,12 @@ class DebugListener : Listener {
                         SynchedEntityData.DataValue(27, EntityDataSerializers.BYTE, bitmask.toByte())
                     )
                 )
-            ).sendTo(this@sendDebugText)
+            )
         }
     }
 
     private fun removeDebugTextDisplay(player: Player) =
         debugIdMap[player.uniqueId]?.values?.let {
-            PacketContainer.fromPacket(ClientboundRemoveEntitiesPacket(IntList.of(*it.toIntArray()))).sendTo(player)
+            (player as CraftPlayer).handle.connection.send(ClientboundRemoveEntitiesPacket(IntList.of(*it.toIntArray())))
         }
 }
