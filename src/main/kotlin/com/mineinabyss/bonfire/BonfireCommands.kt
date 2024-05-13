@@ -12,13 +12,11 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.serialization.setPersisting
 import com.mineinabyss.idofront.commands.arguments.intArg
 import com.mineinabyss.idofront.commands.arguments.offlinePlayerArg
-import com.mineinabyss.idofront.commands.arguments.playerArg
 import com.mineinabyss.idofront.commands.arguments.stringArg
 import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
 import com.mineinabyss.idofront.commands.extensions.actions.playerAction
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
-import com.mineinabyss.idofront.messaging.observeLogger
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
 import com.mineinabyss.idofront.nms.nbt.getOfflinePDC

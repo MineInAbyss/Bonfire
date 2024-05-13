@@ -45,4 +45,9 @@ class BonfirePlugin : JavaPlugin() {
             override val logger: ComponentLogger by plugin.observeLogger()
         })
     }
-}
+
+    override fun onDisable() {
+        // Plugin shutdown logic
+//        ProtocolLibrary.getProtocolManager().removePacketListener(ChatPacketAdapter);
+
+    }}
