@@ -29,11 +29,14 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.phys.Vec3
 import org.bukkit.Color
+import org.bukkit.GameMode
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.player.PlayerGameModeChangeEvent
+import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
@@ -42,10 +45,27 @@ class DebugListener : Listener {
 
     @EventHandler
     fun PlayerToggleSneakEvent.onDebugToggle() {
-        player.toGeary().has<BonfireDebug>() || return
-        player.getNearbyEntities(10.0,10.0,10.0).filterIsInstance<ItemDisplay>().filter { it.isBonfire }.forEach {
+        if (!player.toGeary().has<BonfireDebug>()) return
+        player.getNearbyEntities(16.0, 16.0, 16.0).filterIsInstance<ItemDisplay>().filter { it.isBonfire }.forEach {
             if (isSneaking) player.sendDebugTextDisplay(it)
             else removeDebugTextDisplay(player)
+        }
+    }
+
+    @EventHandler
+    fun PlayerGameModeChangeEvent.onDebugToggle() {
+        if (!player.toGeary().has<BonfireDebug>()) return
+        player.getNearbyEntities(16.0, 16.0, 16.0).filterIsInstance<ItemDisplay>().filter { it.isBonfire }.forEach {
+            if (newGameMode == GameMode.SPECTATOR) player.sendDebugTextDisplay(it)
+            else removeDebugTextDisplay(player)
+        }
+    }
+
+    @EventHandler
+    fun PlayerMoveEvent.onDebugToggle() {
+        if (player.gameMode != GameMode.SPECTATOR || !player.toGeary().has<BonfireDebug>()) return
+        player.getNearbyEntities(16.0, 16.0, 16.0).filterIsInstance<ItemDisplay>().filter { it.isBonfire }.forEach {
+            player.sendDebugTextDisplay(it)
         }
     }
 
