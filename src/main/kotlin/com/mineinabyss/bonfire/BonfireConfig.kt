@@ -3,6 +3,7 @@ package com.mineinabyss.bonfire
 import com.mineinabyss.idofront.serialization.DurationSerializer
 import com.mineinabyss.idofront.serialization.VectorSerializer
 import kotlinx.serialization.Serializable
+import org.bukkit.Bukkit
 import org.bukkit.SoundCategory
 import org.bukkit.util.Vector
 import kotlin.time.Duration

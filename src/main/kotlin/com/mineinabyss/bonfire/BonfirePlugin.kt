@@ -25,7 +25,7 @@ class BonfirePlugin : JavaPlugin() {
     }
 
     override fun onEnable() {
-        BonfireCommands()
+        BonfireCommands.registerCommands()
 
         listeners(
             PlayerListener(),
