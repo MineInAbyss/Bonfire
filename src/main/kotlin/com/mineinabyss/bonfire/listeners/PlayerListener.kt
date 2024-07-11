@@ -7,6 +7,7 @@ import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
+import com.mineinabyss.bonfire.extensions.filterIsBonfire
 import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.papermc.datastore.remove
@@ -47,7 +48,7 @@ class PlayerListener : Listener {
         val loc = bonfireRespawn.bonfireLocation
 
         loc.world.getChunkAtAsyncUrgently(loc).thenAccept { chunk ->
-            val bonfireEntity = chunk.entities.filterIsInstance<ItemDisplay>().find { it.isBonfire && it.uniqueId == bonfireRespawn.bonfireUuid } ?: return@thenAccept
+            val bonfireEntity = chunk.entities.filterIsBonfire().find { it.uniqueId == bonfireRespawn.bonfireUuid } ?: return@thenAccept
             val bonfireData = bonfireEntity.toGeary().get<Bonfire>() ?: return@thenAccept
 
             when {

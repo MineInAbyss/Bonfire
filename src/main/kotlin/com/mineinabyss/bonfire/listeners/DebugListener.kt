@@ -7,6 +7,8 @@ import com.mineinabyss.blocky.helpers.GenericHelpers.toBlockCenterLocation
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireDebug
+import com.mineinabyss.bonfire.extensions.filterIsBonfire
+import com.mineinabyss.bonfire.extensions.forEachBonfire
 import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.idofront.entities.toOfflinePlayer
@@ -45,8 +47,7 @@ class DebugListener : Listener {
 
     @EventHandler
     fun PlayerToggleSneakEvent.onDebugToggle() {
-        if (!player.toGeary().has<BonfireDebug>()) return
-        player.getNearbyEntities(16.0, 16.0, 16.0).filterIsInstance<ItemDisplay>().filter { it.isBonfire }.forEach {
+        if (player.toGeary().has<BonfireDebug>()) player.getNearbyEntities(16.0, 16.0, 16.0).forEachBonfire {
             if (isSneaking) player.sendDebugTextDisplay(it)
             else removeDebugTextDisplay(player)
         }
@@ -54,18 +55,9 @@ class DebugListener : Listener {
 
     @EventHandler
     fun PlayerGameModeChangeEvent.onDebugToggle() {
-        if (!player.toGeary().has<BonfireDebug>()) return
-        player.getNearbyEntities(16.0, 16.0, 16.0).filterIsInstance<ItemDisplay>().filter { it.isBonfire }.forEach {
+        if (player.toGeary().has<BonfireDebug>()) player.getNearbyEntities(16.0, 16.0, 16.0).forEachBonfire {
             if (newGameMode == GameMode.SPECTATOR) player.sendDebugTextDisplay(it)
             else removeDebugTextDisplay(player)
-        }
-    }
-
-    @EventHandler
-    fun PlayerMoveEvent.onDebugToggle() {
-        if (player.gameMode != GameMode.SPECTATOR || !player.toGeary().has<BonfireDebug>()) return
-        player.getNearbyEntities(16.0, 16.0, 16.0).filterIsInstance<ItemDisplay>().filter { it.isBonfire }.forEach {
-            player.sendDebugTextDisplay(it)
         }
     }
 
@@ -85,7 +77,7 @@ class DebugListener : Listener {
             do {
                 this@sendDebugTextDisplay.sendDebugText(baseEntity, entityId)
                 delay(1.seconds)
-            } while (isSneaking)
+            } while (isSneaking || gameMode == GameMode.SPECTATOR)
             removeDebugTextDisplay(this@sendDebugTextDisplay)
         }
     }

@@ -180,8 +180,7 @@ class BonfireListener : Listener {
      */
     @EventHandler
     fun EntityRemoveFromWorldEvent.onRemoveBonfire() {
-        if (!entity.isDead) return
-        val bonfireData = (entity as? ItemDisplay)?.toGearyOrNull()?.get<Bonfire>() ?: return
+        val bonfireData = (entity as? ItemDisplay).takeIf { entity.isDead }?.toGearyOrNull()?.get<Bonfire>() ?: return
 
         BlockyFurnitures.removeFurniture(entity as ItemDisplay)
 

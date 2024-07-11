@@ -21,10 +21,9 @@ class FixUntrackedBonfiresListener : Listener {
 
     @EventHandler
     fun ChunkLoadEvent.onAddToWorld() {
-        chunk.entities.forEach { entity ->
-            if (entity !is ItemDisplay) return@forEach
+        chunk.entities.filterIsInstance<ItemDisplay>().forEach { entity ->
             if (entity.persistentDataContainer.hasComponentsEncoded) return@forEach
-            val displayItemPDC = entity.itemStack?.itemMeta?.persistentDataContainer ?: return
+            val displayItemPDC = entity.itemStack.itemMeta?.persistentDataContainer ?: return
             val itemPrefabs = displayItemPDC.decodePrefabs()
 
             if (bonfireItemKey in itemPrefabs || bonfireLitItemKey in itemPrefabs) {
