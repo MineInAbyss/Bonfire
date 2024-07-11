@@ -58,11 +58,11 @@ fun ItemDisplay.updateBonfireState() {
     when {// Set the base-furniture item to the correct state
         bonfire.bonfirePlayers.isEmpty() -> {
             this.brightness = toGearyOrNull()?.get<BlockyFurniture>()?.properties?.brightness
-            gearyItems.createItem(bonfire.states.unlit)?.let { itemStack = it }
+            gearyItems.createItem(bonfire.states.unlit)?.let { setItemStack(it) }
         }
         else -> {
             this.brightness = Display.Brightness(15, 15)
-            gearyItems.createItem(bonfire.states.lit)?.let { itemStack = it }
+            gearyItems.createItem(bonfire.states.lit)?.let { setItemStack(it) }
 
             // Set state via packets to 'set' for all online players currently at the bonfire
             val stateItem = gearyItems.createItem(bonfire.states.set) ?: return

@@ -11,13 +11,8 @@ import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.serialization.setPersisting
-import com.mineinabyss.idofront.commands.arguments.intArg
-import com.mineinabyss.idofront.commands.arguments.offlinePlayerArg
-import com.mineinabyss.idofront.commands.arguments.stringArg
 import com.mineinabyss.idofront.commands.brigadier.IdoCommandContext
 import com.mineinabyss.idofront.commands.brigadier.commands
-import com.mineinabyss.idofront.commands.execution.IdofrontCommandExecutor
-import com.mineinabyss.idofront.commands.extensions.actions.playerAction
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
@@ -25,15 +20,11 @@ import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
 import com.mineinabyss.idofront.nms.nbt.getOfflinePDC
 import com.mineinabyss.idofront.nms.nbt.saveOfflinePDC
 import com.mineinabyss.idofront.util.to
-import com.mineinabyss.idofront.plugin.actions
 import com.mojang.brigadier.arguments.StringArgumentType
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.OfflinePlayer
-import org.bukkit.command.Command
-import org.bukkit.command.CommandSender
-import org.bukkit.command.TabCompleter
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 
@@ -62,11 +53,6 @@ object BonfireCommands {
                     }
                 }
                 "players" {
-                    val location by ArgumentTypes.blockPosition().suggests {
-                        (context.source.executor as? Player)?.location?.let {
-                            suggestFiltering("${it.blockX} ${it.blockY} ${it.blockZ}")
-                        }
-                    }
                     fun IdoCommandContext.runPlayersCommand(location: Location) {
                         val bonfireLoc = location.toBlockCenterLocation()
                         val (x,y,z) = bonfireLoc.blockX to bonfireLoc.blockY to bonfireLoc.blockZ
@@ -80,6 +66,13 @@ object BonfireCommands {
                                     }"
                                 )
                             } ?: sender.error("Could not find bonfire at $x $y $z")
+                        }
+                    }
+
+                    executes { context.source.executor?.location?.let { runPlayersCommand(it) } }
+                    val location by ArgumentTypes.blockPosition().suggests {
+                        (context.source.executor as? Player)?.location?.let {
+                            suggestFiltering("${it.blockX} ${it.blockY} ${it.blockZ}")
                         }
                     }
                     executes { runPlayersCommand(location()?.resolve(context.source)?.toLocation(context.source.location.world)!!) }
