@@ -25,6 +25,15 @@ import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 import kotlin.math.pow
 
+fun Iterable<Entity>.forEachBonfire(action: (ItemDisplay) -> Unit): Unit {
+    for (element in this.filterIsBonfire()) action(element)
+}
+fun Array<Entity>.forEachBonfire(action: (ItemDisplay) -> Unit): Unit {
+    for (element in this.filterIsBonfire()) action(element)
+}
+fun Iterable<Entity>.filterIsBonfire() = mapNotNull { it.takeIf { it.isBonfire } as? ItemDisplay }
+fun Array<Entity>.filterIsBonfire() = mapNotNull { it.takeIf { it.isBonfire } as? ItemDisplay }
+
 val Entity.isBonfire: Boolean
     get() = this is ItemDisplay && this.toGearyOrNull()?.has<Bonfire>() == true
 
@@ -47,6 +56,8 @@ fun Player.removeOldBonfire() {
         }
     }
 }
+
+private val bonfireTrackingRadius = (Bukkit.getServer().simulationDistance * 16.0).pow(2)
 
 /**
  * Updates the bonfire state for all players.
@@ -71,8 +82,8 @@ fun ItemDisplay.updateBonfireState() {
             )
 
             com.mineinabyss.bonfire.bonfire.plugin.launch(com.mineinabyss.bonfire.bonfire.plugin.minecraftDispatcher) {
-                delay(1.ticks)
-                bonfire.bonfirePlayers.mapNotNull { it.toPlayer() }.filter { it.world == world && it.location.distanceSquared(location) < (Bukkit.getServer().simulationDistance * 16.0).pow(2) }.forEach {
+                delay(3.ticks)
+                bonfire.bonfirePlayers.mapNotNull { it.toPlayer() }.filter { it.world.uid == world.uid && it.location.distanceSquared(location) < bonfireTrackingRadius }.forEach {
                     (it as CraftPlayer).handle.connection.send(metadataPacket)
                 }
             }
