@@ -36,11 +36,11 @@ object BonfireCommands {
                     playerExecutes {
                         when {
                             player.toGeary().has<BonfireDebug>() -> {
-                                player.toGeary().remove<BonfireDebug>()
+                                player.persistentDataContainer.remove<BonfireDebug>()
                                 sender.error("Bonfire debug mode disabled")
                             }
                             else -> {
-                                player.toGeary().setPersisting(BonfireDebug())
+                                player.persistentDataContainer.encode(BonfireDebug)
                                 sender.success("Bonfire debug mode enabled")
                             }
                         }
