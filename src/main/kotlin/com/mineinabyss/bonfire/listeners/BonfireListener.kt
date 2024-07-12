@@ -51,12 +51,13 @@ class BonfireListener : Listener {
 
     @EventHandler
     fun BlockyFurniturePlaceEvent.onBonfirePlace() {
-        baseEntity.toGearyOrNull()?.with { bonfire: Bonfire ->
-            baseEntity.toGeary()
-                .setPersisting(bonfire.copy(bonfireOwner = player.uniqueId, bonfirePlayers = mutableListOf()))
-            baseEntity.toGeary().setPersisting(BonfireExpirationTime(0.seconds, currentTime()))
-            baseEntity.updateBonfireState()
-        }
+        val gearyEntity = baseEntity.toGearyOrNull() ?: return
+        val bonfire = gearyEntity.get<Bonfire>() ?: return
+
+        gearyEntity.setPersisting(bonfire.copy(bonfireOwner = player.uniqueId, bonfirePlayers = mutableListOf()))
+        gearyEntity.setPersisting(BonfireExpirationTime(0.seconds, currentTime()))
+        gearyEntity.encodeComponentsTo(baseEntity)
+        baseEntity.updateBonfireState()
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -70,24 +71,13 @@ class BonfireListener : Listener {
                 // Bonfire is lit, player is only registered player, player is unsetting
                 // Since it is being unlit, set lastUnlitTimeStamp to currentTime
                 bonfireData.bonfirePlayers.isNotEmpty() && bonfireData.bonfirePlayers.all { it == player.uniqueId } -> {
-                    gearyEntity.setPersisting(
-                        expiration.copy(
-                            totalUnlitTime = expiration.totalUnlitTime,
-                            lastUnlitTimeStamp = currentTime
-                        )
-                    )
+                    gearyEntity.setPersisting(expiration.copy(totalUnlitTime = expiration.totalUnlitTime, lastUnlitTimeStamp = currentTime))
                 }
                 //  Bonfire was empty and player is attempting to set spawn
                 // Check if Bonfires new totalUnlittime is greater than expiration time
                 else -> {
-                    val totalUnlitTime =
-                        expiration.totalUnlitTime + (currentTime - expiration.lastUnlitTimeStamp).seconds
-                    gearyEntity.setPersisting(
-                        expiration.copy(
-                            totalUnlitTime = totalUnlitTime,
-                            lastUnlitTimeStamp = currentTime
-                        )
-                    )
+                    val totalUnlitTime = expiration.totalUnlitTime.plus(currentTime.minus(expiration.lastUnlitTimeStamp).seconds)
+                    gearyEntity.setPersisting(expiration.copy(totalUnlitTime = totalUnlitTime, lastUnlitTimeStamp = currentTime))
                     if (totalUnlitTime >= bonfireData.bonfireExpirationTime) {
                         player.error(bonfire.messages.BONFIRE_EXPIRED)
                         BlockyFurnitures.removeFurniture(baseEntity)
@@ -95,13 +85,13 @@ class BonfireListener : Listener {
                     } else Unit
                 }
             }
+            gearyEntity.encodeComponentsTo(baseEntity) // Ensure data is saved to PDC
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun BlockyFurnitureInteractEvent.onBonfireInteract() {
-        if (!player.isSneaking) return
-        if (hand != EquipmentSlot.HAND || abs(0 - player.velocity.y) < 0.001) return
+        if (!player.isSneaking || hand != EquipmentSlot.HAND || abs(0 - player.velocity.y) < 0.001) return
 
         val gearyPlayer = player.toGeary()
         val gearyBonfire = baseEntity.toGearyOrNull() ?: return
@@ -126,16 +116,16 @@ class BonfireListener : Listener {
                             baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                         }
 
-                        player.toGeary().setPersisting(BonfireRespawn(baseEntity.uniqueId, baseEntity.location))
-                        player.toGeary().setPersisting(BonfireEffectArea(baseEntity.uniqueId))
+                        player.persistentDataContainer.encode(BonfireRespawn(baseEntity.uniqueId, baseEntity.location))
+                        player.persistentDataContainer.encode(BonfireEffectArea(baseEntity.uniqueId))
                         player.success("Respawn point set")
                     }
                 }
 
                 in bonfireData.bonfirePlayers -> {
                     bonfireData.bonfirePlayers -= player.uniqueId
-                    player.toGeary().remove<BonfireRespawn>()
-                    player.toGeary().remove<BonfireEffectArea>()
+                    player.persistentDataContainer.remove<BonfireRespawn>()
+                    player.persistentDataContainer.remove<BonfireEffectArea>()
                     with(bonfire.config.respawnUnsetSound) {
                         baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                     }
@@ -187,8 +177,10 @@ class BonfireListener : Listener {
         bonfireData.bonfirePlayers.map { it.toOfflinePlayer() }.forEach { p ->
             val onlinePlayer = p.player
             if (onlinePlayer != null) {
-                onlinePlayer.toGeary().remove<BonfireEffectArea>()
-                onlinePlayer.toGeary().remove<BonfireRespawn>()
+                val gearyEntity = onlinePlayer.toGeary()
+                gearyEntity.remove<BonfireEffectArea>()
+                gearyEntity.remove<BonfireRespawn>()
+                gearyEntity.encodeComponentsTo(onlinePlayer)
             } else {
                 p.editOfflinePDC {
                     encode(BonfireRemoved())
