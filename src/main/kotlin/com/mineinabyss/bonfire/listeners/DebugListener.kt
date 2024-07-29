@@ -11,6 +11,7 @@ import com.mineinabyss.bonfire.extensions.filterIsBonfire
 import com.mineinabyss.bonfire.extensions.forEachBonfire
 import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
+import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.idofront.entities.toOfflinePlayer
 import com.mineinabyss.idofront.nms.aliases.toNMS
 import com.mineinabyss.idofront.textcomponents.miniMsg
@@ -23,6 +24,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import net.minecraft.network.chat.Component
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
+import net.minecraft.network.protocol.game.ClientboundBundlePacket
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.syncher.EntityDataSerializers
@@ -47,78 +49,61 @@ class DebugListener : Listener {
 
     @EventHandler
     fun PlayerToggleSneakEvent.onDebugToggle() {
-        if (player.toGeary().has<BonfireDebug>()) player.getNearbyEntities(16.0, 16.0, 16.0).forEachBonfire {
-            if (isSneaking) player.sendDebugTextDisplay(it)
-            else removeDebugTextDisplay(player)
-        }
+        if (player.toGeary().has<BonfireDebug>() && player.isSneaking) player.getNearbyEntities(16.0, 16.0, 16.0).forEachBonfire {
+            player.sendDebugTextDisplay(it)
+        } else removeDebugTextDisplay(player)
     }
 
     @EventHandler
     fun PlayerGameModeChangeEvent.onDebugToggle() {
-        if (player.toGeary().has<BonfireDebug>()) player.getNearbyEntities(16.0, 16.0, 16.0).forEachBonfire {
-            if (newGameMode == GameMode.SPECTATOR) player.sendDebugTextDisplay(it)
-            else removeDebugTextDisplay(player)
-        }
+        if (player.toGeary().has<BonfireDebug>() && newGameMode == GameMode.SPECTATOR) player.getNearbyEntities(16.0, 16.0, 16.0).forEachBonfire {
+            player.sendDebugTextDisplay(it)
+        } else removeDebugTextDisplay(player)
     }
 
     private val debugIdMap = mutableMapOf<UUID, MutableMap<FurnitureUUID, Int>>()
     private fun Player.sendDebugTextDisplay(baseEntity: ItemDisplay) {
-        val entityIds = debugIdMap.computeIfAbsent(uniqueId) { mutableMapOf(baseEntity.uniqueId to Entity.nextEntityId()) }
-        val entityId = entityIds.computeIfAbsent(baseEntity.uniqueId) { Entity.nextEntityId() }
         val loc = baseEntity.location.clone().toBlockCenterLocation().add(bonfire.config.debugTextOffset)
-        val textDisplayPacket = ClientboundAddEntityPacket(
-            entityId, UUID.randomUUID(),
-            loc.x, loc.y, loc.z, loc.pitch, loc.yaw,
-            EntityType.TEXT_DISPLAY, 0, Vec3.ZERO, 0.0
-        )
-
-        (this as CraftPlayer).handle.connection.send(textDisplayPacket)
-        bonfire.plugin.launch {
-            do {
-                this@sendDebugTextDisplay.sendDebugText(baseEntity, entityId)
-                delay(1.seconds)
-            } while (isSneaking || gameMode == GameMode.SPECTATOR)
-            removeDebugTextDisplay(this@sendDebugTextDisplay)
+        var textEntityPacket: ClientboundAddEntityPacket? = null
+        val entityIds = debugIdMap.computeIfAbsent(uniqueId) { mutableMapOf(baseEntity.uniqueId to Entity.nextEntityId()) }
+        val entityId = entityIds.getOrPut(baseEntity.uniqueId) {
+            ClientboundAddEntityPacket(
+                Entity.nextEntityId(), UUID.randomUUID(),
+                loc.x, loc.y, loc.z, loc.pitch, loc.yaw,
+                EntityType.TEXT_DISPLAY, 0, Vec3.ZERO, 0.0
+            ).let {
+                textEntityPacket = it
+                it.id
+            }
         }
-    }
 
-    val DEBUG_TEXT: String = """
-        <yellow>Bonfire-size <gold><size>
-        <gray>Players: <players>
-    """.trimIndent()
-
-    private suspend fun Player.sendDebugText(baseEntity: ItemDisplay, entityId: Int) {
-        val tagResolver = TagResolver.resolver(
-            TagResolver.resolver("size", Tag.inserting(baseEntity.toGeary().get<Bonfire>()!!.let { "${it.bonfirePlayers.size}/${it.maxPlayerCount}" }.miniMsg())),
-            TagResolver.resolver("players", Tag.inserting(baseEntity.toGeary().get<Bonfire>()!!.bonfirePlayers.joinToString { it.toOfflinePlayer().name.toString() }.miniMsg())),
-        )
-        val text = PaperAdventure.asVanilla(DEBUG_TEXT.trimIndent().miniMsg(tagResolver)) ?: Component.empty()
-
-        // Set flags using bitwise operations
-        var bitmask = 0
-        bitmask = bitmask or 0x01 // Set bit 0 (Has shadow)
-        bitmask = bitmask or (0 and 0x0F shl 3) // Set alignment to CENTER (0)
-
-        withContext(bonfire.plugin.asyncDispatcher) {
-            (this@sendDebugText as CraftPlayer).handle.connection.send(
-                ClientboundSetEntityDataPacket(
-                    entityId, listOf(
-                        SynchedEntityData.DataValue(15, EntityDataSerializers.BYTE, 1), // Billboard
-                        SynchedEntityData.DataValue(23, EntityDataSerializers.COMPONENT, text),
-                        SynchedEntityData.DataValue(
-                            25,
-                            EntityDataSerializers.INT,
-                            Color.fromARGB(0, 0, 0, 0).asARGB()
-                        ), // Transparent background
-                        SynchedEntityData.DataValue(27, EntityDataSerializers.BYTE, bitmask.toByte())
-                    )
-                )
+        val text = PaperAdventure.asVanilla(createDebugText(baseEntity.toGearyOrNull()?.get<Bonfire>() ?: return).miniMsg()) ?: Component.empty()
+        val textMetaPacket = ClientboundSetEntityDataPacket(
+            entityId, listOf(
+                SynchedEntityData.DataValue(15, EntityDataSerializers.BYTE, 1), // Billboard
+                SynchedEntityData.DataValue(23, EntityDataSerializers.COMPONENT, text),
+                SynchedEntityData.DataValue(
+                    25,
+                    EntityDataSerializers.INT,
+                    Color.fromARGB(0, 0, 0, 0).asARGB()
+                ), // Transparent background
+                SynchedEntityData.DataValue(27, EntityDataSerializers.BYTE, ((0 or 0x01) or (0 and 0x0F shl 3)).toByte())
             )
-        }
+        )
+
+        (player as CraftPlayer).handle.connection.send(
+            textEntityPacket?.let { ClientboundBundlePacket(listOf(textEntityPacket, textMetaPacket)) } ?: textMetaPacket
+        )
     }
 
-    private fun removeDebugTextDisplay(player: Player) =
+    private fun removeDebugTextDisplay(player: Player) {
         debugIdMap[player.uniqueId]?.values?.let {
             (player as CraftPlayer).handle.connection.send(ClientboundRemoveEntitiesPacket(IntList.of(*it.toIntArray())))
         }
+    }
+
+    private fun createDebugText(bonfire: Bonfire) = """
+        <yellow>Bonfire-size <gold>"${bonfire.bonfirePlayers.size}/${bonfire.maxPlayerCount}"
+        <gray>Players: ${bonfire.bonfirePlayers.joinToString { it.toOfflinePlayer().name.toString() }}
+    """.trimIndent()
 }
