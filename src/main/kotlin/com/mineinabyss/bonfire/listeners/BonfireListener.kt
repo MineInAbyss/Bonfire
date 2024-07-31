@@ -11,12 +11,15 @@ import com.mineinabyss.bonfire.extensions.canBreakBonfire
 import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.bonfire.extensions.removeOldBonfire
 import com.mineinabyss.bonfire.extensions.updateBonfireState
+import com.mineinabyss.geary.actions.ActionGroupContext
+import com.mineinabyss.geary.actions.execute
 import com.mineinabyss.geary.helpers.with
+import com.mineinabyss.geary.papermc.bridge.cooldowns.Cooldowns
+import com.mineinabyss.geary.papermc.bridge.cooldowns.StartCooldown
 import com.mineinabyss.geary.papermc.datastore.decode
 import com.mineinabyss.geary.papermc.datastore.encode
 import com.mineinabyss.geary.papermc.datastore.encodeComponentsTo
 import com.mineinabyss.geary.papermc.datastore.remove
-import com.mineinabyss.geary.papermc.features.general.cooldown.Cooldown
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.serialization.setPersisting
@@ -38,7 +41,7 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 
 class BonfireListener : Listener {
-    val cooldown = Cooldown(length = bonfire.config.bonfireInteractCooldown)
+    private val cooldown = StartCooldown(length = bonfire.config.bonfireInteractCooldown, display = null, "bonfire:interaction_cooldown")
 
     private fun currentTime() = LocalDateTime.now().toInstant(ZoneOffset.UTC).epochSecond
 
@@ -95,11 +98,12 @@ class BonfireListener : Listener {
 
         val gearyPlayer = player.toGeary()
         val gearyBonfire = baseEntity.toGearyOrNull() ?: return
-        if (!Cooldown.isComplete(gearyPlayer, gearyBonfire)) {
+
+        if (!Cooldowns.isComplete(gearyPlayer, "bonfire:interaction_cooldown")) {
             isCancelled = true
             return
         }
-        Cooldown.start(gearyPlayer, gearyBonfire, cooldown)
+        cooldown.execute(ActionGroupContext(gearyPlayer))
 
         gearyBonfire.with { bonfireData: Bonfire ->
             when (player.uniqueId) {
