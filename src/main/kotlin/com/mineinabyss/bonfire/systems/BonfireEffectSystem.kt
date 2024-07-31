@@ -12,7 +12,6 @@ import org.bukkit.Particle
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 
-@AutoScan
 fun GearyModule.bonfireEffectSystem() = system(object : Query() {
     val player by get<Player>()
     val effect by get<BonfireEffectArea>()

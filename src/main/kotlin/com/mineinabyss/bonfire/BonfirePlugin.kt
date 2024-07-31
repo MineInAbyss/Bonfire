@@ -1,10 +1,13 @@
 package com.mineinabyss.bonfire
 
+import com.mineinabyss.blocky.systems.createFurnitureOutlineSystem
 import com.mineinabyss.bonfire.extensions.BonfireMessages
 import com.mineinabyss.bonfire.listeners.BonfireListener
 import com.mineinabyss.bonfire.listeners.DebugListener
 import com.mineinabyss.bonfire.listeners.FixUntrackedBonfiresListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
+import com.mineinabyss.bonfire.systems.bonfireEffectSystem
+import com.mineinabyss.geary.addons.GearyPhase
 import com.mineinabyss.geary.autoscan.autoscan
 import com.mineinabyss.geary.modules.geary
 import com.mineinabyss.idofront.config.config
@@ -33,6 +36,10 @@ class BonfirePlugin : JavaPlugin() {
             DebugListener(),
             FixUntrackedBonfiresListener()
         )
+
+        geary.pipeline.runOnOrAfter(GearyPhase.INIT_SYSTEMS) {
+            geary.bonfireEffectSystem()
+        }
 
     }
 
