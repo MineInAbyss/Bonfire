@@ -40,7 +40,7 @@ object BonfireCommands {
                                 sender.error("Bonfire debug mode disabled")
                             }
                             else -> {
-                                player.persistentDataContainer.encode(BonfireDebug)
+                                player.persistentDataContainer.encode(BonfireDebug())
                                 sender.success("Bonfire debug mode enabled")
                             }
                         }
