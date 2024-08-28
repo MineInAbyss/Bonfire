@@ -29,6 +29,7 @@ import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
 import com.mineinabyss.idofront.nms.nbt.getOfflinePDC
 import org.bukkit.Bukkit
+import org.bukkit.attribute.Attribute
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -95,6 +96,7 @@ class BonfireListener : Listener {
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun BlockyFurnitureInteractEvent.onBonfireInteract() {
         if (!player.isSneaking || hand != EquipmentSlot.HAND || abs(0 - player.velocity.y) < 0.001) return
+        if (player.fallDistance > (player.getAttribute(Attribute.GENERIC_SAFE_FALL_DISTANCE)?.value ?: 3.0)) return
 
         val gearyPlayer = player.toGeary()
         val gearyBonfire = baseEntity.toGearyOrNull() ?: return

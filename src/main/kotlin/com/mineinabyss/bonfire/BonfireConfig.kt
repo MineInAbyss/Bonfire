@@ -17,7 +17,6 @@ data class BonfireConfig(
     val bonfireInteractCooldown: @Serializable(with = DurationSerializer::class) Duration = 2.seconds,
     val respawnSetSound: BonfireSound = BonfireSound("block.ladder.step", 1f, 1.5f, SoundCategory.BLOCKS),
     val respawnUnsetSound: BonfireSound = BonfireSound("block.ladder.step", 1f, 0.5f, SoundCategory.BLOCKS),
-    val minFallDist: Int = 3,
     val effectRadius: Double = 3.0,
     val effectStrength: Float = 10f,
     val effectRegenRate: Int = 7,
