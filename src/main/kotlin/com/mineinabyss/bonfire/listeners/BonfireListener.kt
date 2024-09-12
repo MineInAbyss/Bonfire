@@ -122,16 +122,16 @@ class BonfireListener : Listener {
                             baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                         }
 
-                        player.persistentDataContainer.encode(BonfireRespawn(baseEntity.uniqueId, baseEntity.location))
-                        player.persistentDataContainer.encode(BonfireEffectArea(baseEntity.uniqueId))
+                        gearyPlayer.setPersisting(BonfireRespawn(baseEntity.uniqueId, baseEntity.location))
+                        gearyPlayer.setPersisting(BonfireEffectArea(baseEntity.uniqueId))
                         player.success("Respawn point set")
                     }
                 }
 
                 in bonfireData.bonfirePlayers -> {
                     bonfireData.bonfirePlayers -= player.uniqueId
-                    player.persistentDataContainer.remove<BonfireRespawn>()
-                    player.persistentDataContainer.remove<BonfireEffectArea>()
+                    gearyPlayer.remove<BonfireRespawn>()
+                    gearyPlayer.remove<BonfireEffectArea>()
                     with(bonfire.config.respawnUnsetSound) {
                         baseEntity.world.playSound(baseEntity.location, sound, volume, pitch)
                     }
@@ -141,6 +141,7 @@ class BonfireListener : Listener {
 
             baseEntity.updateBonfireState()
             gearyBonfire.encodeComponentsTo(baseEntity) // Ensure data is saved to PDC
+            gearyPlayer.encodeComponentsTo(player)
         }
     }
 
@@ -182,11 +183,10 @@ class BonfireListener : Listener {
 
         bonfireData.bonfirePlayers.map { it.toOfflinePlayer() }.forEach { p ->
             val onlinePlayer = p.player
-            if (onlinePlayer != null) {
-                val gearyEntity = onlinePlayer.toGeary()
-                gearyEntity.remove<BonfireEffectArea>()
-                gearyEntity.remove<BonfireRespawn>()
-                gearyEntity.encodeComponentsTo(onlinePlayer)
+            if (onlinePlayer != null) with(onlinePlayer.toGeary()) {
+                remove<BonfireEffectArea>()
+                remove<BonfireRespawn>()
+                encodeComponentsTo(onlinePlayer)
             } else {
                 p.editOfflinePDC {
                     encode(BonfireRemoved())

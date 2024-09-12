@@ -1,27 +1,17 @@
 package com.mineinabyss.bonfire.listeners
 
-import com.github.shynixn.mccoroutine.bukkit.asyncDispatcher
-import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.blocky.helpers.FurnitureUUID
 import com.mineinabyss.blocky.helpers.GenericHelpers.toBlockCenterLocation
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireDebug
-import com.mineinabyss.bonfire.extensions.filterIsBonfire
 import com.mineinabyss.bonfire.extensions.forEachBonfire
-import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.idofront.entities.toOfflinePlayer
-import com.mineinabyss.idofront.nms.aliases.toNMS
 import com.mineinabyss.idofront.textcomponents.miniMsg
 import io.papermc.paper.adventure.PaperAdventure
 import it.unimi.dsi.fastutil.ints.IntList
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
-import net.kyori.adventure.text.minimessage.tag.Tag
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import net.minecraft.network.chat.Component
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
 import net.minecraft.network.protocol.game.ClientboundBundlePacket
@@ -40,10 +30,8 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerGameModeChangeEvent
-import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import java.util.*
-import kotlin.time.Duration.Companion.seconds
 
 class DebugListener : Listener {
 

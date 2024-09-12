@@ -7,6 +7,7 @@ import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.papermc.datastore.decode
 import com.mineinabyss.geary.papermc.datastore.encode
+import com.mineinabyss.geary.papermc.datastore.encodeComponentsTo
 import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
@@ -34,16 +35,20 @@ object BonfireCommands {
             "bonfire" {
                 "debug" {
                     playerExecutes {
-                        when {
-                            player.toGeary().has<BonfireDebug>() -> {
-                                player.persistentDataContainer.remove<BonfireDebug>()
-                                sender.error("Bonfire debug mode disabled")
+                        with(player.toGeary()) {
+                            when {
+                                has<BonfireDebug>() -> {
+                                    remove<BonfireDebug>()
+                                    sender.error("Bonfire debug mode disabled")
+                                }
+                                else -> {
+                                    setPersisting(BonfireDebug())
+                                    sender.success("Bonfire debug mode enabled")
+                                }
                             }
-                            else -> {
-                                player.persistentDataContainer.encode(BonfireDebug())
-                                sender.success("Bonfire debug mode enabled")
-                            }
+                            encodeComponentsTo(player)
                         }
+
                     }
                 }
                 "reload" {
@@ -75,11 +80,11 @@ object BonfireCommands {
                             suggestFiltering("${it.blockX} ${it.blockY} ${it.blockZ}")
                         }
                     }
-                    executes { runPlayersCommand(location()?.resolve(context.source)?.toLocation(context.source.location.world)!!) }
+                    executes { runPlayersCommand(location().toLocation(context.source.location.world)!!) }
                     val world by ArgumentTypes.world().suggests {
                         suggest(Bukkit.getWorlds().map { it.key.asString() })
                     }
-                    executes { runPlayersCommand(location()?.resolve(context.source)?.toLocation(world()!!)!!) }
+                    executes { runPlayersCommand(location().toLocation(world()!!)) }
                 }
                 "respawn" {
                     val offlinePlayer by StringArgumentType.word()
@@ -129,13 +134,13 @@ object BonfireCommands {
                             }
                         }
                         executes {
-                            handleRespawnSet(Bukkit.getOfflinePlayer(offlinePlayer()), location()!!.resolve(context.source).toLocation(context.source.location.world))
+                            handleRespawnSet(Bukkit.getOfflinePlayer(offlinePlayer()), location().toLocation(context.source.location.world))
                         }
                         val world by ArgumentTypes.world().suggests {
                             suggest(Bukkit.getWorlds().map { it.key.asString() })
                         }
                         executes {
-                            handleRespawnSet(Bukkit.getOfflinePlayer(offlinePlayer()), location()!!.resolve(context.source).toLocation(world()!!))
+                            handleRespawnSet(Bukkit.getOfflinePlayer(offlinePlayer()), location().toLocation(world()!!))
                         }
                     }
                     "remove" {
