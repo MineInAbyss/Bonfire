@@ -27,3 +27,7 @@ dependencies:
       required: false
       load: BEFORE
       join-classpath: true
+    AxiomPaper:
+      required: false
+      load: BEFORE
+      join-classpath: true

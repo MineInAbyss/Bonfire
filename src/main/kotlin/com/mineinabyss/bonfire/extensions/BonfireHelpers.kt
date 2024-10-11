@@ -4,7 +4,6 @@ import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import com.github.shynixn.mccoroutine.bukkit.ticks
 import com.mineinabyss.blocky.components.core.BlockyFurniture
-import com.mineinabyss.blocky.helpers.FurniturePacketHelpers.ITEM_DISPLAY_ITEMSTACK_ID
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
@@ -78,7 +77,7 @@ fun ItemDisplay.updateBonfireState() {
             // Set state via packets to 'set' for all online players currently at the bonfire
             val stateItem = gearyItems.createItem(bonfire.states.set) ?: return
             val metadataPacket = ClientboundSetEntityDataPacket(entityId,
-                listOf(SynchedEntityData.DataValue(ITEM_DISPLAY_ITEMSTACK_ID, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
+                listOf(SynchedEntityData.DataValue(23, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
             )
 
             com.mineinabyss.bonfire.bonfire.plugin.launch(com.mineinabyss.bonfire.bonfire.plugin.minecraftDispatcher) {

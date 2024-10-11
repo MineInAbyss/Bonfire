@@ -24,10 +24,13 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.serialization.setPersisting
 import com.mineinabyss.idofront.entities.toOfflinePlayer
+import com.mineinabyss.idofront.entities.toPlayer
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
 import com.mineinabyss.idofront.nms.nbt.getOfflinePDC
+import com.mineinabyss.idofront.plugin.Plugins
+import com.moulberry.axiom.event.AxiomManipulateEntityEvent
 import org.bukkit.Bukkit
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.ItemDisplay
@@ -177,22 +180,41 @@ class BonfireListener : Listener {
      */
     @EventHandler
     fun EntityRemoveFromWorldEvent.onRemoveBonfire() {
-        val bonfireData = (entity as? ItemDisplay).takeIf { entity.isDead }?.toGearyOrNull()?.get<Bonfire>() ?: return
+        val itemDisplay = entity as? ItemDisplay ?: return
+        val bonfireData = itemDisplay.takeIf { entity.isDead }?.toGearyOrNull()?.get<Bonfire>() ?: return
 
-        BlockyFurnitures.removeFurniture(entity as ItemDisplay)
+        BlockyFurnitures.removeFurniture(itemDisplay)
 
-        bonfireData.bonfirePlayers.map { it.toOfflinePlayer() }.forEach { p ->
-            val onlinePlayer = p.player
-            if (onlinePlayer != null) with(onlinePlayer.toGeary()) {
+        bonfireData.bonfirePlayers.map { it.toOfflinePlayer() to it.toPlayer() }.forEach { (offline, online) ->
+            if (online != null) with(online.toGeary()) {
                 remove<BonfireEffectArea>()
                 remove<BonfireRespawn>()
-                encodeComponentsTo(onlinePlayer)
-            } else {
-                p.editOfflinePDC {
-                    encode(BonfireRemoved())
-                    remove<BonfireRespawn>()
-                }
+                encodeComponentsTo(online)
+            } else offline.editOfflinePDC {
+                encode(BonfireRemoved())
+                remove<BonfireRespawn>()
             }
+        }
+    }
+
+    init {
+        if (Plugins.isEnabled("AxiomPaper")) {
+            Bukkit.getPluginManager().registerEvents(object : Listener {
+
+                @EventHandler
+                fun AxiomManipulateEntityEvent.manipulateBonfire() {
+                    val bonfireData = (entity as? ItemDisplay).takeUnless { entity.isDead }?.toGearyOrNull()?.get<Bonfire>() ?: return
+
+                    bonfireData.bonfirePlayers.map { it.toOfflinePlayer() to it.toPlayer() }.forEach { (offline, online) ->
+                        if (online != null) with(online.toGeary()) {
+                            get<BonfireRespawn>()?.copy(bonfireLocation = entity.location)?.let { setPersisting(it) }
+                            encodeComponentsTo(online)
+                        } else offline.editOfflinePDC {
+                            decode<BonfireRespawn>()?.copy(bonfireLocation = entity.location)?.let { encode(it) }
+                        }
+                    }
+                }
+            }, bonfire.plugin)
         }
     }
 }
