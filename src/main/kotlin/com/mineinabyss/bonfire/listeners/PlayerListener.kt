@@ -1,8 +1,6 @@
 package com.mineinabyss.bonfire.listeners
 
-import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent
 import com.github.shynixn.mccoroutine.bukkit.launch
-import com.mineinabyss.blocky.helpers.GenericHelpers.toEntity
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRemoved
@@ -16,7 +14,7 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
-import com.mineinabyss.idofront.time.ticks
+import io.papermc.paper.event.player.PlayerTrackEntityEvent
 import kotlinx.coroutines.delay
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
@@ -75,9 +73,8 @@ class PlayerListener : Listener {
     }
 
     @EventHandler
-    fun PlayerPostRespawnEvent.onBonfireRespawned() {
-        val bonfireRespawn = player.toGeary().get<BonfireRespawn>() ?: return
-        (bonfireRespawn.bonfireUuid.toEntity() as? ItemDisplay)?.updateBonfireState()
+    fun PlayerTrackEntityEvent.onTrackBonfire() {
+        (entity as? ItemDisplay)?.updateBonfireState()
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -90,15 +87,6 @@ class PlayerListener : Listener {
         }
     }
 
-    @EventHandler
-    fun PlayerJoinEvent.onPlayerJoin() {
-        val bonfire = player.toGeary().get<BonfireRespawn>() ?: return
-        val bonfireEntity = bonfire.bonfireUuid.toEntity() as? ItemDisplay ?: return
-        com.mineinabyss.bonfire.bonfire.plugin.launch {
-            delay(3.ticks)
-            bonfireEntity.updateBonfireState()
-        }
-    }
     @EventHandler
     fun PlayerQuitEvent.onPlayerQuit() {
         player.persistentDataContainer.remove<BonfireRemoved>()

@@ -1,9 +1,9 @@
 package com.mineinabyss.bonfire.extensions
 
 import com.github.shynixn.mccoroutine.bukkit.launch
-import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import com.github.shynixn.mccoroutine.bukkit.ticks
 import com.mineinabyss.blocky.components.core.BlockyFurniture
+import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
@@ -15,14 +15,12 @@ import kotlinx.coroutines.delay
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
-import org.bukkit.Bukkit
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Display
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
-import kotlin.math.pow
 
 fun Iterable<Entity>.forEachBonfire(action: (ItemDisplay) -> Unit): Unit {
     for (element in this.filterIsBonfire()) action(element)
@@ -56,14 +54,12 @@ fun Player.removeOldBonfire() {
     }
 }
 
-private val bonfireTrackingRadius = (Bukkit.getServer().simulationDistance * 16.0).pow(2)
-
 /**
  * Updates the bonfire state for all players.
  */
 fun ItemDisplay.updateBonfireState() {
+    val plugin = bonfire.plugin
     val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
-
 
     when {// Set the base-furniture item to the correct state
         bonfire.bonfirePlayers.isEmpty() -> {
@@ -80,9 +76,9 @@ fun ItemDisplay.updateBonfireState() {
                 listOf(SynchedEntityData.DataValue(23, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
             )
 
-            com.mineinabyss.bonfire.bonfire.plugin.launch(com.mineinabyss.bonfire.bonfire.plugin.minecraftDispatcher) {
-                delay(3.ticks)
-                bonfire.bonfirePlayers.mapNotNull { it.toPlayer() }.filter { it.world.uid == world.uid && it.location.distanceSquared(location) < bonfireTrackingRadius }.forEach {
+            plugin.launch {
+                delay(2.ticks)
+                bonfire.bonfirePlayers.mapNotNull { it.toPlayer()?.takeIf( { p -> p.canSee(this@updateBonfireState) }) }.forEach {
                     (it as CraftPlayer).handle.connection.send(metadataPacket)
                 }
             }
