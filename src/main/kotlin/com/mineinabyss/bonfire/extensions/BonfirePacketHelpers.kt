@@ -7,6 +7,8 @@ import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.gearyItems
+import com.mineinabyss.idofront.messaging.broadcast
+import com.mineinabyss.idofront.nms.aliases.NMSEntity
 import com.mineinabyss.idofront.nms.aliases.toNMS
 import com.mineinabyss.idofront.time.ticks
 import it.unimi.dsi.fastutil.ints.IntList
@@ -19,6 +21,7 @@ import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.world.entity.Display
 import net.minecraft.world.entity.EntityType
+import org.bukkit.Location
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.ItemDisplay
@@ -27,9 +30,13 @@ import org.bukkit.entity.Player
 object BonfirePacketHelpers {
 
     data class BonfireAddonEntity(val furnitureUUID: FurnitureUUID, val addonEntity: Display.ItemDisplay)
-    data class BonfireAddonPacket(val addonEntity: Display.ItemDisplay, val addEntity: ClientboundAddEntityPacket, val addons: List<ClientboundSetEntityDataPacket>) {
-        fun bundlePacket(bonfireSize: Int) : ClientboundBundlePacket {
-            return ClientboundBundlePacket(listOf(addEntity, addons.elementAtOrNull(bonfireSize)))
+    data class BonfireAddonPacket(val addonEntity: Display.ItemDisplay, val addons: List<ClientboundSetEntityDataPacket>) {
+        fun bundlePacket(furniture: NMSEntity, bonfireSize: Int) : ClientboundBundlePacket {
+            addonEntity.teleportTo(furniture.x, furniture.y, furniture.z)
+            return ClientboundBundlePacket(listOf(
+                addonEntity.getAddEntityPacket(furniture.`moonrise$getTrackedEntity`().serverEntity),
+                addons.elementAtOrNull(bonfireSize)
+            ))
         }
     }
 
@@ -43,29 +50,24 @@ object BonfirePacketHelpers {
     fun sendAddonPacket(furniture: ItemDisplay, player: Player) {
         if (!furniture.isBlockyFurniture) return
 
-        val plugin = bonfire.plugin
         val bonfire = furniture.toGearyOrNull()?.get<Bonfire>() ?: return
         val nmsFurniture = furniture.toNMS()
-        val nmsWorld = nmsFurniture.level()
-        bonfireAddonPackets.computeIfAbsent(furniture.uniqueId) {
+        val bonfireAddonPacket = bonfireAddonPackets.computeIfAbsent(furniture.uniqueId) {
             val addonEntity = bonfireAddons.firstOrNull { it.furnitureUUID == furniture.uniqueId }?.addonEntity
-                ?: BonfireAddonEntity(furniture.uniqueId, Display.ItemDisplay(EntityType.ITEM_DISPLAY, nmsWorld))
-                    .apply(bonfireAddons::add).addonEntity.apply { teleportTo(furniture.x, furniture.y, furniture.z) }
+                ?: BonfireAddonEntity(furniture.uniqueId, Display.ItemDisplay(EntityType.ITEM_DISPLAY, nmsFurniture.level()))
+                    .apply(bonfireAddons::add).addonEntity
 
-            val entityPacket = ClientboundAddEntityPacket(addonEntity, nmsFurniture.`moonrise$getTrackedEntity`().serverEntity)
             val metadataPackets = bonfire.addons.mapNotNull { addon ->
                 val item = gearyItems.createItem(addon) ?: return@mapNotNull null
                 ClientboundSetEntityDataPacket(addonEntity.id,
                     listOf(SynchedEntityData.DataValue(23, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(item)))
                 )
             }
-            BonfireAddonPacket(addonEntity, entityPacket, metadataPackets)
-        }.bundlePacket(bonfire.bonfirePlayers.size).let {
-            plugin.launch {
-                delay(2.ticks)
-                (player as CraftPlayer).handle.connection.send(it)
-            }
-        }
+
+            BonfireAddonPacket(addonEntity, metadataPackets)
+        }.bundlePacket(nmsFurniture, bonfire.bonfirePlayers.size)
+
+        (player as CraftPlayer).handle.connection.send(bonfireAddonPacket)
     }
 
     fun removeAddonPacket(furniture: ItemDisplay) {

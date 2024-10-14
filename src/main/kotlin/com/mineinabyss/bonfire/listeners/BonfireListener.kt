@@ -201,7 +201,8 @@ class BonfireListener : Listener {
 
                 @EventHandler
                 fun AxiomManipulateEntityEvent.manipulateBonfire() {
-                    val bonfireData = (entity as? ItemDisplay).takeUnless { entity.isDead }?.toGearyOrNull()?.get<Bonfire>() ?: return
+                    val furniture = (entity as? ItemDisplay).takeUnless { entity.isDead } ?: return
+                    val bonfireData = furniture.toGearyOrNull()?.get<Bonfire>() ?: return
 
                     bonfireData.bonfirePlayers.map { it.toOfflinePlayer() to it.toPlayer() }.forEach { (offline, online) ->
                         if (online != null) with(online.toGeary()) {
@@ -211,6 +212,7 @@ class BonfireListener : Listener {
                             decode<BonfireRespawn>()?.copy(bonfireLocation = entity.location)?.let { encode(it) }
                         }
                     }
+                    BonfirePacketHelpers.sendAddonPacket(furniture)
                 }
             }, bonfire.plugin)
         }
