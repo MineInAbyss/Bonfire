@@ -5,6 +5,7 @@ import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
+import com.mineinabyss.bonfire.extensions.BonfirePacketHelpers
 import com.mineinabyss.bonfire.extensions.filterIsBonfire
 import com.mineinabyss.bonfire.extensions.isBonfire
 import com.mineinabyss.bonfire.extensions.updateBonfireState
@@ -15,6 +16,7 @@ import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import io.papermc.paper.event.player.PlayerTrackEntityEvent
+import io.papermc.paper.event.player.PlayerUntrackEntityEvent
 import kotlinx.coroutines.delay
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
@@ -74,7 +76,15 @@ class PlayerListener : Listener {
 
     @EventHandler
     fun PlayerTrackEntityEvent.onTrackBonfire() {
-        (entity as? ItemDisplay)?.updateBonfireState()
+        val furniture = entity as? ItemDisplay ?: return
+        furniture.updateBonfireState()
+        BonfirePacketHelpers.sendAddonPacket(furniture, player)
+    }
+
+    @EventHandler
+    fun PlayerUntrackEntityEvent.onUntrackBonfire() {
+        val furniture = entity as? ItemDisplay ?: return
+        BonfirePacketHelpers.removeAddonPacket(furniture, player)
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

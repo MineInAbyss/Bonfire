@@ -91,7 +91,7 @@ class DebugListener : Listener {
     }
 
     private fun createDebugText(bonfire: Bonfire) = """
-        <yellow>Bonfire-size <gold>"${bonfire.bonfirePlayers.size}/${bonfire.maxPlayerCount}"
+        <yellow>Bonfire-size <gold>${bonfire.bonfirePlayers.size}/${bonfire.maxPlayerCount}
         <gray>Players: ${bonfire.bonfirePlayers.joinToString { it.toOfflinePlayer().name.toString() }}
     """.trimIndent()
 }

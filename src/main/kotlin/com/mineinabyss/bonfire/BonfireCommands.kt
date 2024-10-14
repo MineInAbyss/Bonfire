@@ -4,6 +4,7 @@ import com.mineinabyss.blocky.helpers.GenericHelpers.toBlockCenterLocation
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireDebug
 import com.mineinabyss.bonfire.components.BonfireRespawn
+import com.mineinabyss.bonfire.extensions.BonfirePacketHelpers
 import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.papermc.datastore.decode
 import com.mineinabyss.geary.papermc.datastore.encode
@@ -127,6 +128,7 @@ object BonfireCommands {
                                             }
                                             bonfire.bonfirePlayers += offlinePlayer.uniqueId
                                             bonfireEntity.updateBonfireState()
+                                            BonfirePacketHelpers.sendAddonPacket(bonfireEntity)
                                             sender.success("Set respawn point for ${offlinePlayer.name} to $x $y $z in ${world.name}")
                                         }
                                     }

@@ -54,6 +54,8 @@ fun Player.removeOldBonfire() {
     }
 }
 
+
+
 /**
  * Updates the bonfire state for all players.
  */

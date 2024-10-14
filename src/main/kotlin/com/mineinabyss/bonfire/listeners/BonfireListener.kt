@@ -7,10 +7,7 @@ import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureInteractEvent
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurniturePlaceEvent
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.*
-import com.mineinabyss.bonfire.extensions.canBreakBonfire
-import com.mineinabyss.bonfire.extensions.isBonfire
-import com.mineinabyss.bonfire.extensions.removeOldBonfire
-import com.mineinabyss.bonfire.extensions.updateBonfireState
+import com.mineinabyss.bonfire.extensions.*
 import com.mineinabyss.geary.actions.ActionGroupContext
 import com.mineinabyss.geary.actions.execute
 import com.mineinabyss.geary.helpers.with
@@ -142,9 +139,10 @@ class BonfireListener : Listener {
                 }
             }
 
-            baseEntity.updateBonfireState()
             gearyBonfire.encodeComponentsTo(baseEntity) // Ensure data is saved to PDC
             gearyPlayer.encodeComponentsTo(player)
+            baseEntity.updateBonfireState()
+            BonfirePacketHelpers.sendAddonPacket(baseEntity)
         }
     }
 

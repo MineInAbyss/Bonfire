@@ -1,5 +1,6 @@
 package com.mineinabyss.bonfire.components
 
+import com.charleskorn.kaml.YamlComment
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.geary.prefabs.PrefabKey
 import com.mineinabyss.geary.prefabs.serializers.PrefabKeySerializer
@@ -18,6 +19,8 @@ data class Bonfire(
     val maxPlayerCount: Int = bonfire.config.maxPlayerCount,
     val bonfireExpirationTime: @Serializable(with = DurationSerializer::class) Duration = bonfire.config.bonfireExpirationTime,
     val states: BonfireStates,
+    @YamlComment("Item to spawn in addition to bonfire, mainly for visually representing player-count")
+    val addons: List<@Serializable(PrefabKeySerializer::class) PrefabKey> = emptyList()
 ) {
     @Serializable
     data class BonfireStates(
