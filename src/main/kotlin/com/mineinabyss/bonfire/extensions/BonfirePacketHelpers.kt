@@ -1,19 +1,14 @@
 package com.mineinabyss.bonfire.extensions
 
-import com.github.shynixn.mccoroutine.bukkit.launch
 import com.mineinabyss.blocky.api.BlockyFurnitures.isBlockyFurniture
 import com.mineinabyss.blocky.helpers.FurnitureUUID
-import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
-import com.mineinabyss.geary.papermc.tracking.items.gearyItems
-import com.mineinabyss.idofront.messaging.broadcast
+import com.mineinabyss.geary.papermc.tracking.items.ItemTracking
+import com.mineinabyss.geary.papermc.withGeary
 import com.mineinabyss.idofront.nms.aliases.NMSEntity
 import com.mineinabyss.idofront.nms.aliases.toNMS
-import com.mineinabyss.idofront.time.ticks
 import it.unimi.dsi.fastutil.ints.IntList
-import kotlinx.coroutines.delay
-import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
 import net.minecraft.network.protocol.game.ClientboundBundlePacket
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
@@ -21,7 +16,6 @@ import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.world.entity.Display
 import net.minecraft.world.entity.EntityType
-import org.bukkit.Location
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.ItemDisplay
@@ -58,7 +52,7 @@ object BonfirePacketHelpers {
                     .apply(bonfireAddons::add).addonEntity
 
             val metadataPackets = bonfire.addons.mapNotNull { addon ->
-                val item = gearyItems.createItem(addon) ?: return@mapNotNull null
+                val item = player.withGeary { getAddon(ItemTracking) }.createItem(addon) ?: return@mapNotNull null
                 ClientboundSetEntityDataPacket(addonEntity.id,
                     listOf(SynchedEntityData.DataValue(23, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(item)))
                 )
