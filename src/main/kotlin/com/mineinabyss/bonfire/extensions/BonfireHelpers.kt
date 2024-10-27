@@ -9,7 +9,8 @@ import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
-import com.mineinabyss.geary.papermc.tracking.items.gearyItems
+import com.mineinabyss.geary.papermc.tracking.items.ItemTracking
+import com.mineinabyss.geary.papermc.withGeary
 import com.mineinabyss.idofront.entities.toPlayer
 import kotlinx.coroutines.delay
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
@@ -60,28 +61,31 @@ fun Player.removeOldBonfire() {
  * Updates the bonfire state for all players.
  */
 fun ItemDisplay.updateBonfireState() {
-    val plugin = bonfire.plugin
-    val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
+    withGeary {
+        val plugin = bonfire.plugin
+        val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
+        val itemTracking = getAddon(ItemTracking)
 
-    when {// Set the base-furniture item to the correct state
-        bonfire.bonfirePlayers.isEmpty() -> {
-            this.brightness = toGearyOrNull()?.get<BlockyFurniture>()?.properties?.brightness
-            gearyItems.createItem(bonfire.states.unlit)?.let { setItemStack(it) }
-        }
-        else -> {
-            this.brightness = Display.Brightness(15, 15)
-            gearyItems.createItem(bonfire.states.lit)?.let { setItemStack(it) }
+        when {// Set the base-furniture item to the correct state
+            bonfire.bonfirePlayers.isEmpty() -> {
+                brightness = toGearyOrNull()?.get<BlockyFurniture>()?.properties?.brightness
+                itemTracking.createItem(bonfire.states.unlit)?.let { setItemStack(it) }
+            }
+            else -> {
+                brightness = Display.Brightness(15, 15)
+                itemTracking.createItem(bonfire.states.lit)?.let { setItemStack(it) }
 
-            // Set state via packets to 'set' for all online players currently at the bonfire
-            val stateItem = gearyItems.createItem(bonfire.states.set) ?: return
-            val metadataPacket = ClientboundSetEntityDataPacket(entityId,
-                listOf(SynchedEntityData.DataValue(23, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
-            )
+                // Set state via packets to 'set' for all online players currently at the bonfire
+                val stateItem = itemTracking.createItem(bonfire.states.set) ?: return
+                val metadataPacket = ClientboundSetEntityDataPacket(entityId,
+                    listOf(SynchedEntityData.DataValue(23, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
+                )
 
-            plugin.launch {
-                delay(2.ticks)
-                bonfire.bonfirePlayers.mapNotNull { it.toPlayer()?.takeIf( { p -> p.canSee(this@updateBonfireState) }) }.forEach {
-                    (it as CraftPlayer).handle.connection.send(metadataPacket)
+                plugin.launch {
+                    delay(2.ticks)
+                    bonfire.bonfirePlayers.mapNotNull { it.toPlayer()?.takeIf( { p -> p.canSee(this@updateBonfireState) }) }.forEach {
+                        (it as CraftPlayer).handle.connection.send(metadataPacket)
+                    }
                 }
             }
         }

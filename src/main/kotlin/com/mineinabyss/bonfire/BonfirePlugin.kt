@@ -8,8 +8,11 @@ import com.mineinabyss.bonfire.listeners.FixUntrackedBonfiresListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.bonfire.systems.bonfireEffectSystem
 import com.mineinabyss.geary.addons.GearyPhase
+import com.mineinabyss.geary.addons.dsl.createAddon
 import com.mineinabyss.geary.autoscan.autoscan
 import com.mineinabyss.geary.modules.geary
+import com.mineinabyss.geary.papermc.configure
+import com.mineinabyss.geary.papermc.gearyPaper
 import com.mineinabyss.idofront.config.config
 import com.mineinabyss.idofront.di.DI
 import com.mineinabyss.idofront.messaging.ComponentLogger
@@ -20,10 +23,8 @@ import org.bukkit.plugin.java.JavaPlugin
 class BonfirePlugin : JavaPlugin() {
     override fun onLoad() {
         registerBonfireContext()
-        geary {
-            autoscan(classLoader, "com.mineinabyss.bonfire") {
-                all()
-            }
+        gearyPaper.configure {
+            install(BonfireAddon)
         }
     }
 
@@ -36,11 +37,6 @@ class BonfirePlugin : JavaPlugin() {
             DebugListener(),
             FixUntrackedBonfiresListener()
         )
-
-        geary.pipeline.runOnOrAfter(GearyPhase.INIT_SYSTEMS) {
-            geary.bonfireEffectSystem()
-        }
-
     }
 
     fun registerBonfireContext() {

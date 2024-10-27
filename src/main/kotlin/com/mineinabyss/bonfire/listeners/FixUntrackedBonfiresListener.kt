@@ -8,6 +8,7 @@ import com.mineinabyss.geary.modules.geary
 import com.mineinabyss.geary.papermc.datastore.decodePrefabs
 import com.mineinabyss.geary.papermc.datastore.hasComponentsEncoded
 import com.mineinabyss.geary.papermc.tracking.entities.events.GearyEntityAddToWorldEvent
+import com.mineinabyss.geary.papermc.withGeary
 import com.mineinabyss.geary.prefabs.PrefabKey
 import org.bukkit.Bukkit
 import org.bukkit.entity.ItemDisplay
@@ -23,8 +24,7 @@ class FixUntrackedBonfiresListener : Listener {
     fun ChunkLoadEvent.onAddToWorld() {
         chunk.entities.filterIsInstance<ItemDisplay>().forEach { entity ->
             if (entity.persistentDataContainer.hasComponentsEncoded) return@forEach
-            val displayItemPDC = entity.itemStack.itemMeta?.persistentDataContainer ?: return
-            val itemPrefabs = displayItemPDC.decodePrefabs()
+            val itemPrefabs = entity.withGeary { entity.itemStack.itemMeta?.persistentDataContainer?.decodePrefabs() ?: return }
 
             if (bonfireItemKey in itemPrefabs || bonfireLitItemKey in itemPrefabs) {
                 Bukkit.getScheduler().scheduleSyncDelayedTask(bonfire.plugin, {

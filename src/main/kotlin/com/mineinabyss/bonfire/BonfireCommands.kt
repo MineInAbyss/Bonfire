@@ -10,11 +10,15 @@ import com.mineinabyss.geary.papermc.datastore.decode
 import com.mineinabyss.geary.papermc.datastore.encode
 import com.mineinabyss.geary.papermc.datastore.encodeComponentsTo
 import com.mineinabyss.geary.papermc.datastore.remove
+import com.mineinabyss.geary.papermc.gearyPaper
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
+import com.mineinabyss.geary.papermc.withGeary
 import com.mineinabyss.geary.serialization.setPersisting
-import com.mineinabyss.idofront.commands.brigadier.IdoCommandContext
 import com.mineinabyss.idofront.commands.brigadier.commands
+import com.mineinabyss.idofront.commands.brigadier.context.IdoCommandContext
+import com.mineinabyss.idofront.commands.brigadier.executes
+import com.mineinabyss.idofront.commands.brigadier.playerExecutes
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
 import com.mineinabyss.idofront.messaging.success
@@ -36,20 +40,20 @@ object BonfireCommands {
             "bonfire" {
                 "debug" {
                     playerExecutes {
-                        with(player.toGeary()) {
+                        player.withGeary {
+                            val gearyPlayer = player.toGeary()
                             when {
-                                has<BonfireDebug>() -> {
-                                    remove<BonfireDebug>()
+                                gearyPlayer.has<BonfireDebug>() -> {
+                                    gearyPlayer.remove<BonfireDebug>()
                                     sender.error("Bonfire debug mode disabled")
                                 }
                                 else -> {
-                                    setPersisting(BonfireDebug())
+                                    gearyPlayer.setPersisting(BonfireDebug())
                                     sender.success("Bonfire debug mode enabled")
                                 }
                             }
-                            encodeComponentsTo(player)
+                            gearyPlayer.encodeComponentsTo(player)
                         }
-
                     }
                 }
                 "reload" {
@@ -59,61 +63,54 @@ object BonfireCommands {
                     }
                 }
                 "players" {
-                    fun IdoCommandContext.runPlayersCommand(location: Location) {
-                        val bonfireLoc = location.toBlockCenterLocation()
-                        val (x,y,z) = bonfireLoc.blockX to bonfireLoc.blockY to bonfireLoc.blockZ
+                    playerExecutes(
+                        ArgumentTypes.finePosition(true).suggests {
+                            suggestFiltering("${location.blockX} ${location.blockY} ${location.blockZ}")
+                        }.resolve().map { it.toLocation(executor!!.world) }.named("location"),
+                    ) { location ->
+                        val (x,y,z) = location.blockX() to location.blockY() to location.blockZ()
 
-                        location.world.getChunkAtAsync(location).thenAccept {
-                            val bonfireEntity = bonfireLoc.getNearbyEntitiesByType(ItemDisplay::class.java, 5.0).firstOrNull()
-                            bonfireEntity?.toGeary()?.get<Bonfire>()?.let { bonfire ->
-                                sender.info(
-                                    "Players with their respawn set at this bonfire: ${
-                                        bonfire.bonfirePlayers.joinToString(", ") { Bukkit.getOfflinePlayer(it).name ?: "Unknown" }
-                                    }"
-                                )
-                            } ?: sender.error("Could not find bonfire at $x $y $z")
+                        location.world.getChunkAtAsync(location).thenAccept { chunk ->
+                            chunk.addPluginChunkTicket(bonfire.plugin)
+                            location.getNearbyEntitiesByType(ItemDisplay::class.java, 2.0)
+                                .firstOrNull()?.toGeary()?.get<Bonfire>()?.let { bonfire ->
+                                    val bonfireNames = bonfire.bonfirePlayers.joinToString(", ") { Bukkit.getOfflinePlayer(it).name ?: "Unknown" }
+                                    sender.info("Players with their respawn set at this bonfire: $bonfireNames")
+                                } ?: sender.error("Could not find bonfire at $x $y $z")
                         }
                     }
-
-                    executes { context.source.executor?.location?.let { runPlayersCommand(it) } }
-                    val location by ArgumentTypes.blockPosition().suggests {
-                        (context.source.executor as? Player)?.location?.let {
-                            suggestFiltering("${it.blockX} ${it.blockY} ${it.blockZ}")
-                        }
-                    }
-                    executes { runPlayersCommand(location().toLocation(context.source.location.world)!!) }
-                    val world by ArgumentTypes.world().suggests {
-                        suggest(Bukkit.getWorlds().map { it.key.asString() })
-                    }
-                    executes { runPlayersCommand(location().toLocation(world()!!)) }
                 }
+
                 "respawn" {
-                    val offlinePlayer by StringArgumentType.word()
                     "get" {
-                        executes {
-                            val offlinePlayer = Bukkit.getOfflinePlayer(offlinePlayer())
+                        executes(
+                            StringArgumentType.word().named("offlinePlayer").map { Bukkit.getOfflinePlayer(it) }
+                                .default { (executor as? Player) ?: fail("Must be a valid player or offlinePlayer") }
+                        ) { offlinePlayer ->
                             val respawn = when {
                                 offlinePlayer.isOnline -> offlinePlayer.player?.toGearyOrNull()?.get<BonfireRespawn>()
-                                else -> offlinePlayer.getOfflinePDC()?.decode<BonfireRespawn>()
-                            }?.bonfireLocation ?: return@executes sender.error("Could not find BonfireRespawn for the given Player")
+                                else -> with(gearyPaper.worldManager.global) {
+                                    offlinePlayer.getOfflinePDC()?.decode<BonfireRespawn>()
+                                }
+                            }?.bonfireLocation
+                                ?: return@executes sender.error("Could not find BonfireRespawn for the given Player")
                             sender.info("Bonfire-Respawn for ${offlinePlayer.name} is at ${respawn.x}, ${respawn.y}, ${respawn.z} in ${respawn.world.name}")
                         }
                     }
                     "set" {
-                        val location by ArgumentTypes.blockPosition().suggests {
-                            (context.source.executor as? Player)?.location?.let {
-                                suggestFiltering("${it.blockX} ${it.blockY} ${it.blockZ}")
-                            }
-                        }
-
-                        fun IdoCommandContext.handleRespawnSet(offlinePlayer: OfflinePlayer, location: Location) {
+                        playerExecutes(
+                            StringArgumentType.word().named("offlinePlayer").map { Bukkit.getOfflinePlayer(it) }
+                                .default { (executor as? Player) ?: fail("Must be a valid player or offlinePlayer") },
+                            ArgumentTypes.finePosition(true).suggests {
+                                suggestFiltering("${location.blockX} ${location.blockY} ${location.blockZ}")
+                            }.resolve().map { it.toLocation(executor!!.world) }.named("location"),
+                        ) { offlinePlayer, location ->
                             // Ensures the player has a datafile, aka joined the server before, so we can save the bonfire location
-                            offlinePlayer.getOfflinePDC() ?: return sender.error("Could not find PDC for the given OfflinePlayer")
-                            val world = location.world
+                            offlinePlayer.getOfflinePDC() ?: return@playerExecutes sender.error("Could not find PDC for the given OfflinePlayer")
                             val bonfireLoc = location.toBlockCenterLocation()
                             val (x,y,z) = bonfireLoc.blockX to bonfireLoc.blockY to bonfireLoc.blockZ
 
-                            world.getChunkAtAsync(location).thenAccept {
+                            player.world.getChunkAtAsync(location).thenAccept {
                                 val bonfireEntity = bonfireLoc.getNearbyEntitiesByType(ItemDisplay::class.java, 0.5).firstOrNull()
 
                                 bonfireEntity?.toGearyOrNull()?.get<Bonfire>()?.let { bonfire ->
@@ -122,32 +119,25 @@ object BonfireCommands {
                                             sender.error("Player is already registered to this bonfire")
                                         bonfire.bonfirePlayers.size >= bonfire.maxPlayerCount ->
                                             sender.error("Bonfire is full")
-                                        else -> {
+                                        else -> with(gearyPaper.worldManager.global) {
                                             offlinePlayer.editOfflinePDC {
                                                 encode(BonfireRespawn(bonfireEntity.uniqueId, bonfireEntity.location))
                                             }
                                             bonfire.bonfirePlayers += offlinePlayer.uniqueId
                                             bonfireEntity.updateBonfireState()
                                             BonfirePacketHelpers.sendAddonPacket(bonfireEntity)
-                                            sender.success("Set respawn point for ${offlinePlayer.name} to $x $y $z in ${world.name}")
+                                            sender.success("Set respawn point for ${offlinePlayer.name} to $x $y $z in ${player.world.name}")
                                         }
                                     }
                                 } ?: sender.error("Could not find bonfire at $x $y $z")
                             }
                         }
-                        executes {
-                            handleRespawnSet(Bukkit.getOfflinePlayer(offlinePlayer()), location().toLocation(context.source.location.world))
-                        }
-                        val world by ArgumentTypes.world().suggests {
-                            suggest(Bukkit.getWorlds().map { it.key.asString() })
-                        }
-                        executes {
-                            handleRespawnSet(Bukkit.getOfflinePlayer(offlinePlayer()), location().toLocation(world()!!))
-                        }
                     }
                     "remove" {
-                        executes {
-                            val offlinePlayer = Bukkit.getOfflinePlayer(offlinePlayer())
+                        executes(
+                            StringArgumentType.word().named("offlinePlayer").map { Bukkit.getOfflinePlayer(it) }
+                            .default { (executor as? Player) ?: fail("Must be a valid player or offlinePlayer") }
+                        ) { offlinePlayer ->
                             val respawn = when {
                                 offlinePlayer.isOnline -> {
                                     val respawn = offlinePlayer.player?.toGearyOrNull()?.get<BonfireRespawn>()
@@ -155,11 +145,13 @@ object BonfireCommands {
                                     respawn
                                 }
                                 else -> {
-                                    val pdc = offlinePlayer.getOfflinePDC() ?: return@executes sender.error("Could not find PDC for the given OfflinePlayer")
-                                    val respawn = pdc.decode<BonfireRespawn>() ?: return@executes sender.error("OfflinePlayer has no bonfire set")
-                                    pdc.remove<BonfireRespawn>()
-                                    offlinePlayer.saveOfflinePDC(pdc)
-                                    respawn
+                                    with(gearyPaper.worldManager.global) {
+                                        val pdc = offlinePlayer.getOfflinePDC() ?: return@executes sender.error("Could not find PDC for the given OfflinePlayer")
+                                        val respawn = pdc.decode<BonfireRespawn>() ?: return@executes sender.error("OfflinePlayer has no bonfire set")
+                                        pdc.remove<BonfireRespawn>()
+                                        offlinePlayer.saveOfflinePDC(pdc)
+                                        respawn
+                                    }
                                 }
                             } ?: return@executes sender.error("Player has no respawn point set")
 
