@@ -12,6 +12,7 @@ import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
+import com.mineinabyss.geary.papermc.withGeary
 import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
@@ -99,6 +100,6 @@ class PlayerListener : Listener {
 
     @EventHandler
     fun PlayerQuitEvent.onPlayerQuit() {
-        player.persistentDataContainer.remove<BonfireRemoved>()
+        player.withGeary { player.persistentDataContainer.remove<BonfireRemoved>() }
     }
 }

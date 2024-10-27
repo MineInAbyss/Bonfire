@@ -32,3 +32,13 @@ dependencies {
     compileOnly(libs.blocky)
     compileOnly(libs.minecraft.plugin.axiompaper)
 }
+
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.addAll(
+            "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
+            "-opt-in=kotlin.ExperimentalUnsignedTypes",
+            "-Xcontext-receivers"
+        )
+    }
+}

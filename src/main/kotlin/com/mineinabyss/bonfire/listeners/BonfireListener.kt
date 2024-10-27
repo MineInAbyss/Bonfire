@@ -17,8 +17,10 @@ import com.mineinabyss.geary.papermc.datastore.encodeComponentsTo
 import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.features.common.cooldowns.Cooldowns
 import com.mineinabyss.geary.papermc.features.common.cooldowns.StartCooldown
+import com.mineinabyss.geary.papermc.gearyPaper
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
+import com.mineinabyss.geary.papermc.withGeary
 import com.mineinabyss.geary.serialization.setPersisting
 import com.mineinabyss.idofront.entities.toOfflinePlayer
 import com.mineinabyss.idofront.entities.toPlayer
@@ -29,6 +31,7 @@ import com.mineinabyss.idofront.nms.nbt.getOfflinePDC
 import com.mineinabyss.idofront.plugin.Plugins
 import com.moulberry.axiom.event.AxiomManipulateEntityEvent
 import org.bukkit.Bukkit
+import org.bukkit.OfflinePlayer
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.EventHandler
@@ -60,7 +63,9 @@ class BonfireListener : Listener {
 
         gearyEntity.setPersisting(bonfire.copy(bonfireOwner = player.uniqueId, bonfirePlayers = mutableListOf()))
         gearyEntity.setPersisting(BonfireExpirationTime(0.seconds, currentTime()))
-        gearyEntity.encodeComponentsTo(baseEntity)
+        baseEntity.withGeary {
+            gearyEntity.encodeComponentsTo(baseEntity)
+        }
         baseEntity.updateBonfireState()
     }
 
@@ -89,7 +94,9 @@ class BonfireListener : Listener {
                     } else Unit
                 }
             }
-            gearyEntity.encodeComponentsTo(baseEntity) // Ensure data is saved to PDC
+            baseEntity.withGeary {
+                gearyEntity.encodeComponentsTo(baseEntity) // Ensure data is saved to PDC
+            }
         }
     }
 
@@ -139,8 +146,10 @@ class BonfireListener : Listener {
                 }
             }
 
-            gearyBonfire.encodeComponentsTo(baseEntity) // Ensure data is saved to PDC
-            gearyPlayer.encodeComponentsTo(player)
+            player.withGeary {
+                gearyBonfire.encodeComponentsTo(baseEntity) // Ensure data is saved to PDC
+                gearyPlayer.encodeComponentsTo(player)
+            }
             baseEntity.updateBonfireState()
             BonfirePacketHelpers.sendAddonPacket(baseEntity)
         }
@@ -162,7 +171,7 @@ class BonfireListener : Listener {
             val offlinePlayer = Bukkit.getOfflinePlayer(it)
             val respawn = when {
                 offlinePlayer.isOnline -> offlinePlayer.player?.toGearyOrNull()?.get<BonfireRespawn>()
-                else -> offlinePlayer.getOfflinePDC()?.decode<BonfireRespawn>()
+                else -> withGeary { offlinePlayer.getOfflinePDC()?.decode<BonfireRespawn>() }
             }
             respawn?.bonfireUuid == this.uniqueId
         }
@@ -187,10 +196,12 @@ class BonfireListener : Listener {
             if (online != null) with(online.toGeary()) {
                 remove<BonfireEffectArea>()
                 remove<BonfireRespawn>()
-                encodeComponentsTo(online)
+                online.withGeary { encodeComponentsTo(online) }
             } else offline.editOfflinePDC {
-                encode(BonfireRemoved())
-                remove<BonfireRespawn>()
+                with(gearyPaper.worldManager.global) {
+                    encode(BonfireRemoved())
+                    remove<BonfireRespawn>()
+                }
             }
         }
     }
@@ -207,9 +218,11 @@ class BonfireListener : Listener {
                     bonfireData.bonfirePlayers.map { it.toOfflinePlayer() to it.toPlayer() }.forEach { (offline, online) ->
                         if (online != null) with(online.toGeary()) {
                             get<BonfireRespawn>()?.copy(bonfireLocation = entity.location)?.let { setPersisting(it) }
-                            encodeComponentsTo(online)
+                            online.withGeary { encodeComponentsTo(online) }
                         } else offline.editOfflinePDC {
-                            decode<BonfireRespawn>()?.copy(bonfireLocation = entity.location)?.let { encode(it) }
+                            with(gearyPaper.worldManager.global) {
+                                decode<BonfireRespawn>()?.copy(bonfireLocation = entity.location)?.let { encode(it) }
+                            }
                         }
                     }
                     BonfirePacketHelpers.sendAddonPacket(furniture)
