@@ -13,17 +13,17 @@ import org.bukkit.entity.Player
 fun Geary.bonfireEffectSystem() = system(object : Query(this) {
     val player by get<Player>()
     val effect by get<BonfireEffectArea>()
-}).every(10.ticks).exec {
+}).every(10.ticks).exec { q ->
     // Check if still near a bonfire
-    player.location.getNearbyEntitiesByType(ItemDisplay::class.java, bonfire.config.effectRadius).firstOrNull {
-        it.isBonfire && it.uniqueId == effect.uuid
+    q.player.location.getNearbyEntitiesByType(ItemDisplay::class.java, bonfire.config.effectRadius).firstOrNull {
+        it.isBonfire && it.uniqueId == q.effect.uuid
     }?.let {
-        player.location.world.spawnParticle(
+        q.player.location.world.spawnParticle(
             listOf(Particle.SOUL, Particle.SOUL_FIRE_FLAME).random(),
-            player.location, 1, 0.5, 1.0, 0.5, 0.0
+            q.player.location, 1, 0.5, 1.0, 0.5, 0.0
         )
 
-        player.saturation = bonfire.config.effectStrength
-        player.saturatedRegenRate = bonfire.config.effectRegenRate
+        q.player.saturation = bonfire.config.effectStrength
+        q.player.saturatedRegenRate = bonfire.config.effectRegenRate
     }
 }
