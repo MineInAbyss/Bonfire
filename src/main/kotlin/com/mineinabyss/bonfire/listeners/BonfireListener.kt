@@ -15,8 +15,8 @@ import com.mineinabyss.geary.papermc.datastore.decode
 import com.mineinabyss.geary.papermc.datastore.encode
 import com.mineinabyss.geary.papermc.datastore.encodeComponentsTo
 import com.mineinabyss.geary.papermc.datastore.remove
+import com.mineinabyss.geary.papermc.features.common.cooldowns.Cooldown
 import com.mineinabyss.geary.papermc.features.common.cooldowns.Cooldowns
-import com.mineinabyss.geary.papermc.features.common.cooldowns.StartCooldown
 import com.mineinabyss.geary.papermc.gearyPaper
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
@@ -45,7 +45,7 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 
 class BonfireListener : Listener {
-    private val cooldown = StartCooldown(length = bonfire.config.bonfireInteractCooldown, display = null, "bonfire:interaction_cooldown")
+    private val cooldown = Cooldown(length = bonfire.config.bonfireInteractCooldown, display = null, "bonfire:interaction_cooldown")
 
     private fun currentTime() = LocalDateTime.now().toInstant(ZoneOffset.UTC).epochSecond
 

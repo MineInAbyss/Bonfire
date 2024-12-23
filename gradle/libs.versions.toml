@@ -1,5 +1,5 @@
 [versions]
-gearyPaper = "0.31.3"
+gearyPaper = "0.31.9"
 blocky = "0.10.16"
 
 [libraries]
