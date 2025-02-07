@@ -37,7 +37,7 @@ class DebugListener : Listener {
 
     @EventHandler
     fun PlayerToggleSneakEvent.onDebugToggle() {
-        if (player.toGeary().has<BonfireDebug>() && player.isSneaking) player.getNearbyEntities(16.0, 16.0, 16.0).forEachBonfire {
+        if (player.toGeary().has<BonfireDebug>() && isSneaking) player.world.entities.filter(player::canSee).forEachBonfire {
             player.sendDebugTextDisplay(it)
         } else removeDebugTextDisplay(player)
     }
@@ -50,44 +50,32 @@ class DebugListener : Listener {
     }
 
     private val debugIdMap = mutableMapOf<UUID, MutableMap<FurnitureUUID, Int>>()
+    private val backgroundColor = Color.fromARGB(0, 0, 0, 0).asARGB()
     private fun Player.sendDebugTextDisplay(baseEntity: ItemDisplay) {
         val loc = baseEntity.location.clone().toBlockCenterLocation().add(bonfire.config.debugTextOffset)
-        var textEntityPacket: ClientboundAddEntityPacket? = null
         val entityIds = debugIdMap.computeIfAbsent(uniqueId) { mutableMapOf(baseEntity.uniqueId to Entity.nextEntityId()) }
-        val entityId = entityIds.getOrPut(baseEntity.uniqueId) {
-            ClientboundAddEntityPacket(
-                Entity.nextEntityId(), UUID.randomUUID(),
-                loc.x, loc.y, loc.z, loc.pitch, loc.yaw,
-                EntityType.TEXT_DISPLAY, 0, Vec3.ZERO, 0.0
-            ).let {
-                textEntityPacket = it
-                it.id
-            }
-        }
+        val entityId = entityIds.getOrPut(baseEntity.uniqueId) { Entity.nextEntityId() }
+        val textEntityPacket = ClientboundAddEntityPacket(
+            entityId, UUID.randomUUID(), loc.x, loc.y, loc.z, loc.pitch, loc.yaw,
+            EntityType.TEXT_DISPLAY, 0, Vec3.ZERO, 0.0
+        )
 
         val text = PaperAdventure.asVanilla(createDebugText(baseEntity.toGearyOrNull()?.get<Bonfire>() ?: return).miniMsg()) ?: Component.empty()
         val textMetaPacket = ClientboundSetEntityDataPacket(
             entityId, listOf(
                 SynchedEntityData.DataValue(15, EntityDataSerializers.BYTE, 1), // Billboard
                 SynchedEntityData.DataValue(23, EntityDataSerializers.COMPONENT, text),
-                SynchedEntityData.DataValue(
-                    25,
-                    EntityDataSerializers.INT,
-                    Color.fromARGB(0, 0, 0, 0).asARGB()
-                ), // Transparent background
+                SynchedEntityData.DataValue(25, EntityDataSerializers.INT, backgroundColor), // Transparent background
                 SynchedEntityData.DataValue(27, EntityDataSerializers.BYTE, ((0 or 0x01) or (0 and 0x0F shl 3)).toByte())
             )
         )
 
-        (player as CraftPlayer).handle.connection.send(
-            textEntityPacket?.let { ClientboundBundlePacket(listOf(textEntityPacket, textMetaPacket)) } ?: textMetaPacket
-        )
+        (player as CraftPlayer).handle.connection.send(ClientboundBundlePacket(listOf(textEntityPacket, textMetaPacket)))
     }
 
     private fun removeDebugTextDisplay(player: Player) {
-        debugIdMap[player.uniqueId]?.values?.let {
-            (player as CraftPlayer).handle.connection.send(ClientboundRemoveEntitiesPacket(IntList.of(*it.toIntArray())))
-        }
+        val ids = IntList.of(*debugIdMap.remove(player.uniqueId)?.values?.toIntArray() ?: return)
+        (player as CraftPlayer).handle.connection.send(ClientboundRemoveEntitiesPacket(ids))
     }
 
     private fun createDebugText(bonfire: Bonfire) = """

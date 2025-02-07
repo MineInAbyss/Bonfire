@@ -23,10 +23,10 @@ import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 
-fun Iterable<Entity>.forEachBonfire(action: (ItemDisplay) -> Unit): Unit {
+fun Iterable<Entity>.forEachBonfire(action: (ItemDisplay) -> Unit) {
     for (element in this.filterIsBonfire()) action(element)
 }
-fun Array<Entity>.forEachBonfire(action: (ItemDisplay) -> Unit): Unit {
+fun Array<Entity>.forEachBonfire(action: (ItemDisplay) -> Unit) {
     for (element in this.filterIsBonfire()) action(element)
 }
 fun Iterable<Entity>.filterIsBonfire() = mapNotNull { it.takeIf { it.isBonfire } as? ItemDisplay }
