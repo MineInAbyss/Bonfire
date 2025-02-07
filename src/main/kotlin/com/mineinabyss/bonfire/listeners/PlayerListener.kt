@@ -49,9 +49,17 @@ class PlayerListener : Listener {
         val loc = bonfireRespawn.bonfireLocation
 
         loc.world.getChunkAtAsyncUrgently(loc).thenAccept { chunk ->
-            val bonfireEntity =
-                chunk.entities.filterIsBonfire().find { it.uniqueId == bonfireRespawn.bonfireUuid } ?: return@thenAccept
-            val bonfireData = bonfireEntity.toGeary().get<Bonfire>() ?: return@thenAccept
+            chunk.addPluginChunkTicket(bonfire.plugin)
+            val bonfireEntity = chunk.entities.filterIsBonfire().find { it.uniqueId == bonfireRespawn.bonfireUuid }
+            if (bonfireEntity == null) {
+                chunk.removePluginChunkTicket(bonfire.plugin)
+                return@thenAccept
+            }
+            val bonfireData = bonfireEntity.toGeary().get<Bonfire>()
+            if (bonfireData == null) {
+                chunk.removePluginChunkTicket(bonfire.plugin)
+                return@thenAccept
+            }
 
             when {
                 bonfireEntity.isBonfire && player.uniqueId in bonfireData.bonfirePlayers -> {
@@ -72,6 +80,7 @@ class PlayerListener : Listener {
                     player.toGeary().remove<BonfireRespawn>()
                 }
             }
+            chunk.removePluginChunkTicket(bonfire.plugin)
         }
     }
 
