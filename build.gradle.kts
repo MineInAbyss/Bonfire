@@ -30,7 +30,6 @@ dependencies {
 
     // Other plugins
     compileOnly(libs.blocky)
-    compileOnly(libs.minecraft.plugin.axiompaper)
 }
 
 kotlin {

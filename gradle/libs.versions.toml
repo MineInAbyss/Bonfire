@@ -1,8 +1,7 @@
 [versions]
-gearyPaper = "0.31.9"
-blocky = "0.10.16"
+gearyPaper = "0.32.0-dev.0"
+blocky = "0.11.0-dev.0"
 
 [libraries]
 geary-papermc = { module = "com.mineinabyss:geary-papermc", version.ref = "gearyPaper" }
 blocky = { module = "com.mineinabyss:blocky", version.ref = "blocky" }
-minecraft-plugin-axiompaper = "com.moulberry:axiom:4.0.1"
