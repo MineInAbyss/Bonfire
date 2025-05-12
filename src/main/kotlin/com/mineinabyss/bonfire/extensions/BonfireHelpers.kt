@@ -12,16 +12,20 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.tracking.items.ItemTracking
 import com.mineinabyss.geary.papermc.withGeary
 import com.mineinabyss.idofront.entities.toPlayer
+import io.papermc.paper.datacomponent.DataComponentTypes
 import kotlinx.coroutines.delay
+import net.kyori.adventure.key.Key
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
+import org.bukkit.Material
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Display
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
 
 fun Iterable<Entity>.forEachBonfire(action: (ItemDisplay) -> Unit) {
     for (element in this.filterIsBonfire()) action(element)
@@ -69,14 +73,14 @@ fun ItemDisplay.updateBonfireState() {
         when {// Set the base-furniture item to the correct state
             bonfire.bonfirePlayers.isEmpty() -> {
                 brightness = toGearyOrNull()?.get<BlockyFurniture>()?.properties?.brightness
-                itemTracking.createItem(bonfire.states.unlit)?.let { setItemStack(it) }
+                setItemStack(bonfire.states.unlitItem(itemTracking))
             }
             else -> {
                 brightness = Display.Brightness(15, 15)
-                itemTracking.createItem(bonfire.states.lit)?.let { setItemStack(it) }
+                setItemStack(bonfire.states.litItem(itemTracking))
 
                 // Set state via packets to 'set' for all online players currently at the bonfire
-                val stateItem = itemTracking.createItem(bonfire.states.set) ?: return
+                val stateItem = bonfire.states.setItem(itemTracking)
                 val metadataPacket = ClientboundSetEntityDataPacket(entityId,
                     listOf(SynchedEntityData.DataValue(23, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
                 )
