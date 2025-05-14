@@ -68,6 +68,9 @@ fun ItemDisplay.updateBonfireState() {
         when {// Set the base-furniture item to the correct state
             bonfire.bonfirePlayers.isEmpty() -> {
                 brightness = toGearyOrNull()?.get<BlockyFurniture>()?.properties?.brightness
+                setItemStack(itemStack.apply {
+                    unsetData(DataComponentTypes.CUSTOM_MODEL_DATA)
+                })
             }
             else -> {
                 brightness = Display.Brightness(15, 15)
