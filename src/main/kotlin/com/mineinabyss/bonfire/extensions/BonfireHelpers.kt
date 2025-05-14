@@ -9,23 +9,19 @@ import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
-import com.mineinabyss.geary.papermc.tracking.items.ItemTracking
 import com.mineinabyss.geary.papermc.withGeary
-import com.mineinabyss.idofront.entities.toPlayer
 import io.papermc.paper.datacomponent.DataComponentTypes
+import io.papermc.paper.datacomponent.item.CustomModelData
 import kotlinx.coroutines.delay
-import net.kyori.adventure.key.Key
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
-import org.bukkit.Material
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Display
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
-import org.bukkit.inventory.ItemStack
 
 fun Iterable<Entity>.forEachBonfire(action: (ItemDisplay) -> Unit) {
     for (element in this.filterIsBonfire()) action(element)
@@ -68,26 +64,30 @@ fun ItemDisplay.updateBonfireState() {
     withGeary {
         val plugin = bonfire.plugin
         val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
-        val itemTracking = getAddon(ItemTracking)
 
         when {// Set the base-furniture item to the correct state
             bonfire.bonfirePlayers.isEmpty() -> {
                 brightness = toGearyOrNull()?.get<BlockyFurniture>()?.properties?.brightness
-                setItemStack(bonfire.states.unlitItem(itemTracking))
             }
             else -> {
                 brightness = Display.Brightness(15, 15)
-                setItemStack(bonfire.states.litItem(itemTracking))
+                setItemStack(itemStack.apply {
+                    val cmd = CustomModelData.customModelData().addFloat(bonfire.bonfirePlayers.size.toFloat()).addFlag(true).addFlag(false).build()
+                    setData(DataComponentTypes.CUSTOM_MODEL_DATA, cmd)
+                })
 
                 // Set state via packets to 'set' for all online players currently at the bonfire
-                val stateItem = bonfire.states.setItem(itemTracking)
+                val stateItem = itemStack.apply {
+                    val cmd = CustomModelData.customModelData().addFloat(bonfire.bonfirePlayers.size.toFloat()).addFlag(true).addFlag(true).build()
+                    setData(DataComponentTypes.CUSTOM_MODEL_DATA, cmd)
+                }
                 val metadataPacket = ClientboundSetEntityDataPacket(entityId,
                     listOf(SynchedEntityData.DataValue(23, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
                 )
 
                 plugin.launch {
                     delay(2.ticks)
-                    bonfire.bonfirePlayers.mapNotNull { it.toPlayer()?.takeIf( { p -> p.canSee(this@updateBonfireState) }) }.forEach {
+                    this@updateBonfireState.trackedBy.filter { it.uniqueId in bonfire.bonfirePlayers }.forEach {
                         (it as CraftPlayer).handle.connection.send(metadataPacket)
                     }
                 }

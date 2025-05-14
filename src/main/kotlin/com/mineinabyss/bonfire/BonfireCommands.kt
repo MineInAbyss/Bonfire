@@ -4,7 +4,6 @@ import com.mineinabyss.blocky.helpers.GenericHelpers.toBlockCenterLocation
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireDebug
 import com.mineinabyss.bonfire.components.BonfireRespawn
-import com.mineinabyss.bonfire.extensions.BonfirePacketHelpers
 import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.papermc.datastore.decode
 import com.mineinabyss.geary.papermc.datastore.encode
@@ -16,7 +15,6 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.withGeary
 import com.mineinabyss.geary.serialization.setPersisting
 import com.mineinabyss.idofront.commands.brigadier.commands
-import com.mineinabyss.idofront.commands.brigadier.context.IdoCommandContext
 import com.mineinabyss.idofront.commands.brigadier.executes
 import com.mineinabyss.idofront.commands.brigadier.playerExecutes
 import com.mineinabyss.idofront.messaging.error
@@ -29,8 +27,6 @@ import com.mineinabyss.idofront.util.to
 import com.mojang.brigadier.arguments.StringArgumentType
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes
 import org.bukkit.Bukkit
-import org.bukkit.Location
-import org.bukkit.OfflinePlayer
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
 
@@ -125,7 +121,6 @@ object BonfireCommands {
                                             }
                                             bonfire.bonfirePlayers += offlinePlayer.uniqueId
                                             bonfireEntity.updateBonfireState()
-                                            BonfirePacketHelpers.sendAddonPacket(bonfireEntity)
                                             sender.success("Set respawn point for ${offlinePlayer.name} to $x $y $z in ${player.world.name}")
                                         }
                                     }

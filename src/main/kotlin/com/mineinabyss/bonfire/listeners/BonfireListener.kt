@@ -7,7 +7,10 @@ import com.mineinabyss.blocky.api.events.furniture.BlockyFurnitureInteractEvent
 import com.mineinabyss.blocky.api.events.furniture.BlockyFurniturePlaceEvent
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.*
-import com.mineinabyss.bonfire.extensions.*
+import com.mineinabyss.bonfire.extensions.canBreakBonfire
+import com.mineinabyss.bonfire.extensions.isBonfire
+import com.mineinabyss.bonfire.extensions.removeOldBonfire
+import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.actions.ActionGroupContext
 import com.mineinabyss.geary.actions.execute
 import com.mineinabyss.geary.helpers.with
@@ -28,7 +31,6 @@ import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
 import com.mineinabyss.idofront.nms.nbt.getOfflinePDC
-import com.mineinabyss.idofront.plugin.Plugins
 import org.bukkit.Bukkit
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.ItemDisplay
@@ -149,7 +151,6 @@ class BonfireListener : Listener {
                 gearyPlayer.encodeComponentsTo(player)
             }
             baseEntity.updateBonfireState()
-            BonfirePacketHelpers.sendAddonPacket(baseEntity)
         }
     }
 
