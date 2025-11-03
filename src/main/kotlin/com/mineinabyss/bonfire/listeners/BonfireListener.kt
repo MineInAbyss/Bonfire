@@ -27,6 +27,7 @@ import com.mineinabyss.geary.papermc.withGeary
 import com.mineinabyss.geary.serialization.setPersisting
 import com.mineinabyss.idofront.entities.toOfflinePlayer
 import com.mineinabyss.idofront.entities.toPlayer
+import com.mineinabyss.idofront.location.up
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.success
 import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
@@ -51,8 +52,7 @@ class BonfireListener : Listener {
 
     @EventHandler
     fun BlockBreakEvent.onBreakBlock() { // Cancel block-break if it is below a bonfire
-        val boundingBox = block.boundingBox.shift(0.0, 1.0, 0.0)
-        if (block.world.getNearbyEntities(boundingBox).none { it.isBonfire }) return
+        if (block.world.getNearbyEntities(block.location.up(1), 1.0, 1.0, 1.0).none { it.isBonfire }) return
         isCancelled = true
     }
 
