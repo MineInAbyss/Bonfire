@@ -52,7 +52,8 @@ class BonfireListener : Listener {
 
     @EventHandler
     fun BlockBreakEvent.onBreakBlock() { // Cancel block-break if it is below a bonfire
-        if (block.world.getNearbyEntities(block.location.up(1), 1.0, 1.0, 1.0).none { it.isBonfire }) return
+        val loc = block.location.toCenterLocation().up(1)
+        if (block.world.getNearbyEntities(loc, 1.0, 1.0, 1.0).none { it.isBonfire }) return
         isCancelled = true
     }
 
