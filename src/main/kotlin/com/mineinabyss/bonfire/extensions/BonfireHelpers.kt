@@ -62,7 +62,7 @@ fun Player.removeOldBonfire() {
  */
 fun ItemDisplay.updateBonfireState() {
     withGeary {
-        val plugin = bonfire.plugin
+        val plugin = bonfire
         val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
 
         when {// Set the base-furniture item to the correct state

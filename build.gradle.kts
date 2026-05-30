@@ -1,12 +1,15 @@
+import net.minecrell.pluginyml.bukkit.BukkitPluginDescription.Permission.Default.OP
+import net.minecrell.pluginyml.paper.PaperPluginDescription.RelativeLoadOrder.BEFORE
+
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
-    alias(idofrontLibs.plugins.mia.kotlin.jvm)
-    alias(idofrontLibs.plugins.kotlinx.serialization)
-    alias(idofrontLibs.plugins.mia.papermc)
-    alias(idofrontLibs.plugins.mia.copyjar)
-    alias(idofrontLibs.plugins.mia.nms)
-    alias(idofrontLibs.plugins.mia.publication)
-    alias(idofrontLibs.plugins.mia.autoversion)
+    alias(miaLibs.plugins.mia.kotlin.jvm)
+    alias(miaLibs.plugins.kotlinx.serialization)
+    alias(miaLibs.plugins.mia.papermc)
+    alias(miaLibs.plugins.mia.copyjar)
+    alias(miaLibs.plugins.mia.nms)
+    alias(miaLibs.plugins.mia.publication)
+    alias(miaLibs.plugins.mia.autoversion)
 }
 
 repositories {
@@ -18,15 +21,13 @@ repositories {
 
 dependencies {
     // MineInAbyss platform
-    compileOnly(idofrontLibs.bundles.idofront.core)
-    compileOnly(idofrontLibs.idofront.nms)
-    compileOnly(idofrontLibs.kotlinx.serialization.json)
-    compileOnly(idofrontLibs.kotlinx.serialization.kaml)
-    compileOnly(idofrontLibs.kotlinx.serialization.cbor)
-    compileOnly(idofrontLibs.minecraft.mccoroutine)
-
-    // Geary platform
-    compileOnly(libs.geary.papermc)
+    compileOnly(miaLibs.bundles.idofront.core)
+    compileOnly(miaLibs.idofront.nms)
+    compileOnly(miaLibs.kotlinx.serialization.json)
+    compileOnly(miaLibs.kotlinx.serialization.kaml)
+    compileOnly(miaLibs.kotlinx.serialization.cbor)
+    compileOnly(miaLibs.minecraft.mccoroutine)
+    compileOnly(miaLibs.geary.papermc)
 
     // Other plugins
     compileOnly(libs.blocky)
@@ -37,7 +38,45 @@ kotlin {
         freeCompilerArgs.addAll(
             "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
             "-opt-in=kotlin.ExperimentalUnsignedTypes",
-            "-Xcontext-receivers"
         )
+    }
+}
+
+paper {
+    main = "com.mineinabyss.bonfire.BonfirePlugin"
+    name = "Bonfire"
+    apiVersion = "1.21"
+    authors = listOf("boy0000", "Scyu_", "Norazan", "Ru_Kira")
+
+    permissions {
+        register("bonfire.*") {
+            description = "Gives access to all commands and allows staff to remove bonfires"
+            children = listOf("bonfire.remove")
+        }
+        register("bonfire.remove") {
+            description = "Allow staff to remove bonfires."
+            default = OP
+        }
+    }
+
+    serverDependencies {
+        register("Geary") {
+            load = BEFORE
+            joinClasspath = true
+        }
+        register("Blocky") {
+            load = BEFORE
+            joinClasspath = true
+        }
+        register("DeeperWorld") {
+            load = BEFORE
+            joinClasspath = true
+            required = false
+        }
+        register("AxiomPaper") {
+            load = BEFORE
+            joinClasspath = true
+            required = false
+        }
     }
 }

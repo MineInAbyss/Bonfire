@@ -1,35 +1,62 @@
 package com.mineinabyss.bonfire
 
-import com.mineinabyss.blocky.systems.createFurnitureOutlineSystem
+import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.extensions.BonfireMessages
 import com.mineinabyss.bonfire.listeners.BonfireListener
 import com.mineinabyss.bonfire.listeners.DebugListener
 import com.mineinabyss.bonfire.listeners.FixUntrackedBonfiresListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
-import com.mineinabyss.bonfire.systems.bonfireEffectSystem
-import com.mineinabyss.geary.addons.GearyPhase
-import com.mineinabyss.geary.addons.dsl.createAddon
+import com.mineinabyss.dependencies.DI
+import com.mineinabyss.dependencies.get
+import com.mineinabyss.dependencies.getLazy
+import com.mineinabyss.dependencies.loadCatching
+import com.mineinabyss.dependencies.scope
+import com.mineinabyss.dependencies.single
 import com.mineinabyss.geary.autoscan.autoscan
-import com.mineinabyss.geary.modules.geary
-import com.mineinabyss.geary.papermc.configure
 import com.mineinabyss.geary.papermc.gearyPaper
-import com.mineinabyss.idofront.config.config
-import com.mineinabyss.idofront.di.DI
+import com.mineinabyss.idofront.config.SingleConfig
+import com.mineinabyss.idofront.features.MainCommand
+import com.mineinabyss.idofront.features.MainCommandFeature
+import com.mineinabyss.idofront.features.singleConfig
+import com.mineinabyss.idofront.features.singlePluginLogger
 import com.mineinabyss.idofront.messaging.ComponentLogger
-import com.mineinabyss.idofront.messaging.observeLogger
 import com.mineinabyss.idofront.plugin.listeners
 import org.bukkit.plugin.java.JavaPlugin
 
-class BonfirePlugin : JavaPlugin() {
-    override fun onLoad() {
-        registerBonfireContext()
-        gearyPaper.configure {
-            install(BonfireAddon)
+val bonfire = BonfirePlugin.instance ?: error("Bonfire not loaded")
+
+class BonfirePlugin : JavaPlugin(), DI {
+    override val di = DI {
+        singlePluginLogger(this@BonfirePlugin)
+        singleConfig<BonfireConfig>("config.yml") { default = BonfireConfig() }
+        singleConfig<BonfireMessages>("messages.yml") { default = BonfireMessages() }
+        single {
+            MainCommand(
+                names = listOf("deeperworld", "dw"),
+                description = "The main command for DeeperWorld",
+                reloadCommandName = "reload",
+                onBeforeReload = {
+                    get<SingleConfig<BonfireConfig>>().updateCached()
+                    get<SingleConfig<BonfireMessages>>().updateCached()
+                }
+            )
         }
     }
 
+    val logger by di.getLazy<ComponentLogger>()
+    val config by di.getLazy<BonfireConfig>()
+    val messages by di.getLazy<BonfireMessages>()
+
     override fun onEnable() {
-        BonfireCommands.registerCommands()
+        gearyPaper.configure {
+            world.autoscan {
+                scan(BonfirePlugin::class.java.classLoader, listOf("com.mineinabyss.bonfire")) {
+                    all()
+                }
+            }
+        }
+        scope.loadCatching(BonfireAddon)
+        scope.loadCatching(MainCommandFeature)
 
         listeners(
             PlayerListener(),
@@ -39,18 +66,11 @@ class BonfirePlugin : JavaPlugin() {
         )
     }
 
-    fun registerBonfireContext() {
-        DI.remove<BonfireContext>()
-        DI.add<BonfireContext>(object : BonfireContext {
-            override val plugin = this@BonfirePlugin
-            override val config: BonfireConfig by config("config", dataFolder.toPath(), BonfireConfig())
-            override val messages: BonfireMessages by config("messages", dataFolder.toPath(), BonfireMessages())
-            override val logger: ComponentLogger by plugin.observeLogger()
-        })
+    override fun onDisable() {
+        di.close()
     }
 
-    override fun onDisable() {
-        // Plugin shutdown logic
-//        ProtocolLibrary.getProtocolManager().removePacketListener(ChatPacketAdapter);
-
-    }}
+    companion object {
+        var instance: BonfirePlugin? = null
+    }
+}

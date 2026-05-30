@@ -26,7 +26,7 @@ class FixUntrackedBonfiresListener : Listener {
             val itemPrefabs = entity.withGeary { entity.itemStack.persistentDataContainer.decodePrefabs() }
 
             if (bonfireItemKey in itemPrefabs || bonfireLitItemKey in itemPrefabs) {
-                Bukkit.getScheduler().scheduleSyncDelayedTask(bonfire.plugin, {
+                Bukkit.getScheduler().scheduleSyncDelayedTask(bonfire, {
                     BlockyFurnitures.placeFurniture(bonfireItemKey, entity.location, entity.yaw)
                     entity.remove()
                 }, 1)
@@ -38,7 +38,7 @@ class FixUntrackedBonfiresListener : Listener {
     fun GearyEntityAddToWorldEvent.onOldBonfireLoad() {
         if (entity !is ItemDisplay || gearyEntity.has<BlockyFurniture>() || !gearyEntity.has<Bonfire>()) return
 
-        Bukkit.getScheduler().scheduleSyncDelayedTask(bonfire.plugin, {
+        Bukkit.getScheduler().scheduleSyncDelayedTask(bonfire, {
             BlockyFurnitures.placeFurniture(bonfireItemKey, entity.location, entity.yaw)
             entity.remove()
         }, 1)

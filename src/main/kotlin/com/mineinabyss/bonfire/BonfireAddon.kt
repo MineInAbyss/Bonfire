@@ -1,15 +1,15 @@
 package com.mineinabyss.bonfire
 
 import com.mineinabyss.bonfire.systems.bonfireEffectSystem
-import com.mineinabyss.geary.addons.dsl.createAddon
+import com.mineinabyss.dependencies.module
 import com.mineinabyss.geary.autoscan.autoscan
+import com.mineinabyss.geary.papermc.gearyWorld
+import com.mineinabyss.idofront.features.mainCommand
 
-val BonfireAddon = createAddon("Bonfire", configuration = {
-    autoscan(BonfirePlugin::class.java.classLoader, "com.mineinabyss.bonfire") {
-        all()
-    }
-}) {
-    systems {
+val BonfireAddon = module("bonfire") {
+    gearyWorld {
         bonfireEffectSystem()
     }
+}.mainCommand {
+    bonfireCommands()
 }

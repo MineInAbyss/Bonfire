@@ -47,15 +47,15 @@ class PlayerListener : Listener {
         val loc = bonfireRespawn.bonfireLocation
 
         loc.world.getChunkAtAsyncUrgently(loc).thenAccept { chunk ->
-            chunk.addPluginChunkTicket(bonfire.plugin)
+            chunk.addPluginChunkTicket(bonfire)
             val bonfireEntity = chunk.entities.filterIsBonfire().find { it.uniqueId == bonfireRespawn.bonfireUuid }
             if (bonfireEntity == null) {
-                chunk.removePluginChunkTicket(bonfire.plugin)
+                chunk.removePluginChunkTicket(bonfire)
                 return@thenAccept
             }
             val bonfireData = bonfireEntity.toGeary().get<Bonfire>()
             if (bonfireData == null) {
-                chunk.removePluginChunkTicket(bonfire.plugin)
+                chunk.removePluginChunkTicket(bonfire)
                 return@thenAccept
             }
 
@@ -78,7 +78,7 @@ class PlayerListener : Listener {
                     player.toGeary().remove<BonfireRespawn>()
                 }
             }
-            chunk.removePluginChunkTicket(bonfire.plugin)
+            chunk.removePluginChunkTicket(bonfire)
         }
     }
 
@@ -92,7 +92,7 @@ class PlayerListener : Listener {
     fun PlayerJoinEvent.onJoinRemovedBonfire() {
         if (player.toGearyOrNull()?.has<BonfireRemoved>() != true) return
 
-        bonfire.plugin.launch {
+        bonfire.launch {
             delay(1.seconds)
             player.error(bonfire.messages.BONFIRE_REMOVED)
         }
