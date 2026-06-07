@@ -1,10 +1,11 @@
 package com.mineinabyss.bonfire
 
-import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.extensions.BonfireMessages
+import com.mineinabyss.bonfire.listeners.BlockyBonfireListener
 import com.mineinabyss.bonfire.listeners.BonfireListener
 import com.mineinabyss.bonfire.listeners.DebugListener
 import com.mineinabyss.bonfire.listeners.FixUntrackedBonfiresListener
+import com.mineinabyss.bonfire.listeners.NexoBonfireListener
 import com.mineinabyss.bonfire.listeners.PlayerListener
 import com.mineinabyss.dependencies.DI
 import com.mineinabyss.dependencies.get
@@ -20,6 +21,7 @@ import com.mineinabyss.idofront.features.MainCommandFeature
 import com.mineinabyss.idofront.features.singleConfig
 import com.mineinabyss.idofront.features.singlePluginLogger
 import com.mineinabyss.idofront.messaging.ComponentLogger
+import com.mineinabyss.idofront.plugin.Plugins
 import com.mineinabyss.idofront.plugin.listeners
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -64,6 +66,9 @@ class BonfirePlugin : JavaPlugin(), DI {
             DebugListener(),
             FixUntrackedBonfiresListener()
         )
+
+        if (Plugins.isEnabled("Blocky")) listeners(BlockyBonfireListener())
+        if (Plugins.isEnabled("Nexo")) listeners(NexoBonfireListener())
     }
 
     override fun onDisable() {

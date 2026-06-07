@@ -17,6 +17,7 @@ repositories {
     maven("https://repo.mineinabyss.com/releases")
     maven("https://repo.mineinabyss.com/snapshots")
     maven("https://repo.dmulloy2.net/repository/public") // ProtocolLib
+    maven("https://repo.nexomc.com/releases")
 }
 
 dependencies {
@@ -28,6 +29,7 @@ dependencies {
     compileOnly(miaLibs.kotlinx.serialization.cbor)
     compileOnly(miaLibs.minecraft.mccoroutine)
     compileOnly(miaLibs.geary.papermc)
+    compileOnly(miaLibs.minecraft.plugin.nexo)
 
     // Other plugins
     compileOnly(libs.blocky)
@@ -65,6 +67,10 @@ paper {
             joinClasspath = true
         }
         register("Blocky") {
+            load = BEFORE
+            joinClasspath = true
+        }
+        register("Nexo") {
             load = BEFORE
             joinClasspath = true
         }

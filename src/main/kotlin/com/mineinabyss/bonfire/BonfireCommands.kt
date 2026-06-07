@@ -1,6 +1,6 @@
 package com.mineinabyss.bonfire
 
-import com.mineinabyss.blocky.helpers.GenericHelpers.toBlockCenterLocation
+
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireDebug
 import com.mineinabyss.bonfire.components.BonfireRespawn
@@ -99,7 +99,7 @@ fun IdoCommand.bonfireCommands() {
                 // Ensures the player has a datafile, aka joined the server before, so we can save the bonfire location
                 offlinePlayer.getOfflinePDC()
                     ?: return@args sender.error("Could not find PDC for the given OfflinePlayer")
-                val bonfireLoc = location.toBlockCenterLocation()
+                val bonfireLoc = location.clone().toCenterLocation().apply { y -= 0.5 }
                 val (x, y, z) = bonfireLoc.blockX to bonfireLoc.blockY to bonfireLoc.blockZ
 
                 player.world.getChunkAtAsync(location).thenAccept {

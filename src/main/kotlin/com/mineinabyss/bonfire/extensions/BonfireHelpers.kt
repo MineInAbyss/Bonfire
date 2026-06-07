@@ -10,6 +10,7 @@ import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.withGeary
+import com.nexomc.nexo.api.NexoFurniture
 import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.datacomponent.item.CustomModelData
 import kotlinx.coroutines.delay
@@ -22,6 +23,7 @@ import org.bukkit.entity.Display
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
+import kotlin.time.Duration.Companion.milliseconds
 
 fun Iterable<Entity>.forEachBonfire(action: (ItemDisplay) -> Unit) {
     for (element in this.filterIsBonfire()) action(element)
@@ -67,7 +69,11 @@ fun ItemDisplay.updateBonfireState() {
 
         when {// Set the base-furniture item to the correct state
             bonfire.bonfirePlayers.isEmpty() -> {
-                brightness = toGearyOrNull()?.get<BlockyFurniture>()?.properties?.brightness
+                brightness = runCatching {
+                    NexoFurniture.furnitureMechanic(this@updateBonfireState)?.properties?.brightness
+                }.getOrElse {
+                    runCatching { toGearyOrNull()?.get<BlockyFurniture>()?.properties?.brightness }.getOrNull()
+                }
                 setItemStack(itemStack.apply {
                     unsetData(DataComponentTypes.CUSTOM_MODEL_DATA)
                 })
@@ -89,7 +95,7 @@ fun ItemDisplay.updateBonfireState() {
                 )
 
                 plugin.launch {
-                    delay(2.ticks)
+                    delay(2.ticks.milliseconds)
                     this@updateBonfireState.trackedBy.filter { it.uniqueId in bonfire.bonfirePlayers }.forEach {
                         (it as CraftPlayer).handle.connection.send(metadataPacket)
                     }
