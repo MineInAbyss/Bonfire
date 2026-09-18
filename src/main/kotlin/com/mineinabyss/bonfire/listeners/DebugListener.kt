@@ -1,7 +1,5 @@
 package com.mineinabyss.bonfire.listeners
 
-import com.mineinabyss.blocky.helpers.FurnitureUUID
-import com.mineinabyss.blocky.helpers.GenericHelpers.toBlockCenterLocation
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireDebug
@@ -17,13 +15,15 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket
 import net.minecraft.network.protocol.game.ClientboundBundlePacket
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.EntityType
+import net.minecraft.world.entity.EntityTypeIds
 import net.minecraft.world.phys.Vec3
 import org.bukkit.Color
 import org.bukkit.GameMode
+import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
@@ -49,15 +49,16 @@ class DebugListener : Listener {
         } else removeDebugTextDisplay(player)
     }
 
-    private val debugIdMap = mutableMapOf<UUID, MutableMap<FurnitureUUID, Int>>()
+    private val debugIdMap = mutableMapOf<UUID, MutableMap<UUID, Int>>()
     private val backgroundColor = Color.fromARGB(0, 0, 0, 0).asARGB()
     private fun Player.sendDebugTextDisplay(baseEntity: ItemDisplay) {
-        val loc = baseEntity.location.clone().toBlockCenterLocation().add(bonfire.config.debugTextOffset)
-        val entityIds = debugIdMap.computeIfAbsent(uniqueId) { mutableMapOf(baseEntity.uniqueId to Entity.nextEntityId()) }
-        val entityId = entityIds.getOrPut(baseEntity.uniqueId) { Entity.nextEntityId() }
+        val loc = baseEntity.location.clone().toCenterLocation().add(bonfire.config.debugTextOffset)
+        val level = (world as CraftWorld).handle
+        val entityIds = debugIdMap.computeIfAbsent(uniqueId) { mutableMapOf(baseEntity.uniqueId to level.nextEntityId) }
+        val entityId = entityIds.getOrPut(baseEntity.uniqueId) { level.nextEntityId }
         val textEntityPacket = ClientboundAddEntityPacket(
             entityId, UUID.randomUUID(), loc.x, loc.y, loc.z, loc.pitch, loc.yaw,
-            EntityType.TEXT_DISPLAY, 0, Vec3.ZERO, 0.0
+            BuiltInRegistries.ENTITY_TYPE.getValue(EntityTypeIds.TEXT_DISPLAY)!!, 0, Vec3.ZERO, 0.0
         )
 
         val text = PaperAdventure.asVanilla(createDebugText(baseEntity.toGearyOrNull()?.get<Bonfire>() ?: return).miniMsg()) ?: Component.empty()

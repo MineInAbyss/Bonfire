@@ -2,7 +2,6 @@ package com.mineinabyss.bonfire.extensions
 
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.github.shynixn.mccoroutine.bukkit.ticks
-import com.mineinabyss.blocky.components.core.BlockyFurniture
 import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRemoved
@@ -71,9 +70,7 @@ fun ItemDisplay.updateBonfireState() {
             bonfire.bonfirePlayers.isEmpty() -> {
                 brightness = runCatching {
                     NexoFurniture.furnitureMechanic(this@updateBonfireState)?.properties?.brightness
-                }.getOrElse {
-                    runCatching { toGearyOrNull()?.get<BlockyFurniture>()?.properties?.brightness }.getOrNull()
-                }
+                }.getOrNull()
                 setItemStack(itemStack.apply {
                     unsetData(DataComponentTypes.CUSTOM_MODEL_DATA)
                 })

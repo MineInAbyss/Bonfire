@@ -13,6 +13,8 @@ import kotlin.time.Duration.Companion.seconds
 @Serializable
 data class BonfireConfig(
     val maxPlayerCount: Int = 4,
+    /** Nexo item id of the bonfire furniture, used when re-placing legacy bonfires that lost their furniture */
+    val nexoFurnitureId: String = "mineinabyss_bonfire",
     val bonfireExpirationTime: @Serializable(with = DurationSerializer::class) Duration = 7.days,
     val bonfireInteractCooldown: @Serializable(with = DurationSerializer::class) Duration = 2.seconds,
     val respawnSetSound: BonfireSound = BonfireSound("block.ladder.step", 1f, 1.5f, SoundCategory.BLOCKS),

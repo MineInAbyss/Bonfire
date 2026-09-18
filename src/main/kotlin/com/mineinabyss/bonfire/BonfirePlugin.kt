@@ -1,7 +1,6 @@
 package com.mineinabyss.bonfire
 
 import com.mineinabyss.bonfire.extensions.BonfireMessages
-import com.mineinabyss.bonfire.listeners.BlockyBonfireListener
 import com.mineinabyss.bonfire.listeners.BonfireListener
 import com.mineinabyss.bonfire.listeners.DebugListener
 import com.mineinabyss.bonfire.listeners.FixUntrackedBonfiresListener
@@ -23,19 +22,21 @@ import com.mineinabyss.idofront.features.singlePluginLogger
 import com.mineinabyss.idofront.messaging.ComponentLogger
 import com.mineinabyss.idofront.plugin.Plugins
 import com.mineinabyss.idofront.plugin.listeners
+import org.bukkit.plugin.Plugin
 import org.bukkit.plugin.java.JavaPlugin
 
-val bonfire = BonfirePlugin.instance ?: error("Bonfire not loaded")
+val bonfire get() = BonfirePlugin.instance ?: error("Bonfire not loaded")
 
 class BonfirePlugin : JavaPlugin(), DI {
     override val di = DI {
+        single<Plugin> { this@BonfirePlugin }
         singlePluginLogger(this@BonfirePlugin)
         singleConfig<BonfireConfig>("config.yml") { default = BonfireConfig() }
         singleConfig<BonfireMessages>("messages.yml") { default = BonfireMessages() }
         single {
             MainCommand(
-                names = listOf("deeperworld", "dw"),
-                description = "The main command for DeeperWorld",
+                names = listOf("bonfire"),
+                description = "The main command for Bonfire",
                 reloadCommandName = "reload",
                 onBeforeReload = {
                     get<SingleConfig<BonfireConfig>>().updateCached()
@@ -48,6 +49,10 @@ class BonfirePlugin : JavaPlugin(), DI {
     val logger by di.getLazy<ComponentLogger>()
     val config by di.getLazy<BonfireConfig>()
     val messages by di.getLazy<BonfireMessages>()
+
+    override fun onLoad() {
+        instance = this@BonfirePlugin
+    }
 
     override fun onEnable() {
         gearyPaper.configure {
@@ -64,11 +69,9 @@ class BonfirePlugin : JavaPlugin(), DI {
             PlayerListener(),
             BonfireListener(),
             DebugListener(),
-            FixUntrackedBonfiresListener()
+            FixUntrackedBonfiresListener(),
+            NexoBonfireListener(),
         )
-
-        if (Plugins.isEnabled("Blocky")) listeners(BlockyBonfireListener())
-        if (Plugins.isEnabled("Nexo")) listeners(NexoBonfireListener())
     }
 
     override fun onDisable() {

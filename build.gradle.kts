@@ -18,6 +18,7 @@ repositories {
     maven("https://repo.mineinabyss.com/snapshots")
     maven("https://repo.dmulloy2.net/repository/public") // ProtocolLib
     maven("https://repo.nexomc.com/releases")
+    mavenLocal()
 }
 
 dependencies {
@@ -30,9 +31,6 @@ dependencies {
     compileOnly(miaLibs.minecraft.mccoroutine)
     compileOnly(miaLibs.geary.papermc)
     compileOnly(miaLibs.minecraft.plugin.nexo)
-
-    // Other plugins
-    compileOnly(libs.blocky)
 }
 
 kotlin {
@@ -63,10 +61,6 @@ paper {
 
     serverDependencies {
         register("Geary") {
-            load = BEFORE
-            joinClasspath = true
-        }
-        register("Blocky") {
             load = BEFORE
             joinClasspath = true
         }
