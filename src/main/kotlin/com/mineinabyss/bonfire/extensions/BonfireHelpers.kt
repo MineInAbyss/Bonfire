@@ -66,24 +66,28 @@ fun ItemDisplay.updateBonfireState() {
         val plugin = bonfire
         val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
 
+        // Nexo keeps the furniture's item on its own mechanic and renders it with packets, the
+        // display entity itself holds nothing, so both reads and writes have to go through its api
+        val furnitureItem = NexoFurniture.furnitureItem(this@updateBonfireState) ?: return
+
         when {// Set the base-furniture item to the correct state
             bonfire.bonfirePlayers.isEmpty() -> {
                 brightness = runCatching {
                     NexoFurniture.furnitureMechanic(this@updateBonfireState)?.properties?.brightness
                 }.getOrNull()
-                setItemStack(itemStack.apply {
+                NexoFurniture.furnitureItem(this@updateBonfireState, furnitureItem.apply {
                     unsetData(DataComponentTypes.CUSTOM_MODEL_DATA)
                 })
             }
             else -> {
                 brightness = Display.Brightness(15, 15)
-                setItemStack(itemStack.apply {
+                NexoFurniture.furnitureItem(this@updateBonfireState, furnitureItem.apply {
                     val cmd = CustomModelData.customModelData().addFloat(bonfire.bonfirePlayers.size.toFloat()).addFlag(true).addFlag(false).build()
                     setData(DataComponentTypes.CUSTOM_MODEL_DATA, cmd)
                 })
 
                 // Set state via packets to 'set' for all online players currently at the bonfire
-                val stateItem = itemStack.apply {
+                val stateItem = furnitureItem.clone().apply {
                     val cmd = CustomModelData.customModelData().addFloat(bonfire.bonfirePlayers.size.toFloat()).addFlag(true).addFlag(true).build()
                     setData(DataComponentTypes.CUSTOM_MODEL_DATA, cmd)
                 }

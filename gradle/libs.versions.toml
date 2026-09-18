@@ -1,5 +1,0 @@
-[versions]
-blocky = "0.11.2"
-
-[libraries]
-blocky = { module = "com.mineinabyss:blocky", version.ref = "blocky" }

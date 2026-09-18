@@ -17,6 +17,7 @@ import com.mineinabyss.idofront.entities.toOfflinePlayer
 import com.mineinabyss.idofront.entities.toPlayer
 import com.mineinabyss.idofront.location.up
 import com.mineinabyss.idofront.nms.nbt.editOfflinePDC
+import com.mineinabyss.idofront.plugin.Plugins
 import com.nexomc.nexo.api.NexoFurniture
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.EventHandler
@@ -42,7 +43,7 @@ class BonfireListener : Listener {
         val itemDisplay = entity as? ItemDisplay ?: return
         val bonfireData = itemDisplay.takeIf { entity.isDead }?.toGearyOrNull()?.get<Bonfire>() ?: return
 
-        NexoFurniture.remove(itemDisplay)
+        if (Plugins.isEnabled("Nexo")) NexoFurniture.remove(itemDisplay)
 
         bonfireData.bonfirePlayers.map { it.toOfflinePlayer() to it.toPlayer() }.forEach { (offline, online) ->
             if (online != null) with(online.toGeary()) {

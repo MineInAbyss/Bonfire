@@ -69,9 +69,10 @@ class BonfirePlugin : JavaPlugin(), DI {
             PlayerListener(),
             BonfireListener(),
             DebugListener(),
-            FixUntrackedBonfiresListener(),
-            NexoBonfireListener(),
         )
+
+        // Both listeners talk to Nexo's furniture API, without it there is no furniture to place or adopt
+        if (Plugins.isEnabled("Nexo")) listeners(FixUntrackedBonfiresListener(), NexoBonfireListener())
     }
 
     override fun onDisable() {

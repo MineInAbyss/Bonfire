@@ -67,6 +67,7 @@ paper {
         register("Nexo") {
             load = BEFORE
             joinClasspath = true
+            required = false
         }
         register("DeeperWorld") {
             load = BEFORE
