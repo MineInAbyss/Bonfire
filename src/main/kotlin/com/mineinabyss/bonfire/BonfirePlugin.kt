@@ -82,7 +82,8 @@ class BonfirePlugin : JavaPlugin(), DI {
     }
 
     override fun onDisable() {
-        if (Plugins.isEnabled("Nexo")) NexoFurniture.unregisterItemOverrides(this)
+        // Not gated on Nexo being enabled, it may already be disabling and would then keep us registered
+        runCatching { NexoFurniture.unregisterItemOverrides(this) }
         di.close()
     }
 

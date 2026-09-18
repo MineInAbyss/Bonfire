@@ -6,6 +6,7 @@ import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.withGeary
+import com.mineinabyss.idofront.plugin.Plugins
 import com.nexomc.nexo.api.NexoFurniture
 import org.bukkit.entity.Display
 import org.bukkit.entity.Entity
@@ -53,6 +54,8 @@ fun Player.removeOldBonfire() {
  * Nexo sends the furniture, which is what the refresh below asks it to do
  */
 fun ItemDisplay.updateBonfireState() {
+    // Reached from listeners and commands that run with or without Nexo, and every call below is Nexo's
+    if (!Plugins.isEnabled("Nexo")) return
     withGeary {
         val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
 

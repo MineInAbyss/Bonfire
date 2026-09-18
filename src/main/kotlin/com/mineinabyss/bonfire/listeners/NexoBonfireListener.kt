@@ -161,8 +161,9 @@ class NexoBonfireListener : Listener {
             }
             respawn?.bonfireUuid == this.uniqueId
         }
+        val previousCount = bonfireData.bonfirePlayers.size
         bonfireData.bonfirePlayers.clear()
         bonfireData.bonfirePlayers.addAll(validPlayers)
-        return validPlayers.size == bonfireData.bonfirePlayers.size
+        return validPlayers.size == previousCount
     }
 }

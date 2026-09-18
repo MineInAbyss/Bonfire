@@ -7,7 +7,6 @@ import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
 import com.mineinabyss.bonfire.extensions.filterIsBonfire
 import com.mineinabyss.bonfire.extensions.isBonfire
-import com.mineinabyss.bonfire.extensions.updateBonfireState
 import com.mineinabyss.geary.papermc.datastore.remove
 import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
@@ -15,13 +14,11 @@ import com.mineinabyss.geary.papermc.withGeary
 import com.mineinabyss.idofront.entities.rightClicked
 import com.mineinabyss.idofront.messaging.error
 import com.mineinabyss.idofront.messaging.info
-import io.papermc.paper.event.player.PlayerTrackEntityEvent
 import kotlinx.coroutines.delay
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.data.type.Bed
 import org.bukkit.entity.Boat
-import org.bukkit.entity.ItemDisplay
 import org.bukkit.event.Event
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -80,12 +77,6 @@ class PlayerListener : Listener {
             }
             chunk.removePluginChunkTicket(bonfire)
         }
-    }
-
-    @EventHandler
-    fun PlayerTrackEntityEvent.onTrackBonfire() {
-        val furniture = entity as? ItemDisplay ?: return
-        furniture.updateBonfireState()
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

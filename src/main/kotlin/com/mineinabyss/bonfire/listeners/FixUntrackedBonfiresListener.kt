@@ -30,14 +30,15 @@ class FixUntrackedBonfiresListener : Listener {
     fun ChunkLoadEvent.onAddToWorld() {
         chunk.entities.filterIsInstance<ItemDisplay>().forEach { entity ->
             if (entity.persistentDataContainer.hasComponentsEncoded) return@forEach
-            val itemPrefabs = entity.withGeary { entity.itemStack.persistentDataContainer.decodePrefabs() }
+            val displayed = entity.itemStack ?: return@forEach
+            val itemPrefabs = entity.withGeary { displayed.persistentDataContainer.decodePrefabs() }
             if (bonfireItemKey !in itemPrefabs && bonfireLitItemKey !in itemPrefabs) return@forEach
 
             Bukkit.getScheduler().scheduleSyncDelayedTask(bonfire, {
                 entity.withGeary {
                     entity.persistentDataContainer.encodePrefabs(itemPrefabs)
-                    // Geary tracked the entity before the prefabs existed on it, so its components need loading by hand
-                    entity.toGearyOrNull()?.loadComponentsFrom(entity.persistentDataContainer)
+                    // Everything this bonfire owns is still on the displayed item, the entity only just got its prefabs
+                    entity.toGearyOrNull()?.loadComponentsFrom(displayed.persistentDataContainer)
                 }
                 entity.adoptAsNexoFurniture()
             }, 1)
