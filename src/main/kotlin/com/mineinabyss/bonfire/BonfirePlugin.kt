@@ -5,7 +5,9 @@ import com.mineinabyss.bonfire.listeners.BonfireListener
 import com.mineinabyss.bonfire.listeners.DebugListener
 import com.mineinabyss.bonfire.listeners.FixUntrackedBonfiresListener
 import com.mineinabyss.bonfire.listeners.NexoBonfireListener
+import com.mineinabyss.bonfire.extensions.BonfireItemOverride
 import com.mineinabyss.bonfire.listeners.PlayerListener
+import com.nexomc.nexo.api.NexoFurniture
 import com.mineinabyss.dependencies.DI
 import com.mineinabyss.dependencies.get
 import com.mineinabyss.dependencies.getLazy
@@ -72,10 +74,15 @@ class BonfirePlugin : JavaPlugin(), DI {
         )
 
         // Both listeners talk to Nexo's furniture API, without it there is no furniture to place or adopt
-        if (Plugins.isEnabled("Nexo")) listeners(FixUntrackedBonfiresListener(), NexoBonfireListener())
+        if (Plugins.isEnabled("Nexo")) {
+            listeners(FixUntrackedBonfiresListener(), NexoBonfireListener())
+            // Scoped, so Nexo keeps sending one shared packet for everyone else's furniture
+            NexoFurniture.registerItemOverride(this, BonfireItemOverride, setOf(config.nexoFurnitureId))
+        }
     }
 
     override fun onDisable() {
+        if (Plugins.isEnabled("Nexo")) NexoFurniture.unregisterItemOverrides(this)
         di.close()
     }
 

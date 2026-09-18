@@ -1,8 +1,5 @@
 package com.mineinabyss.bonfire.extensions
 
-import com.github.shynixn.mccoroutine.bukkit.launch
-import com.github.shynixn.mccoroutine.bukkit.ticks
-import com.mineinabyss.bonfire.bonfire
 import com.mineinabyss.bonfire.components.Bonfire
 import com.mineinabyss.bonfire.components.BonfireRemoved
 import com.mineinabyss.bonfire.components.BonfireRespawn
@@ -10,19 +7,10 @@ import com.mineinabyss.geary.papermc.tracking.entities.toGeary
 import com.mineinabyss.geary.papermc.tracking.entities.toGearyOrNull
 import com.mineinabyss.geary.papermc.withGeary
 import com.nexomc.nexo.api.NexoFurniture
-import io.papermc.paper.datacomponent.DataComponentTypes
-import io.papermc.paper.datacomponent.item.CustomModelData
-import kotlinx.coroutines.delay
-import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
-import net.minecraft.network.syncher.EntityDataSerializers
-import net.minecraft.network.syncher.SynchedEntityData
-import org.bukkit.craftbukkit.entity.CraftPlayer
-import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.entity.Display
 import org.bukkit.entity.Entity
 import org.bukkit.entity.ItemDisplay
 import org.bukkit.entity.Player
-import kotlin.time.Duration.Companion.milliseconds
 
 fun Iterable<Entity>.forEachBonfire(action: (ItemDisplay) -> Unit) {
     for (element in this.filterIsBonfire()) action(element)
@@ -60,48 +48,21 @@ fun Player.removeOldBonfire() {
 
 /**
  * Updates the bonfire state for all players.
+ *
+ * Only the lighting is set here, the item each player sees comes from [BonfireItemOverride] whenever
+ * Nexo sends the furniture, which is what the refresh below asks it to do
  */
 fun ItemDisplay.updateBonfireState() {
     withGeary {
-        val plugin = bonfire
         val bonfire = toGearyOrNull()?.get<Bonfire>() ?: return
 
-        // Nexo keeps the furniture's item on its own mechanic and renders it with packets, the
-        // display entity itself holds nothing, so both reads and writes have to go through its api
-        val furnitureItem = NexoFurniture.furnitureItem(this@updateBonfireState) ?: return
-
-        when {// Set the base-furniture item to the correct state
-            bonfire.bonfirePlayers.isEmpty() -> {
-                brightness = runCatching {
-                    NexoFurniture.furnitureMechanic(this@updateBonfireState)?.properties?.brightness
-                }.getOrNull()
-                NexoFurniture.furnitureItem(this@updateBonfireState, furnitureItem.apply {
-                    unsetData(DataComponentTypes.CUSTOM_MODEL_DATA)
-                })
-            }
-            else -> {
-                brightness = Display.Brightness(15, 15)
-                NexoFurniture.furnitureItem(this@updateBonfireState, furnitureItem.apply {
-                    val cmd = CustomModelData.customModelData().addFloat(bonfire.bonfirePlayers.size.toFloat()).addFlag(true).addFlag(false).build()
-                    setData(DataComponentTypes.CUSTOM_MODEL_DATA, cmd)
-                })
-
-                // Set state via packets to 'set' for all online players currently at the bonfire
-                val stateItem = furnitureItem.clone().apply {
-                    val cmd = CustomModelData.customModelData().addFloat(bonfire.bonfirePlayers.size.toFloat()).addFlag(true).addFlag(true).build()
-                    setData(DataComponentTypes.CUSTOM_MODEL_DATA, cmd)
-                }
-                val metadataPacket = ClientboundSetEntityDataPacket(entityId,
-                    listOf(SynchedEntityData.DataValue(23, EntityDataSerializers.ITEM_STACK, CraftItemStack.asNMSCopy(stateItem)))
-                )
-
-                plugin.launch {
-                    delay(2.ticks.milliseconds)
-                    this@updateBonfireState.trackedBy.filter { it.uniqueId in bonfire.bonfirePlayers }.forEach {
-                        (it as CraftPlayer).handle.connection.send(metadataPacket)
-                    }
-                }
-            }
+        brightness = when {
+            bonfire.bonfirePlayers.isEmpty() -> runCatching {
+                NexoFurniture.furnitureMechanic(this@updateBonfireState)?.properties?.brightness
+            }.getOrNull()
+            else -> Display.Brightness(15, 15)
         }
+
+        NexoFurniture.refreshFurnitureItem(this@updateBonfireState)
     }
 }
